@@ -34,14 +34,14 @@
 #include <util/delay.h> // needed for lcd_lib
 #define begin {
 #define end }
+typedef enum { false, true } bool;
 
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
-const int8_t LCD_line[] PROGMEM = "line 1\0";
-const int8_t LCD_cap_equals[] PROGMEM = "C =\0";
-const int8_t LCD_cap_clear[] PROGMEM = "           \0";
 const int8_t LCD_no_capacitor[] PROGMEM = "No Capacitor Detected!\0";
 const int8_t LCD_yes_capacitor[] PROGMEM = "Capacitor Detected!   \0";
-typedef enum { false, true } bool;
+const int8_t LCD_cap_equals[] PROGMEM = "C =\0";
+const int8_t LCD_cap_clear[] PROGMEM = "            \0";
+int8_t lcd_buffer[13];	// LCD display buffer
 
 // Global variable declarations
 volatile char t0_count;    // counts the mS since last task1 call as updated by timer0
@@ -57,9 +57,13 @@ begin
 	begin
 		if (ready) 
 		begin
-		capCount = task1();	// measures capacitance
-		task2(capCount);	// displays capacitance on LCD
-		ready = 0;
+			capCount = task1();	// measures capacitance
+			if (capCount < 10) // capacitance ranges from 1nf to 100nf
+			begin
+				capCount= 0;
+			end
+			write_LCD(capCount);	// displays capacitance on LCD
+			ready = 0;
 		end	
 	end
 end
@@ -123,23 +127,22 @@ the rising edge of the AOC
 */
 void timer1Init(void)
 begin
+	// zero variables to remove previous settings
+	TCCR1A = 0x00;
+	TCCR1B = 0x00;
+	TIMSK1 = 0x00;
 
-// zero variables to remove previous settings
-TCCR1A = 0x00;
-TCCR1B = 0x00;
-TIMSK1 = 0x00;
+	TCCR1B |= (1<<ICES1)|(1<<WGM13)|(1<<WGM12)|(1<<CS10);    // sets the timer mode to compare and capture on ICR0 rising edge
+	TIMSK1 |= (1<<ICIE1);
+	end
 
-TCCR1B |= (1<<ICES1)|(1<<WGM13)|(1<<WGM12)|(1<<CS10);    // sets the timer mode to compare and capture on ICR0 rising edge
-TIMSK1 |= (1<<ICIE1);
-end
-
-// initializes timers, pins, and compare registers
-void initialize(void)
-begin
-portInit();
-aocInit();
-timer0Init();
-timer1Init();
+	// initializes timers, pins, and compare registers
+	void initialize(void)
+	begin
+	portInit();
+	aocInit();
+	timer0Init();
+	timer1Init();
 end
 
 
@@ -181,10 +184,12 @@ begin
 
 	if (capacitance)
 	begin
-		// print value of capacitance
-		LCDGotoXY(4, 0);
+		// populate format for capacitance
 		sprintf(lcd_buffer,"%-i",capacitance/10);
-			// display the count 
+		sprintf(lcd_buffer + strlen(lcd_buffer), "%c", '.');
+		sprintf(lcd_buffer + strlen(lcd_buffer), "%-i nf", capacitance % 10);
+		// display capacitance
+		LCDGotoXY(4, 0);
 		LCDstring(lcd_buffer, strlen(lcd_buffer));	
 	end
 end
@@ -193,23 +198,25 @@ void write_LCD_no_capacitor()
 begin
 	CopyStringtoLCD(LCD_no_capacitor, 0, 0);
 	CopyStringtoLCD(LCD_cap_clear, 0, 1);
+	LCD_has_cap= false;
 end
 
 void write_LCD_yes_capacitor()
 begin
 	CopyStringtoLCD(LCD_yes_capacitor, 0, 0);
 	CopyStringtoLCD(LCD_cap_equals, 0, 1);
+	LCD_has_cap= true;
 end
 
 
 // used for tracking ~200mS to govern a new capacitance measurement
 ISR(TIMER0_COMPA_vect)
 begin
-t0_count++;
-if t0_count == 200
+	t0_count++;
+	if (t0_count == 200)
 	begin
-	t0_count = 0;
-	ready = 1;
+		t0_count = 0;
+		ready = 1;
 	end
 end
 
