@@ -35,12 +35,20 @@
 #define begin {
 #define end }
 
+
+const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
+const int8_t LCD_line[] PROGMEM = "line 1\0";
+const int8_t LCD_cap_equals[] PROGMEM = "C =\0";
+const int8_t LCD_cap_clear[] PROGMEM = "           \0";
+const int8_t LCD_no_capacitor[] PROGMEM = "No Capacitor Detected!\0";
+const int8_t LCD_yes_capacitor[] PROGMEM = "Capacitor Detected!   \0";
+typedef enum { false, true } bool;
+volatile LCD_has_cap= false;
 volatile unsigned int time1, time2;
 
 int main(void) 
 begin
-
-	volatile char ready = 1;	// set to 1 every ~200mS
+	volatile char ready = true;	// set to 1 every ~200mS
 	initialize();
 
 	while(1)
@@ -73,44 +81,54 @@ end
 
 
 // set up LCD
-void initLCD(void)
+void init_LCD(void)
 begin
-  // start the LCD 
-  init_lcd();
-  LCDclr();
-
-  //init the task timer
-  time1=t1;
-  //set up timer 0 for 1 mSec ticks
-  TIMSK0 = 2;		//turn on timer 0 cmp match ISR 
-  OCR0A = 249;  	//set the compare reg to 250 time ticks
-  TCCR0A = 0b00000010; // turn on clear-on-match
-  TCCR0B = 0b00000011;	// clock prescalar to 64
-  
-  // put some stuff on LCD
-  CopyStringtoLCD(LCD_line, 8, 1);//start at char=8 line=1	
-  CopyStringtoLCD(LCD_number, 0, 0);//start at char=0 line=0
-  // init animation state variables	
-  count=0;
-  anipos = 0;
-  LCDGotoXY(anipos,1);	//second line
-  LCDsendChar('o');
-  
-  sei();
-  //main task scheduler loop 
-  while(1)
-  begin 
-  	// reset time and call task    
-    if (time1==0){ time1=t1; task1();}
-  end
+	// start the LCD 
+	LCDinit();	//initialize the display
+	LCDcursorOFF();
+	LCDclr();				//clear the display
+	LCDGotoXY(0,0);
+	CopyStringtoLCD(LCD_initialize, 0, 0);
+	LCDclr();
+	LCD_has_cap= false;
+	write_LCD_no_capacitor();
 end
 
 // write to LCD
-void writeLCD()
+// C = xx.x nf
+// param: capacitance in .1nf
+void write_LCD(int capacitance)
 begin
+	if (!capacitance && LCD_has_cap)
+	begin
+		write_LCD_no_capacitor();
+	end
+	else if (capacitance && !LCD_has_cap)
+	begin
+		write_LCD_yes_capacitor();
+	end
 
+	if (capacitance)
+	begin
+		// print value of capacitance
+		LCDGotoXY(4, 0);
+		sprintf(lcd_buffer,"%-i",capacitance/10);
+			// display the count 
+		LCDstring(lcd_buffer, strlen(lcd_buffer));	
+	end
 end
 
+void write_LCD_no_capacitor()
+begin
+	CopyStringtoLCD(LCD_no_capacitor, 0, 0);
+	CopyStringtoLCD(LCD_cap_clear, 0, 1);
+end
+
+void write_LCD_yes_capacitor()
+begin
+	CopyStringtoLCD(LCD_yes_capacitor, 0, 0);
+	CopyStringtoLCD(LCD_cap_equals, 0, 1);
+end
 
 // used for measuring capacitance through discharge and comparison
 ISR(// insert timer0 compare vector here
