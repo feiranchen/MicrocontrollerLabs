@@ -39,10 +39,11 @@
 volatile char t0_count;    // counts the mS since last task1 call as updated by timer0
 volatile char ready;	// set to 1 every ~200mS
 
+
 int main(void) 
 begin
 	initialize();
-
+	sei();
 	while(1)
 	begin
 		if (ready) 
@@ -181,8 +182,9 @@ begin
 end
 
 
-// used for measuring capacitance through discharge and comparison
-ISR(// insert timer0 compare vector here
+
+// used for tracking ~200mS to govern a new capacitance measurement
+ISR(TIMER0_COMPA_vect)
 begin
 t0_count++;
 if t0_count == 200
@@ -193,8 +195,8 @@ if t0_count == 200
 end
 
 
-// used for tracking ~200mS to govern a new capacitance measurement
-ISR(// insert timer 1 compare vector here
+// used for measuring capacitance through discharge and comparison
+ISR(TIMER1_CAPT_vect)
 begin
 // note that the value of the timer is saved into: 
 // ICR1H
