@@ -6,16 +6,36 @@
 	9/6/14 
 	20:00 
 */
-
+/** 
+ * Use an 2x16 alphanumeric LCD connected to PORTC as follows:
+ *  
+ *	[LCD] -	[Mega644 Pin]
+ *	1 GND -	GND
+ *	2 +5V -	VCC
+ *	3 VLC 10k trimpot wiper (trimpot ends go to +5 and gnd) 
+ *	4 RS -	PC0
+ *	5 RD -	PC1
+ *	6 EN -	PC2
+ *	11 D4 -	PC4
+ *	12 D5 -	PC5
+ *	13 D6 -	PC6
+ *	14 D7 -	PC7 
+ */
 
 #define F_CPU 16000000UL
-#include <inttypes.h>
-#include <avr/io.h>
+#include "lcd_lib.h"
 #include <avr/interrupt.h>
+#include <avr/io.h>
+#include <avr/pgmspace.h>
+#include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <util/delay.h> // needed for lcd_lib
 #define begin {
 #define end }
 
+volatile unsigned int time1, time2;
 
 int main(void) 
 begin
@@ -25,16 +45,13 @@ begin
 
 	while(1)
 	begin
-
 		if (ready) 
 		begin
 		capCount = task1();	// measures capacitance
 		task2(capCount);	// displays capacitance on LCD
 		ready = 0;
 		end	
-			
 	end
-
 end
 
 
@@ -42,8 +59,6 @@ end
 // initializes timers, pins, and compare registers
 void initialize(void)
 begin
-DDRB = ;	// set pin B.2 to be input and B.3 to be an output
-
 
 
 end
@@ -57,10 +72,42 @@ begin
 end
 
 
-// writes values to the LCD
-void task2(void)
+// set up LCD
+void initLCD(void)
 begin
+  // start the LCD 
+  init_lcd();
+  LCDclr();
 
+  //init the task timer
+  time1=t1;
+  //set up timer 0 for 1 mSec ticks
+  TIMSK0 = 2;		//turn on timer 0 cmp match ISR 
+  OCR0A = 249;  	//set the compare reg to 250 time ticks
+  TCCR0A = 0b00000010; // turn on clear-on-match
+  TCCR0B = 0b00000011;	// clock prescalar to 64
+  
+  // put some stuff on LCD
+  CopyStringtoLCD(LCD_line, 8, 1);//start at char=8 line=1	
+  CopyStringtoLCD(LCD_number, 0, 0);//start at char=0 line=0
+  // init animation state variables	
+  count=0;
+  anipos = 0;
+  LCDGotoXY(anipos,1);	//second line
+  LCDsendChar('o');
+  
+  sei();
+  //main task scheduler loop 
+  while(1)
+  begin 
+  	// reset time and call task    
+    if (time1==0){ time1=t1; task1();}
+  end
+end
+
+// write to LCD
+void writeLCD()
+begin
 
 end
 
