@@ -90,7 +90,7 @@ end
 //**********************************************************       
 //Entry point and task scheduler loop
 int main(void)
-begin  
+begin
   
   // start the LCD 
   init_lcd();
