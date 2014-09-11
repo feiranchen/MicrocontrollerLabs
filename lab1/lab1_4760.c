@@ -50,7 +50,7 @@ end
 
 
 // measures capacitance
-void task1(void)
+void measures_cap(void)
 begin
 
 
