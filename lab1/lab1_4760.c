@@ -49,7 +49,7 @@ volatile char ready;	// set to 1 every ~200mS
 volatile bool LCD_has_cap= false; //helper flag for LCD display
 volatile char LED_count;    // counts when to toggle the LED
 volatile uint16_t cap_time_count;
-volatile char charged_flag;     // flag to say that the capacitor has charged
+//volatile char charged_flag;     // flag to say that the capacitor has charged
 
 /* Initialize all of the output ports
 portA - unused
@@ -77,7 +77,7 @@ value, which will prepare for triggering timer1 appropriately
 void aocInit(void)
 begin
 
-ACSR = 0x07;     // sets the AOC to be on, using pin B.2, and rising on B.2 greater tan B.3
+ACSR = (1<<ACIC);     // sets the AOC to be on, using pin B.2, and rising on B.2 greater tan B.3
 
 end
 
@@ -124,32 +124,6 @@ begin
 	TIMSK1 |= (1<<ICIE1);
 end
 
-// set up LCD
-void init_LCD(void)
-begin
-	// start the LCD 
-	LCDinit();	//initialize the display
-	LCDcursorOFF();
-	LCDclr();				//clear the display
-	LCDGotoXY(0,0);
-	CopyStringtoLCD(LCD_initialize, 0, 0);
-	LCDclr();
-	LCD_has_cap= false;
-	write_LCD_no_capacitor();
-end
-
-// initializes timers, pins, and compare registers
-void initialize(void)
-begin
-	portInit();
-	aocInit();
-	timer0Init();
-	timer1Init();
-	init_LCD();
-	cap_time_count = 0;
-	charged_flag = 0;
-end
-
 
 void clean_up(void)
 begin
@@ -162,13 +136,17 @@ end
 // return value: capacitance value in .1nF
 int measures_cap(void)
 begin
-	DDRB &= 0xFB;    // sets B.2 to an input (capacitor starts charging)
-	// restart timer1 to count charge up
-	while(~charged_flag);
-	charged_flag = 0;
 	return cap_time_count * 4547 / 100000;
 end
 
+
+// zeros timer1 for charge count
+// sets B.2 to input to allow for charging
+void start_charge(void)
+begin
+	DDRB &= 0xFB;    // sets B.2 to an input (capacitor starts charging)
+	TCNT1 = 0;    // Initializes timer1 to 0x0000
+end
 
 void write_LCD_no_capacitor()
 begin
@@ -184,6 +162,19 @@ begin
 	LCD_has_cap= true;
 end
 
+// set up LCD
+void init_LCD(void)
+begin
+	// start the LCD 
+	LCDinit();	//initialize the display
+	LCDcursorOFF();
+	LCDclr();				//clear the display
+	LCDGotoXY(0,0);
+	CopyStringtoLCD(LCD_initialize, 0, 0);
+	LCDclr();
+	LCD_has_cap= false;
+	write_LCD_no_capacitor();
+end
 
 // write to LCD
 // C = xx.x nf
@@ -211,51 +202,76 @@ begin
 	end
 end
 
+// initializes timers, pins, and compare registers
+void initialize(void)
+begin
+	portInit();
+	aocInit();
+	timer0Init();
+	timer1Init();    // The problem is in this line.. possibly always stuck in the ISR.
+	init_LCD();
+	cap_time_count = 0;
+end
 
 
 // used for tracking ~200mS to govern a new capacitance measurement
 ISR(TIMER0_COMPA_vect)
 begin
+
 	t0_count++;
 	if (t0_count == 200)
 	begin
 		t0_count = 0;
 		ready = true;
 		LED_count++;
+
 		if (LED_count == 3)
 		begin
 			LED_count = 0;
 			PORTD ^= 0x01;
 		end
+
 	end
+
+	TCNT0 = 0;
+
 end
 
-// used for measuring capacitance through discharge and comparison
+// used for measuring capacitance through charge and comparison
 ISR(TIMER1_CAPT_vect)
 begin
 	cap_time_count = (ICR1H<<8) + ICR1L;
-	//charged_flag = 1;
 end
 
 int main(void) 
 begin
+	int capCount = 0;
 	ready = false;	// set to 1 every ~200mS
-	initialize();
-	sei();
-	//_delay_us(50000);
-	//write_LCD(10);
 
+	initialize();
+	clean_up();
+
+	sei();
+	//write_LCD(0);	// Need to write a start statement
+	while(1);
 	while(1)
 	begin
+		
 		if (ready) 
 		begin
 			clean_up();
+			capCount = measures_cap();
+
 			if (capCount < 10) // capacitance ranges from 1nf to 100nf
-				begin
+			begin
 				capCount= 0;
-				end
+			end
+			// what about if the capacitance is below 1nf (as in there is no capacitor)
+
 			write_LCD(capCount);	// displays capacitance on LCD	
-			uint16_t capCount = measures_cap();	// calculated capacitance in 0.1nF	
+			start_charge();
 		end
+
 	end
+
 end
