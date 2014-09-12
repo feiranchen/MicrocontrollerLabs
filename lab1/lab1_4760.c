@@ -208,7 +208,7 @@ begin
 	portInit();
 	aocInit();
 	timer0Init();
-	timer1Init();    // The problem is in this line.. possibly always stuck in the ISR.
+	//timer1Init();    // The problem is in this line.. possibly always stuck in the ISR.
 	init_LCD();
 	cap_time_count = 0;
 end
