@@ -37,8 +37,8 @@
 typedef enum { false, true } bool;
 
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
-const int8_t LCD_no_capacitor[] PROGMEM = "No Capacitor Detected!\0";
-const int8_t LCD_yes_capacitor[] PROGMEM = "Capacitor Detected!   \0";
+const int8_t LCD_no_capacitor[] PROGMEM =  "No Cap Detected!\0";
+const int8_t LCD_yes_capacitor[] PROGMEM = "Detected!       \0";
 const int8_t LCD_cap_equals[] PROGMEM = "C =\0";
 const int8_t LCD_cap_clear[] PROGMEM = "            \0";
 int8_t lcd_buffer[13];	// LCD display buffer
@@ -46,27 +46,8 @@ int8_t lcd_buffer[13];	// LCD display buffer
 // Global variable declarations
 volatile char t0_count;    // counts the mS since last task1 call as updated by timer0
 volatile char ready;	// set to 1 every ~200mS
-volatile LCD_has_cap= false;
-
-int main(void) 
-begin
-	volatile char ready = true;	// set to 1 every ~200mS
-	initialize();
-	sei();
-	while(1)
-	begin
-		if (ready) 
-		begin
-			capCount = task1();	// measures capacitance
-			if (capCount < 10) // capacitance ranges from 1nf to 100nf
-			begin
-				capCount= 0;
-			end
-			write_LCD(capCount);	// displays capacitance on LCD
-			ready = 0;
-		end	
-	end
-end
+volatile bool LCD_has_cap= false;
+volatile char LED_count;    // counts when to toggle the LED
 
 /* Initialize all of the output ports
 portA - unused
@@ -111,13 +92,18 @@ begin
 // zero variables to remove previous settings
 t0_count = 0;
 ready = 0;
+LED_count = 0;
+
 TCCR0A = 0x00;
 TCCR0B = 0x00;
+TIMSK0 = 0x00;
 
-TCCR0A |= (1<<WGM1);    // sets the timer mode to compare and capture on OCR0A
-TCCR0B |= (1<<CS01)|(1<<CS02);    // Sets the prescaler for the timer to 64
-OCR0A = 250;	// sets the compare value to the timer counter
-TIMSK0 = 0x01;    // sets the OCR0A compare interrupt enable
+TCCR0A |= (1<<WGM01);    // sets the timer mode to compare and capture on OCR0A
+TCCR0B |= (1<<CS01)+(1<<CS00);    // Sets the prescaler for the timer to 64
+TIMSK0 |= (1<<OCIE0A);    // enables CTC interrupt
+
+OCR0A = 249;	// sets the compare value to the timer counter
+
 end
 
 
@@ -132,17 +118,17 @@ begin
 	TCCR1B = 0x00;
 	TIMSK1 = 0x00;
 
-	TCCR1B |= (1<<ICES1)|(1<<WGM13)|(1<<WGM12)|(1<<CS10);    // sets the timer mode to compare and capture on ICR0 rising edge
+	TCCR1B |= (1<<ICES1)+(1<<WGM13)+(1<<WGM12)+(1<<CS10);    // sets the timer mode to compare and capture on ICR0 rising edge
 	TIMSK1 |= (1<<ICIE1);
-	end
+end
 
 	// initializes timers, pins, and compare registers
-	void initialize(void)
-	begin
+void initialize(void)
+begin
 	portInit();
-	aocInit();
+	//aocInit();
 	timer0Init();
-	timer1Init();
+	//timer1Init();
 end
 
 
@@ -153,6 +139,20 @@ begin
 
 end
 
+
+void write_LCD_no_capacitor()
+begin
+	CopyStringtoLCD(LCD_no_capacitor, 0, 0);
+	CopyStringtoLCD(LCD_cap_clear, 0, 1);
+	LCD_has_cap= false;
+end
+
+void write_LCD_yes_capacitor()
+begin
+	CopyStringtoLCD(LCD_yes_capacitor, 0, 0);
+	CopyStringtoLCD(LCD_cap_equals, 0, 1);
+	LCD_has_cap= true;
+end
 
 // set up LCD
 void init_LCD(void)
@@ -189,24 +189,11 @@ begin
 		sprintf(lcd_buffer + strlen(lcd_buffer), "%c", '.');
 		sprintf(lcd_buffer + strlen(lcd_buffer), "%-i nf", capacitance % 10);
 		// display capacitance
-		LCDGotoXY(4, 0);
+		LCDGotoXY(4, 1);
 		LCDstring(lcd_buffer, strlen(lcd_buffer));	
 	end
 end
 
-void write_LCD_no_capacitor()
-begin
-	CopyStringtoLCD(LCD_no_capacitor, 0, 0);
-	CopyStringtoLCD(LCD_cap_clear, 0, 1);
-	LCD_has_cap= false;
-end
-
-void write_LCD_yes_capacitor()
-begin
-	CopyStringtoLCD(LCD_yes_capacitor, 0, 0);
-	CopyStringtoLCD(LCD_cap_equals, 0, 1);
-	LCD_has_cap= true;
-end
 
 
 // used for tracking ~200mS to govern a new capacitance measurement
@@ -217,7 +204,14 @@ begin
 	begin
 		t0_count = 0;
 		ready = 1;
+		LED_count++;
+		if (LED_count == 3)
+		begin
+			LED_count = 0;
+			PORTD ^= 0x01;
+		end
 	end
+
 end
 
 
@@ -228,4 +222,32 @@ begin
 // ICR1H
 // ICR1L
 
+end
+
+int main(void) 
+begin
+	volatile char ready = true;	// set to 1 every ~200mS
+	initialize();
+	sei();
+	//init_LCD();
+	//_delay_us(50000);
+	//write_LCD(10);
+
+
+	while(1)
+	begin
+	_delay_us(5);
+	/*
+		if (ready) 
+		begin
+			capCount = task1();	// measures capacitance
+			if (capCount < 10) // capacitance ranges from 1nf to 100nf
+			begin
+				capCount= 0;
+			end
+			write_LCD(capCount);	// displays capacitance on LCD
+			ready = 0;
+		end
+		*/
+	end
 end
