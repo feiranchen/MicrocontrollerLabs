@@ -2,9 +2,8 @@
 	Connor Archard	cwa37
 	Feiran Chen		fc254
 	
-	Rev 1
-	9/6/14 
-	20:00 
+	Rev 3
+	9/16/14
 */
 /** 
  * Use an 2x16 alphanumeric LCD connected to PORTC as follows:
@@ -49,7 +48,7 @@ volatile char ready;	// set to 1 every ~200mS
 volatile bool LCD_has_cap= false; //helper flag for LCD display
 volatile char LED_count;    // counts when to toggle the LED
 volatile uint16_t cap_time_count;
-//volatile char charged_flag;     // flag to say that the capacitor has charged
+
 
 /* Initialize all of the output ports
 portA - unused
@@ -59,15 +58,16 @@ portD - unused
 */
 void portInit(void)
 begin
-DDRA = 0xff;    // PORTA is unused and left to output low
-DDRB = 0xf7;    // sets B.3 to an input
-DDRC = 0xff;    // PORTC is used for the LCD and needs to output
-DDRD = 0xff;    // PORTD is unused and left to output low
+	DDRA = 0xff;    // PORTA is unused and left to output low
+	DDRB = 0xf7;    // sets B.3 to an input
+	DDRC = 0xff;    // PORTC is used for the LCD and needs to output
+	DDRD = 0xff;    // PORTD is unused and left to output low
 
-PORTA = 0x00;	// all of PORTA is output low
-PORTB = 0x08;   // B.3 has pull-up on. The rest of PORTB is output low
-PORTC = 0x00;   // PORTC is initialized to output low. LCD code will change
-PORTD = 0x00;   // PORTD is output low to save power
+	PORTA = 0x00;	// all of PORTA is output low
+	PORTB = 0x08;   // B.3 has pull-up on. The rest of PORTB is output low
+	PORTC = 0x00;   // PORTC is initialized to output low. LCD code will change
+	PORTD = 0x00;   // PORTD is output low to save power
+
 end
 
 
@@ -120,31 +120,26 @@ begin
 	TCCR1B = 0x00;
 	TIMSK1 = 0x00;
 
-	TCCR1B |= (1<<ICES1)+(1<<WGM13)+(1<<WGM12)+(1<<CS10);    // sets the timer mode to compare and capture on ICR0 rising edge
+	TCCR1B |= (1<<ICES1)+(1<<CS10);    // sets the timer mode to normal on ICR0 rising edge
 	TIMSK1 |= (1<<ICIE1);
+	TCNT1 = 0;
+
 end
 
 
-void clean_up(void)
+void discharge(void)
 begin
+	PORTD ^= 0x08;    // Turns on red LED to indicate discharging
 	ready = false;
 	DDRB |= 0x04;    // B.2 is set to an output
 	PORTB &= 0xFB;    // B.2 is set low to begin cap discharge
 end
 
-// measures capacitance
-// return value: capacitance value in .1nF
-int measures_cap(void)
-begin
-	return cap_time_count * 4547 / 100000;
-end
-
-
 // zeros timer1 for charge count
 // sets B.2 to input to allow for charging
 void start_charge(void)
 begin
-	DDRB &= 0xFB;    // sets B.2 to an input (capacitor starts charging)
+	DDRB ^= 0x04;    // sets B.2 to an input (capacitor starts charging)
 	TCNT1 = 0;    // Initializes timer1 to 0x0000
 end
 
@@ -173,7 +168,6 @@ begin
 	CopyStringtoLCD(LCD_initialize, 0, 0);
 	LCDclr();
 	LCD_has_cap= false;
-	write_LCD_no_capacitor();
 end
 
 // write to LCD
@@ -195,7 +189,7 @@ begin
 		// populate format for capacitance
 		sprintf(lcd_buffer,"%-i",capacitance/10);
 		sprintf(lcd_buffer + strlen(lcd_buffer), "%c", '.');
-		sprintf(lcd_buffer + strlen(lcd_buffer), "%-i nf", capacitance % 10);
+		sprintf(lcd_buffer + strlen(lcd_buffer), "%-i nf  ", capacitance % 10);
 		// display capacitance
 		LCDGotoXY(4, 1);
 		LCDstring(lcd_buffer, strlen(lcd_buffer));	
@@ -208,7 +202,7 @@ begin
 	portInit();
 	aocInit();
 	timer0Init();
-	//timer1Init();    // The problem is in this line.. possibly always stuck in the ISR.
+	timer1Init();    
 	init_LCD();
 	cap_time_count = 0;
 end
@@ -219,10 +213,10 @@ ISR(TIMER0_COMPA_vect)
 begin
 
 	t0_count++;
-	if (t0_count == 200)
+	if (t0_count >= 200)
 	begin
 		t0_count = 0;
-		ready = true;
+		ready = true;	
 		LED_count++;
 
 		if (LED_count == 3)
@@ -240,36 +234,42 @@ end
 // used for measuring capacitance through charge and comparison
 ISR(TIMER1_CAPT_vect)
 begin
-	cap_time_count = (ICR1H<<8) + ICR1L;
+	cap_time_count = ICR1;
+	PORTD ^= 0x02;    // Toggle yellow LED to indicate discharging
 end
 
 int main(void) 
 begin
-	int capCount = 0;
 	ready = false;	// set to 1 every ~200mS
 
-	initialize();
-	clean_up();
+	initialize();    // set all ports and timers up
+	sei();    // enable interrupts
+	discharge();    // set B.2 to low output to start discharge
+	//write_LCD(cap_time_count);
+	//_delay_ms(1000);
+	//write_LCD(0);
+	//start_charge();
 
-	sei();
-	//write_LCD(0);	// Need to write a start statement
-	while(1);
 	while(1)
 	begin
-		
 		if (ready) 
 		begin
-			clean_up();
-			capCount = measures_cap();
 
-			if (capCount < 10) // capacitance ranges from 1nf to 100nf
+			discharge();    // begins discharge of the capacitor
+
+			// performs calculations based on the value read in the last cycle's ISR
+			// taking the board's cap offset into consideration
+			if (cap_time_count < 46)
 			begin
-				capCount= 0;
+				write_LCD(0);
 			end
-			// what about if the capacitance is below 1nf (as in there is no capacitor)
+			else
+			begin
+				write_LCD((cap_time_count - 42) / 29.4);
+			end
 
-			write_LCD(capCount);	// displays capacitance on LCD	
-			start_charge();
+			start_charge();    // sets B.2 to an input, leading to capacitor charging and timer1 ISR triggering
+			
 		end
 
 	end
