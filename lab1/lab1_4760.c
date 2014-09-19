@@ -35,7 +35,7 @@
 #define end }
 typedef enum { false, true } bool;
 
-const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
+const int8_t LCD_initialize[] PROGMEM = " LCD Initialized!\0";
 const int8_t LCD_no_capacitor[] PROGMEM =  "No Cap Detected!\0";
 const int8_t LCD_yes_capacitor[] PROGMEM = "Detected!       \0";
 const int8_t LCD_cap_equals[] PROGMEM = "C =\0";
@@ -166,7 +166,7 @@ begin
 	LCDclr();				//clear the display
 	LCDGotoXY(0,0);
 	CopyStringtoLCD(LCD_initialize, 0, 0);
-	LCDclr();
+	//LCDclr();
 	LCD_has_cap= false;
 end
 
