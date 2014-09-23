@@ -34,6 +34,12 @@ typedef enum { false, true } bool;
 #define maybe_term_released 7
 #define str_buff_check 8
 
+// ramp constants
+#define RAMPUPEND 250 // = 4*62.5 or 4mSec * 62.5 samples/mSec NOTE:max=255
+#define RAMPDOWNSTART 625 // = 10*62.5
+#define RAMPDOWNEND 875 // = 14*62.5 NOTE: RAMPDOWNEND-RAMPDOWNSTART<255 
+#define countMS 62  //ticks/mSec
+
 // keypad variables
 volatile char current_state;    // the current state for the debounce state machine
 volatile char button_number;	// the number being pressed on the keypad
@@ -45,9 +51,17 @@ volatile int LED_timer;
 
 
 // DDS variables
-volatile unsigned int accumulator;
-volatile unsigned int incrementor;
-volatile char s_table[256];
+volatile unsigned long accumulator;
+volatile unsigned long increment;
+volatile unsigned char highbyte;
+volatile char sineTable[256];
+volatile char rampTable[256];
+
+// Time variables
+// the volitile is needed because the time is only set in the ISR
+// time counts mSec, sample counts DDS samples (62.5 KHz)
+volatile unsigned int time, sample, rampCount;
+volatile char  count;
 
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
 const int8_t LCD_interval[] PROGMEM =  "Chirp Interval: \0";
@@ -58,6 +72,21 @@ const int8_t LCD_rpt_interval[] PROGMEM = "Rpt interval:   \0"
 const int8_t LCD_cap_equals[] PROGMEM = "C =\0";
 const int8_t LCD_cap_clear[] PROGMEM = "            \0";
 int8_t lcd_buffer[13];	// LCD display buffer
+
+// ====================== Debug Helper ==========================
+// write to LCD
+void write_LCD(int num)
+begin
+	sprintf(lcd_buffer,"%-i", num);
+	//sprintf(lcd_buffer + strlen(lcd_buffer), "%c", '.');
+	//sprintf(lcd_buffer + strlen(lcd_buffer), "%-i nf  ", capacitance % 10);
+	LCDGotoXY(0, 0);
+	LCDstring(lcd_buffer, strlen(lcd_buffer));
+end
+
+// ==================== End of Debug Helper =====================
+
+
 
 // Initializes timer0 for fast PWM
 void timer0_init(void)
@@ -79,13 +108,26 @@ end
 // Creates a sine table in memory to access in DDS
 void DDS_init(void)
 begin
-	for (i=0; i<256; i++)
-	   begin
-	   		s_table[i] = (char)(127.0 * sin(6.283*((float)i)/256.0)) ;
-	   end  
 
 	accumulator = 0;
-	increment = 1000;
+    // init the DDS phase increment
+	// for a 32-bit DDS accumulator, running at 16e6/256 Hz:
+	// increment = 2^32*256*Fout/16e6 = 68719 * Fout
+	// Fout=1000 Hz, increment= 68719000 
+	increment = 68719000L ; 
+	ceiling = 127;
+   // init the sine table
+   for (i = 0; i < 256; i++)
+   begin
+   		sineTable[i] = (char)(127.0 * sin(6.283*((float)i)/256.0));
+		// the following table needs 
+		// rampTable[0]=0 and rampTable[255]=127
+		rampTable[i] = i>>1 ;
+   end  
+
+
+
+
 end
 
 // PORTA - unused
@@ -193,7 +235,27 @@ end
 // updates the OCR0A register at 62500 Hz
 ISR(TIMER0_OVF_vect)
 begin
-	OCR0A = st_output
+	//the actual DDR 
+	accumulator = accumulator + increment ;
+	highbyte = (char)(accumulator >> 24) ;
+	
+	// output the wavefrom sample
+	OCR0A = 128 + ((sineTable[highbyte] * rampTable[rampCount])>>7) ;
+	
+	sample++ ;
+	if (sample <= RAMPUPEND) rampCount++ ;
+	if (sample > RAMPUPEND && sample <= RAMPDOWNSTART ) rampCount = 255 ;
+	if (sample > RAMPDOWNSTART && sample <= RAMPDOWNEND ) rampCount-- ;
+	if (sample > RAMPDOWNEND) rampCount = 0; 
+	
+	// generate time base for MAIN
+	// 62 counts is about 1 mSec
+	count--;
+	if (0 == count )
+	begin
+		count=countMS;
+		time++;    //in mSec
+	end  
 end
 
 ISR(TIMER1_COMPA_vect)
