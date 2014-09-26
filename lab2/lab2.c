@@ -82,6 +82,7 @@ begin
 	//sprintf(lcd_buffer + strlen(lcd_buffer), "%-i nf  ", capacitance % 10);
 	LCDGotoXY(0, 0);
 	LCDstring(lcd_buffer, strlen(lcd_buffer));
+	CopyStringtoLCD("test", 1, 1);
 end
 
 // ==================== End of Debug Helper =====================
@@ -94,9 +95,11 @@ begin
 	TCCR0A = 0;
 	TIMSK0 = 0;
 	TCCR0B = 0;
-	TCCR0A = (1<<COM0A0) + (1<<COM0A1) + (1<<WGM01) + (1<<WGM00);    // sets to fast_PWM mode (non-inverting) on B.3
+	
+	TCCR0A = (1<<COM0A0) | (1<<COM0A1) | (1<<WGM00) | (1<<WGM01) ; // sets to fast_PWM mode (non-inverting) on B.3
 	TIMSK0 = 1<<TOIE0;
-	TCCR0B = 0x01;    // sets the prescaler to one
+	TCCR0B = 1;    // sets the prescaler to one
+   	DDRB = (1<<PINB3) ;// make B.3 an output
 end
 
 
@@ -106,23 +109,23 @@ void DDS_init(void)
 begin
 
 	accumulator = 0;
-    // init the DDS phase increment
+	// init the DDS phase increment
 	// for a 32-bit DDS accumulator, running at 16e6/256 Hz:
 	// increment = 2^32*256*Fout/16e6 = 68719 * Fout
 	// Fout=1000 Hz, increment= 68719000 
-	increment =68719000L; //68719000L ; 
-   // init the sine table
-   for (int8_t i = 0; i < 256; i++)
-   begin
-   		sineTable[i] = (char)(127.0 * sin(6.283*((float)i)/256.0));
+	increment =68719000L ; 
+	// init the sine table
+	for (unsigned int i = 0; i < 256; i++)
+	begin
+		sineTable[i] = (char)(127.0 * sin(6.283*((float)i)/256.0));
 		// the following table needs 
 		// rampTable[0]=0 and rampTable[255]=127
 		rampTable[i] = i>>1 ;
-   end  
+	end
 
-
-
-
+	// init the time counter
+   time=0;
+   OCR0A = 128 ; // set PWM to half full scale
 end
 
 // PORTA - unused
@@ -155,125 +158,62 @@ end
 
 void initialize(void)
 begin
-	current_state = done;
-	state_timer = t_state;
-	LED_timer = t_led;
-	count_for_ms = 0;
-
-	port_init();
-	LCD_init();
 	timer0_init();
 	DDS_init();
-
 	sei();
 end
 
 
-// checks keypad and returns key
-// returns 255 if invalid keystroke
-// if n~=0, will place into released state
-char keypad(void)
-begin
-
-	return (char)0;
-end
-
-// state machine for keypad detection
-/*
-void update_state(void)
-begin
-	switch(current_state)
-	begin
-		case done:
-			if //
-			else //
-			break;
-		case released:
-			if //
-			else //
-			break;
-		case maybe_pressed:
-			if //
-			else //
-			break;
-		case detect_term:
-			if //
-			else //
-			break;
-		case pressed:
-			if //
-			else //
-			break;
-		case maybe_released:
-			if //
-			else //
-			break;
-		case still_term:
-			if //
-			else //
-			break;
-		case maybe_term_released:
-			if //
-			else //
-			break;
-		case str_buff_check:
-			if //
-			else //
-			break;
-	end
-
-end
-*/
-
-void LED_toggle(void)
-begin
-	LED_timer = t_led;
-	PORTB ^= 0x01;
-end
+//void LED_toggle(void)
+//begin
+//	LED_timer = t_led;
+//	PORTB ^= 0x01;
+//end
 
 // updates the OCR0A register at 62500 Hz
-ISR(TIMER0_OVF_vect)
-begin
-
-	//the actual DDR 
+ISR (TIMER0_OVF_vect)
+begin 
+	//the actual DDR
 	accumulator = accumulator + increment ;
 	highbyte = (char)(accumulator >> 24) ;
-	
 	// output the wavefrom sample
 	OCR0A = 128 + ((sineTable[highbyte] * rampTable[rampCount])>>7) ;
-	
+
 	sample++ ;
 	if (sample <= RAMPUPEND) rampCount++ ;
 	if (sample > RAMPUPEND && sample <= RAMPDOWNSTART ) rampCount = 255 ;
 	if (sample > RAMPDOWNSTART && sample <= RAMPDOWNEND ) rampCount-- ;
-	if (sample > RAMPDOWNEND) rampCount = 0; 
-	
+	if (sample > RAMPDOWNEND) rampCount = 0;
+
 	// generate time base for MAIN
 	// 62 counts is about 1 mSec
 	count--;
 	if (0 == count )
 	begin
 		count=countMS;
-		time++;    //in mSec
-		if (state_timer>0) state_timer--;
-		if (LED_timer > 0) LED_timer--;
-	end  
-end
+		time++; //in mSec
+	end 
+end 
 
 
 int main(void)
 begin
-
+	initialize();
 	while(1)
 	begin
-		//if(state_timer == 0) update_state();
-		if(LED_timer == 0) LED_toggle();
-
-		// check s_table here
-		// modulate s_table value by ramp
-		// update ORC0A through s_table value here
-		// timer0 takes care of the rest...
-	end
+	if (time==50) 
+     begin
+	     // start a new 50 mSec cycle 
+         time=0;
+		 
+		 // init ramp variables
+		 sample = 0 ;
+		 rampCount = 0;
+	     // phase lock the sine generator DDS
+         accumulator = 0 ;
+			  
+     end //if (time==50)
+	end //end while
 
 	return 1;
 end
