@@ -66,8 +66,8 @@ volatile char  count;
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
 const int8_t LCD_interval[] PROGMEM =  "Chirp Interval: \0";
 const int8_t LCD_num_syllable[] PROGMEM = "Num Syllables:  \0";
-const int8_t LCD_dur_syllable[] PROGMEM = "Dur Syllables:  \0"
-const int8_t LCD_rpt_interval[] PROGMEM = "Rpt interval:   \0"
+const int8_t LCD_dur_syllable[] PROGMEM = "Dur Syllables:  \0";
+const int8_t LCD_rpt_interval[] PROGMEM = "Rpt interval:   \0";
 
 const int8_t LCD_cap_equals[] PROGMEM = "C =\0";
 const int8_t LCD_cap_clear[] PROGMEM = "            \0";
@@ -91,7 +91,7 @@ end
 // Initializes timer0 for fast PWM
 void timer0_init(void)
 begin
-	TCCR0A = (1<<COM0A1) + (1<<WGM1) + (1<<WGM0);    // sets to fast_PWM mode (non-inverting) on B.3
+	TCCR0A = (1<<COM0A1) + (1<<WGM01) + (1<<WGM00);    // sets to fast_PWM mode (non-inverting) on B.3
 	TCCR0B = 0x01;    // sets the prescaler to one
 end
 
