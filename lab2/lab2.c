@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <util/delay.h> // needed for lcd_lib
 #define begin {
 #define end }
@@ -90,7 +91,11 @@ end
 // Initializes timer0 for fast PWM
 void timer0_init(void)
 begin
-	TCCR0A = (1<<COM0A1) + (1<<WGM01) + (1<<WGM00);    // sets to fast_PWM mode (non-inverting) on B.3
+	TCCR0A = 0;
+	TIMSK0 = 0;
+	TCCR0B = 0;
+	TCCR0A = (1<<COM0A0) + (1<<COM0A1) + (1<<WGM01) + (1<<WGM00);    // sets to fast_PWM mode (non-inverting) on B.3
+	TIMSK0 = 1<<TOIE0;
 	TCCR0B = 0x01;    // sets the prescaler to one
 end
 
@@ -105,10 +110,9 @@ begin
 	// for a 32-bit DDS accumulator, running at 16e6/256 Hz:
 	// increment = 2^32*256*Fout/16e6 = 68719 * Fout
 	// Fout=1000 Hz, increment= 68719000 
-	increment = 68719000L ; 
-	ceiling = 127;
+	increment =68719000L; //68719000L ; 
    // init the sine table
-   for (i = 0; i < 256; i++)
+   for (int8_t i = 0; i < 256; i++)
    begin
    		sineTable[i] = (char)(127.0 * sin(6.283*((float)i)/256.0));
 		// the following table needs 
@@ -153,13 +157,12 @@ void initialize(void)
 begin
 	current_state = done;
 	state_timer = t_state;
-	LED_timer = t_LED;
+	LED_timer = t_led;
 	count_for_ms = 0;
 
 	port_init();
 	LCD_init();
 	timer0_init();
-	timer1_init();
 	DDS_init();
 
 	sei();
@@ -172,7 +175,7 @@ end
 char keypad(void)
 begin
 
-return char(0)
+	return (char)0;
 end
 
 // state machine for keypad detection
@@ -224,7 +227,7 @@ end
 
 void LED_toggle(void)
 begin
-	LCD_timer = t_LCD;
+	LED_timer = t_led;
 	PORTB ^= 0x01;
 end
 
@@ -263,7 +266,7 @@ begin
 
 	while(1)
 	begin
-		if(state_timer == 0) update_state();
+		//if(state_timer == 0) update_state();
 		if(LED_timer == 0) LED_toggle();
 
 		// check s_table here
@@ -272,5 +275,5 @@ begin
 		// timer0 takes care of the rest...
 	end
 
-return 1
+	return 1;
 end
