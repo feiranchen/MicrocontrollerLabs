@@ -21,7 +21,7 @@ typedef enum { false, true } bool;
 // task timer definitions
 #define t_state 40
 #define t_led 500
-#define t_ramp 2
+#define t_ramp 4
 
 // state name definitions
 #define done 0
@@ -48,7 +48,7 @@ volatile char maybe_button;    // the number that might be pressed
 // task timers
 volatile char state_timer;
 volatile int LED_timer;
-
+volatile char count_for_ms;
 
 // DDS variables
 volatile unsigned long accumulator;
@@ -69,7 +69,6 @@ const int8_t LCD_num_syllable[] PROGMEM = "Num Syllables:  \0";
 const int8_t LCD_dur_syllable[] PROGMEM = "Dur Syllables:  \0";
 const int8_t LCD_rpt_interval[] PROGMEM = "Rpt interval:   \0";
 
-const int8_t LCD_cap_equals[] PROGMEM = "C =\0";
 const int8_t LCD_cap_clear[] PROGMEM = "            \0";
 int8_t lcd_buffer[13];	// LCD display buffer
 
@@ -93,14 +92,6 @@ void timer0_init(void)
 begin
 	TCCR0A = (1<<COM0A1) + (1<<WGM01) + (1<<WGM00);    // sets to fast_PWM mode (non-inverting) on B.3
 	TCCR0B = 0x01;    // sets the prescaler to one
-end
-
-
-// Initializes timer1 for mS timer
-void timer1_init(void)
-begin
-
-
 end
 
 
@@ -163,13 +154,15 @@ begin
 	current_state = done;
 	state_timer = t_state;
 	LED_timer = t_LED;
-	
+	count_for_ms = 0;
+
 	port_init();
 	LCD_init();
 	timer0_init();
 	timer1_init();
 	DDS_init();
 
+	sei();
 end
 
 
@@ -179,9 +172,11 @@ end
 char keypad(void)
 begin
 
+return char(0)
 end
 
 // state machine for keypad detection
+/*
 void update_state(void)
 begin
 	switch(current_state)
@@ -225,6 +220,7 @@ begin
 	end
 
 end
+*/
 
 void LED_toggle(void)
 begin
@@ -235,6 +231,7 @@ end
 // updates the OCR0A register at 62500 Hz
 ISR(TIMER0_OVF_vect)
 begin
+
 	//the actual DDR 
 	accumulator = accumulator + increment ;
 	highbyte = (char)(accumulator >> 24) ;
@@ -255,15 +252,11 @@ begin
 	begin
 		count=countMS;
 		time++;    //in mSec
+		if (state_timer>0) state_timer--;
+		if (LED_timer > 0) LED_timer--;
 	end  
 end
 
-ISR(TIMER1_COMPA_vect)
-begin
-	if (state_timer>0) state_timer--;
-	if (LED_timer > 0) LED_timer--;
-	TCNT1 = 0;
-end
 
 int main(void)
 begin
