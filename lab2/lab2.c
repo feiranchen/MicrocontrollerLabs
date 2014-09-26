@@ -55,8 +55,8 @@ volatile char count_for_ms;
 volatile unsigned long accumulator;
 volatile unsigned long increment;
 volatile unsigned char highbyte;
-volatile char sineTable[256];
-volatile char rampTable[256];
+volatile signed char sineTable[256];
+volatile signed char rampTable[256];
 
 // Time variables
 // the volitile is needed because the time is only set in the ISR
@@ -72,19 +72,13 @@ const int8_t LCD_rpt_interval[] PROGMEM = "Rpt interval:   \0";
 
 const int8_t LCD_cap_clear[] PROGMEM = "            \0";
 int8_t lcd_buffer[13];	// LCD display buffer
+int8_t keystr[16];
 
-// ====================== Debug Helper ==========================
-// write to LCD
-void write_LCD(int num)
-begin
-	sprintf(lcd_buffer,"%-i", num);
-	//sprintf(lcd_buffer + strlen(lcd_buffer), "%c", '.');
-	//sprintf(lcd_buffer + strlen(lcd_buffer), "%-i nf  ", capacitance % 10);
-	LCDGotoXY(0, 0);
-	LCDstring(lcd_buffer, strlen(lcd_buffer));
-	CopyStringtoLCD("test", 1, 1);
-end
-
+//key pad scan table
+unsigned char key_table[16]={0xee, 0xed, 0xeb, 0xe7, 
+						  0xde, 0xdd, 0xdb, 0xd7, 
+						  0xbe, 0xbd, 0xbb, 0xb7, 
+						  0x7e, 0x7d, 0x7b, 0x77};
 // ==================== End of Debug Helper =====================
 
 
@@ -177,7 +171,7 @@ begin
 	accumulator = accumulator + increment ;
 	highbyte = (char)(accumulator >> 24) ;
 	// output the wavefrom sample
-	OCR0A = 128 + ((sineTable[highbyte] * rampTable[rampCount])>>7) ;
+	OCR0A = 128 + (sineTable[highbyte] * rampTable[rampCount]>> 7) ;
 
 	sample++ ;
 	if (sample <= RAMPUPEND) rampCount++ ;
@@ -195,25 +189,131 @@ begin
 	end 
 end 
 
+// checks keypad and returns key
+// returns 255 if invalid keystroke
+// if n~=0, will place into released state
+char keypad(void)
+begin
+	char butnum = 0;
+	char lower = 0;
+	char i;
+
+	DDRD = 0xf0;
+	PORTD = 0x0f;
+	lower = PIND & 0x0f;
+	DDRD = 0x0f;
+	PORTD = 0xf0;
+	butnum = PIND & 0xf0;
+	butnum |= lower;
+	i = 20;
+	for (i=0;i<17;i++)
+	begin
+		if (key_table[i] == butnum) return(i);
+	end
+	return (i-1);
+
+end
+
+// state machine for keypad detection
+void update_state(void)
+begin
+	switch(current_state)
+	begin
+		case done:
+
+		break;
+
+		case released:
+		if (button_number <= 16)
+		begin
+		current_state = maybe_pressed;
+		maybe_button = keypad();
+		end
+		else button_number = keypad();
+		break;
+
+		case maybe_pressed:
+		if (button_number == maybe_button)	current_state = detect_term;	
+		else 
+		begin
+			current_state = released;
+			button_number = keypad();
+		end
+		break;
+
+		case detect_term:
+		if (button_number == 15)
+		begin
+			keystr[count] = '\0';
+			current_state = still_term;
+		end
+		else 
+		begin
+			if (count<17) keystr[count++] = button_number;
+			current_state = pressed;
+			maybe_button = keypad();
+		end
+		break;
+
+		case pressed:
+		if (maybe_button == button_number) maybe_button = keypad();
+		else
+		begin
+			current_state = maybe_released;
+			maybe_button = keypad();
+		end
+		break;
+
+		case maybe_released:
+		if (maybe_button == button_number)
+		begin
+			current_state = pressed;
+			maybe_button = keypad();
+		end
+		else 
+		begin
+			current_state = released;
+			button_number = 20;
+		end
+		break;
+
+		case still_term:
+		if (button_number == maybe_button) maybe_button = keypad();
+		else 
+		begin
+			current_state = maybe_term_released;
+			maybe_button = keypad();
+		end
+		break;
+
+		case maybe_term_released:
+		if (button_number == maybe_button) 
+		begin
+			current_state = still_term;
+			maybe_button = keypad();
+		end
+		else current_state = done;
+		break;
+	end
+
+end
 
 int main(void)
 begin
 	initialize();
 	while(1)
 	begin
-	if (time==50) 
-     begin
-	     // start a new 50 mSec cycle 
-         time=0;
+		if (time==50) 
+	    begin
+		     // start a new 50 mSec cycle 
+	         time=0;
 		 
-		 // init ramp variables
-		 sample = 0 ;
-		 rampCount = 0;
-	     // phase lock the sine generator DDS
-         accumulator = 0 ;
-			  
-     end //if (time==50)
+			 // init ramp variables
+			 sample = 0 ;
+			 rampCount = 0;
+		     // phase lock the sine generator DDS
+	         accumulator = 0 ;
+	    end //if (time==50)
 	end //end while
-
-	return 1;
+	return 0;
 end
