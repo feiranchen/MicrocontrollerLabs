@@ -57,6 +57,7 @@ volatile unsigned long increment;
 volatile unsigned char highbyte;
 volatile char sineTable[256];
 volatile char rampTable[256];
+volatile char keystr[17];
 
 // Time variables
 // the volitile is needed because the time is only set in the ISR
@@ -69,7 +70,7 @@ const int8_t LCD_interval[] PROGMEM =  "Chirp Interval: \0";
 const int8_t LCD_num_syllable[] PROGMEM = "Num Syllables:  \0";
 const int8_t LCD_dur_syllable[] PROGMEM = "Dur Syllables:  \0";
 const int8_t LCD_rpt_interval[] PROGMEM = "Rpt interval:   \0";
-
+const char keytable[16] = {0x7d,0xee,0xed,0xeb,0xde,0xdd,0xdb,0xbe,0xbd,0xbb,0x7e,0x7b,0xe7,0xd7,0xb7,0x77};
 const int8_t LCD_cap_clear[] PROGMEM = "            \0";
 int8_t lcd_buffer[13];	// LCD display buffer
 
@@ -158,7 +159,7 @@ begin
 	current_state = done;
 	state_timer = t_state;
 	LED_timer = t_led;
-	count_for_ms = 0;
+	count = 0;
 
 	port_init();
 	LCD_init();
@@ -174,56 +175,111 @@ end
 // if n~=0, will place into released state
 char keypad(void)
 begin
+	char butnum = 0;
+	char lower = 0;
+	char i;
 
-	return (char)0;
+	DDRD = 0xf0;
+	PORTD = 0x0f;
+	lower = PIND & 0x0f;
+	DDRD = 0x0f;
+	PORTD = 0xf0;
+	butnum = PIND & 0xf0;
+	butnum |= lower;
+	i = 20;
+	for (i=0;i<17;i++)
+	begin
+		if (key_table(i) == butnum) return(i);
+	end
+
+	return (i-1);
+
 end
 
 // state machine for keypad detection
-/*
 void update_state(void)
 begin
 	switch(current_state)
 	begin
 		case done:
-			if //
-			else //
+
 			break;
+
 		case released:
-			if //
-			else //
+			if (button_number <= 16)
+			begin
+				current_state = maybe_pressed;
+				maybe_button = keypad();
+			end
+			else button_number = keypad();
 			break;
+
 		case maybe_pressed:
-			if //
-			else //
+			if (button_number == maybe_button)	current_state = detect_term;			
+			else 
+			begin
+				current_state = released;
+				button_number = keypad();
+			end
 			break;
+
 		case detect_term:
-			if //
-			else //
+			if (button_number == 15)
+			begin
+			 	keystr[count] = '\0';
+			 	current_state = still_term;
+			end
+			else 
+			begin
+				if (count<17) keystr[count++] = button_number;
+				current_state = pressed;
+				maybe_button = keypad();
+			end
 			break;
+
 		case pressed:
-			if //
-			else //
+			if (maybe_button == button_number) maybe_button = keypad();
+			else
+			begin
+				current_state = maybe_released;
+				maybe_button = keypad();
+			end
 			break;
+
 		case maybe_released:
-			if //
-			else //
+			if (maybe_button == button_number)
+			begin
+				current_state = pressed;
+				maybe_ button = keypad();
+			end
+			else 
+			begin
+				current_state = released;
+				button_number = 20;
+			end
 			break;
+
 		case still_term:
-			if //
-			else //
+			if (button_number == maybe_button) maybe_button = keypad();
+			else 
+			begin
+				current_state = maybe_term_released;
+				maybe_button = keypad();
+			end
 			break;
+
 		case maybe_term_released:
-			if //
-			else //
-			break;
-		case str_buff_check:
-			if //
-			else //
+			if (button_number == maybe_button) 
+			begin
+				current_state = still_term;
+				maybe_button = keypad();
+			end
+			else current_state = done;
 			break;
 	end
 
 end
-*/
+
 
 void LED_toggle(void)
 begin
