@@ -131,7 +131,7 @@ begin
 	TCCR0A = (1<<COM0A0) | (1<<COM0A1) | (1<<WGM00) | (1<<WGM01) ; // sets to fast_PWM mode (non-inverting) on B.3
 	TIMSK0 = 1<<TOIE0;
 	TCCR0B = 1;    // sets the prescaler to one
-   	DDRB = (1<<PINB3) ;// make B.3 an output
+	DDRB = (1<<PINB3) ;// make B.3 an output
 end
 
 
@@ -188,15 +188,18 @@ end
 
 void initialize(void)
 begin
-	state_timer = t_state;
+
+	port_init();
 	timer0_init();
 	DDS_init();
 	LCD_init();
 	sei();
 
+	state_timer = t_state;
 	current_state = released;
 	entry_state = chrp_int;
 	LED_timer = t_led;
+	count = 0;
 end
 
 
@@ -263,22 +266,22 @@ begin
 
 end
 
-/*
+
 // reads in the value of the string and saves it as a number
 int str2int(char[] string)
 begin
-	char count = 0;
+	char s2i_count = 0;
 	char tens_count = 0;
 	int temp = 0;
 	int strinteger = 0
 
-	while(string[count]!= "/0") count++;
-	while(count>=0)
+	while(string[s2i_count]!= "/0") s2i_count++;
+	while(s2i_count>=0)
 	begin
-		temp = string[count] - '0';
+		temp = string[s2i_count] - '0';
 		if (tens_count) temp = temp*(10*tens_count);
 		strinteger += temp;
-		count--;
+		s2i_count--;
 		tens_count++;
 	end
 end
@@ -300,17 +303,18 @@ end
 // displays the current keystr contents on the LCD
 void update_LCD(void)
 begin
-	write_LCD(str2int(keystr));
+	LCDGotoXY(1, 1);
+	LCDstring(keystr, strlen(keystr));	
 end
 
 void update_LCD_state_line(void)
 begin
-	if (entry_state == b_freq) // copy LCD_burst_freq to LCD line 0 
-	if (entry_state == chrp_int) // copy LCD_interval to LCD line 0
-	if (entry_state == num_syl) // copy LCD_num_syllable to LCD line 0
-	if (entry_state == dur_syl) // copy LCD_dur_syllable to LCD line 0
-	if (entry_state == rpt_int) // copy LCD_rpt_interval to LCD line 0 
-	if (entry_state == playing) // copy LCD_playing to LCD line 0
+	if (entry_state == b_freq) CopyStringtoLCD(LCD_burst_freq, 0, 0);    // copy LCD_burst_freq to LCD line 0 
+	if (entry_state == chrp_int) CopyStringtoLCD(LCD_interval,0, 0);    // copy LCD_interval to LCD line 0
+	if (entry_state == num_syl) CopyStringtoLCD(LCD_num_syllable, 0, 0);    // copy LCD_num_syllable to LCD line 0
+	if (entry_state == dur_syl) CopyStringtoLCD(LCD_dur_syllable, 0, 0);    // copy LCD_dur_syllable to LCD line 0
+	if (entry_state == rpt_int) CopyStringtoLCD(LCD_rpt_interval, 0, 0);    // copy LCD_rpt_interval to LCD line 0 
+	if (entry_state == playing) CopyStringtoLCD(LCD_playing, 0, 0);    // copy LCD_playing to LCD line 0
 end
 
 
@@ -319,12 +323,23 @@ void update_entry_state(void)
 begin
 	entry_state++;
 	update_LCD_state_line();
+	while(entry_state == playing)
+	begin
+		if(keypad() == 12)	// the stop button is pressed
+		begin
+			entry_state = b_freq;
+			current_state = released;
+			DDS_en = 0;
+		end
+	end
 end
 
 // state machine for keypad detection
 void update_state(void)
 begin
 	int parameter_value;
+	state_timer = t_state;
+
 	switch(current_state)
 	begin
 		case done:
@@ -335,14 +350,6 @@ begin
 			save_parameter(parameter_value);
 			update_entry_state();
 			current_state = released;
-		end
-		else
-		begin
-			if (keypad() == 12)
-			begin
-				entry_state = chrp_int;
-				DDS_en = 0;
-			end
 		end
 		break;
 
@@ -373,6 +380,7 @@ begin
 		else 
 		begin
 			if (count<17) keystr[count++] = button_number;
+			update_LCD();
 			current_state = pressed;
 			maybe_button = keypad();
 		end
@@ -420,7 +428,6 @@ begin
 	end
 
 end
-*/
 
 
 int main(void)
@@ -429,6 +436,8 @@ begin
 	initialize();
 	CopyStringtoLCD(LCD_initialize, 0, 0);
 
+//Keypad testing code
+/*
 	while(1)
 	begin
 		temp = keypad();
@@ -436,23 +445,27 @@ begin
 		LCDGotoXY(1, 1);
 		LCDstring(lcd_buffer, strlen(lcd_buffer));	
 	end
+*/
 
 	while(1)
 	begin
+		if (!LED_timer) LED_toggle();
+		if (!state_timer) update_state();
+
 		DDS_en = 1;
 		increment = (int)(burst_frequency/1.047);
 
 		if (time==50) 
-	    begin
-		     // start a new 50 mSec cycle 
-	         time=0;
+		begin
+			 // start a new 50 mSec cycle 
+			 time=0;
 		 
 			 // init ramp variables
 			 sample = 0 ;
 			 rampCount = 0;
-		     // phase lock the sine generator DDS
-	         accumulator = 0 ;
-	    end //if (time==50)
+			 // phase lock the sine generator DDS
+			 accumulator = 0 ;
+		end //if (time==50)
 	end //end while
 	return 0;
 end
