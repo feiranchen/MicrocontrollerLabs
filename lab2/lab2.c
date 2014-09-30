@@ -61,8 +61,8 @@ volatile int LED_timer;
 volatile char count_for_ms;
 
 // DDS variables
-volatile unsigned long accumulator;
-volatile unsigned long increment;
+volatile unsigned int accumulator;
+volatile unsigned int increment;
 volatile unsigned char highbyte;
 volatile signed char sineTable[256];
 volatile signed char rampTable[256];
@@ -129,11 +129,9 @@ void DDS_init(void)
 begin
 
 	accumulator = 0;
-	// init the DDS phase increment
-	// for a 32-bit DDS accumulator, running at 16e6/256 Hz:
-	// increment = 2^32*256*Fout/16e6 = 68719 * Fout
-	// Fout=1000 Hz, increment= 68719000 
-	increment =68719000L ; 
+	
+	increment = 996; 
+
 	// init the sine table
 	for (unsigned int i = 0; i < 256; i++)
 	begin
@@ -203,7 +201,7 @@ begin
 	begin
 		//the actual DDR
 		accumulator = accumulator + increment ;
-		highbyte = (char)(accumulator >> 24) ;
+		highbyte = (char)(accumulator >> 8) ;
 		// output the wavefrom sample
 		OCR0A = 128 + (sineTable[highbyte] * rampTable[rampCount]>> 7) ;
 
@@ -237,9 +235,11 @@ begin
 	DDRD = 0xf0;
 	PORTD = 0x0f;
 	lower = PIND & 0x0f;
+
 	DDRD = 0x0f;
 	PORTD = 0xf0;
 	butnum = PIND & 0xf0;
+
 	butnum |= lower;
 	return butnum;
 	//i = 20;
@@ -397,10 +397,10 @@ end
 
 int main(void)
 begin
-	//char temp = 0;
+	char temp = 0;
 	initialize();
 	CopyStringtoLCD(LCD_initialize, 0, 0);
-	/*
+
 	while(1)
 	begin
 		temp = keypad();
@@ -408,7 +408,7 @@ begin
 		LCDGotoXY(1, 1);
 		LCDstring(lcd_buffer, strlen(lcd_buffer));	
 	end
-	*/
+
 	while(1)
 	begin
 		DDS_en = 1;
