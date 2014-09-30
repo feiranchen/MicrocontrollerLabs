@@ -88,7 +88,7 @@ const int8_t LCD_rpt_interval[] PROGMEM = "Rpt interval:   \0";
 const int8_t LCD_playing[] PROGMEM = "Chirp, Chirp    \0";
 
 const int8_t LCD_cap_clear[] PROGMEM = "            \0";
-volatile int8_t lcd_buffer[13];	// LCD display buffer
+volatile int8_t lcd_buffer[17];	// LCD display buffer
 volatile int8_t keystr[16];
 
 //key pad scan table
@@ -180,6 +180,7 @@ void initialize(void)
 begin
 	timer0_init();
 	DDS_init();
+	LCD_init();
 	sei();
 
 	current_state = released;
@@ -240,12 +241,13 @@ begin
 	PORTD = 0xf0;
 	butnum = PIND & 0xf0;
 	butnum |= lower;
-	i = 20;
-	for (i=0;i<17;i++)
-	begin
-		if (key_table[i] == butnum) return(i);
-	end
-	return (i-1);
+	return butnum;
+	//i = 20;
+	//for (i=0;i<17;i++)
+	//begin
+	//	if (key_table[i] == butnum) return(i);
+	//end
+	//return (i-1);
 
 end
 
@@ -395,9 +397,21 @@ end
 
 int main(void)
 begin
+	//char temp = 0;
 	initialize();
+	CopyStringtoLCD(LCD_initialize, 0, 0);
+	/*
 	while(1)
 	begin
+		temp = keypad();
+		sprintf(lcd_buffer,"%-x",temp);
+		LCDGotoXY(1, 1);
+		LCDstring(lcd_buffer, strlen(lcd_buffer));	
+	end
+	*/
+	while(1)
+	begin
+		DDS_en = 1;
 		if (time==50) 
 	    begin
 		     // start a new 50 mSec cycle 
