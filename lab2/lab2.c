@@ -36,11 +36,12 @@ typedef enum { false, true } bool;
 #define str_buff_check 8
 
 // parameter state name definitions
-#define chrp_int 0
-#define num_syl 1
-#define dur_syl 2
-#define rpt_int 3
-#define playing 4
+#define b_freq 0
+#define chrp_int 1
+#define num_syl 2
+#define dur_syl 3
+#define rpt_int 4
+#define playing 5
 
 // ramp constants
 #define RAMPUPEND 250 // = 4*62.5 or 4mSec * 62.5 samples/mSec NOTE:max=255
@@ -69,6 +70,7 @@ volatile signed char rampTable[256];
 volatile char DDS_en;
 
 // chirp parameters
+volatile int burst_frequency;
 volatile int chirp_interval;
 volatile int num_syllables;
 volatile int dur_syllables;
@@ -92,10 +94,10 @@ volatile int8_t lcd_buffer[17];	// LCD display buffer
 volatile int8_t keystr[16];
 
 //key pad scan table
-unsigned char key_table[16]={0xee, 0xed, 0xeb, 0xe7, 
-						  0xde, 0xdd, 0xdb, 0xd7, 
-						  0xbe, 0xbd, 0xbb, 0xb7, 
-						  0x7e, 0x7d, 0x7b, 0x77};
+unsigned char key_table[16]={0xd7, 0xee, 0xde, 0xbe,
+						  0xed, 0xdd, 0xbd, 0xeb,
+						  0xdb, 0xbb, 0x7e, 0x7d,
+						  0x7b, 0x77, 0xe7, 0xb7};
 
 // write to LCD
 void write_LCD(int num)
@@ -231,23 +233,22 @@ begin
 	char butnum = 0;
 	char lower = 0;
 	char i;
-
 	DDRD = 0xf0;
 	PORTD = 0x0f;
+	_delay_us(5);
 	lower = PIND & 0x0f;
-
 	DDRD = 0x0f;
 	PORTD = 0xf0;
+	_delay_us(5);
 	butnum = PIND & 0xf0;
-
 	butnum |= lower;
-	return butnum;
-	//i = 20;
-	//for (i=0;i<17;i++)
-	//begin
-	//	if (key_table[i] == butnum) return(i);
-	//end
-	//return (i-1);
+
+	i = 20;
+	for (i=0;i<17;i++)
+	begin
+		if (key_table[i] == butnum) return(i);
+	end
+	return (i);
 
 end
 
@@ -255,12 +256,26 @@ end
 // reads in the value of the string and saves it as a number
 int str2int(char[] string)
 begin
+	char count = 0;
+	char tens_count = 0;
+	int temp = 0;
+	int strinteger = 0
 
+	while(string[count]!= "/0") count++;
+	while(count>=0)
+	begin
+		temp = string[count] - '0';
+		if (tens_count) temp = temp*(10*tens_count);
+		strinteger += temp;
+		count--;
+		tens_count++;
+	end
 end
 
 // saves the recently converted parameter into the relevent global variable
 void save_parameter(int data)
 begin
+	if (entry_state == b_freq) burst_frequency = data;
 	if (entry_state == chrp_int) chirp_interval = data;
 	if (entry_state == num_syl) num_syllables = data;
 	if (entry_state == dur_syl) dur_syllables = data;
@@ -279,6 +294,7 @@ end
 
 void update_LCD_state_line(void)
 begin
+	if (entry_state == b_freq) // copy LCD_burst_freq to LCD line 0 
 	if (entry_state == chrp_int) // copy LCD_interval to LCD line 0
 	if (entry_state == num_syl) // copy LCD_num_syllable to LCD line 0
 	if (entry_state == dur_syl) // copy LCD_dur_syllable to LCD line 0
@@ -397,14 +413,14 @@ end
 
 int main(void)
 begin
-	char temp = 0;
+	int temp = 0;
 	initialize();
 	CopyStringtoLCD(LCD_initialize, 0, 0);
 
 	while(1)
 	begin
 		temp = keypad();
-		sprintf(lcd_buffer,"%-x",temp);
+		sprintf(lcd_buffer,"%-i ",temp);
 		LCDGotoXY(1, 1);
 		LCDstring(lcd_buffer, strlen(lcd_buffer));	
 	end
@@ -412,6 +428,8 @@ begin
 	while(1)
 	begin
 		DDS_en = 1;
+		increment = (int)(burst_frequency/1.047);
+
 		if (time==50) 
 	    begin
 		     // start a new 50 mSec cycle 
