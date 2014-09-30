@@ -56,6 +56,8 @@ volatile char maybe_button;    // the number that might be pressed
 volatile char entry_state;    // tracks which part of the parameter entry you are on
 
 
+
+
 // task timers
 volatile char state_timer;
 volatile int LED_timer;
@@ -65,11 +67,7 @@ volatile char count_for_ms;
 volatile unsigned int accumulator;
 volatile unsigned int increment;
 volatile unsigned char highbyte;
-<<<<<<< HEAD
-volatile char sineTable[256];
-volatile char rampTable[256];
-volatile char keystr[17];
-=======
+
 volatile signed char sineTable[256];
 volatile signed char rampTable[256];
 volatile char DDS_en;
@@ -80,7 +78,7 @@ volatile int chirp_interval;
 volatile int num_syllables;
 volatile int dur_syllables;
 volatile int rpt_interval;
->>>>>>> 28ed14580fda601760c79087a978cb638e4cbc99
+
 
 // Time variables
 // the volitile is needed because the time is only set in the ISR
@@ -93,15 +91,11 @@ const int8_t LCD_interval[] PROGMEM =  "Chirp Interval: \0";
 const int8_t LCD_num_syllable[] PROGMEM = "Num Syllables:  \0";
 const int8_t LCD_dur_syllable[] PROGMEM = "Dur Syllables:  \0";
 const int8_t LCD_rpt_interval[] PROGMEM = "Rpt interval:   \0";
-<<<<<<< HEAD
-const char keytable[16] = {0x7d,0xee,0xed,0xeb,0xde,0xdd,0xdb,0xbe,0xbd,0xbb,0x7e,0x7b,0xe7,0xd7,0xb7,0x77};
-=======
 const int8_t LCD_playing[] PROGMEM = "Chirp, Chirp    \0";
-
->>>>>>> 28ed14580fda601760c79087a978cb638e4cbc99
 const int8_t LCD_cap_clear[] PROGMEM = "            \0";
+
 volatile int8_t lcd_buffer[17];	// LCD display buffer
-volatile int8_t keystr[16];
+volatile int8_t keystr[17];
 
 //key pad scan table
 unsigned char key_table[16]={0xd7, 0xee, 0xde, 0xbe,
@@ -309,12 +303,12 @@ end
 
 void update_LCD_state_line(void)
 begin
-	if (entry_state == b_freq) CopyStringtoLCD(LCD_burst_freq, 0, 0);    // copy LCD_burst_freq to LCD line 0 
-	if (entry_state == chrp_int) CopyStringtoLCD(LCD_interval,0, 0);    // copy LCD_interval to LCD line 0
-	if (entry_state == num_syl) CopyStringtoLCD(LCD_num_syllable, 0, 0);    // copy LCD_num_syllable to LCD line 0
-	if (entry_state == dur_syl) CopyStringtoLCD(LCD_dur_syllable, 0, 0);    // copy LCD_dur_syllable to LCD line 0
-	if (entry_state == rpt_int) CopyStringtoLCD(LCD_rpt_interval, 0, 0);    // copy LCD_rpt_interval to LCD line 0 
-	if (entry_state == playing) CopyStringtoLCD(LCD_playing, 0, 0);    // copy LCD_playing to LCD line 0
+	if (entry_state == b_freq) {CopyStringtoLCD(LCD_burst_freq, 0, 0); CopyStringtoLCD(LCD_cap_clear,0,1);}    // copy LCD_burst_freq to LCD line 0 
+	if (entry_state == chrp_int) {CopyStringtoLCD(LCD_interval,0, 0);  CopyStringtoLCD(LCD_cap_clear,0,1);}   // copy LCD_interval to LCD line 0
+	if (entry_state == num_syl) {CopyStringtoLCD(LCD_num_syllable, 0, 0);  CopyStringtoLCD(LCD_cap_clear,0,1);}   // copy LCD_num_syllable to LCD line 0
+	if (entry_state == dur_syl) {CopyStringtoLCD(LCD_dur_syllable, 0, 0);   CopyStringtoLCD(LCD_cap_clear,0,1);}  // copy LCD_dur_syllable to LCD line 0
+	if (entry_state == rpt_int) {CopyStringtoLCD(LCD_rpt_interval, 0, 0);  CopyStringtoLCD(LCD_cap_clear,0,1);}   // copy LCD_rpt_interval to LCD line 0 
+	if (entry_state == playing) {CopyStringtoLCD(LCD_playing, 0, 0); CopyStringtoLCD(LCD_cap_clear,0,1);}    // copy LCD_playing to LCD line 0
 end
 
 
