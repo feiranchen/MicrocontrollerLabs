@@ -321,8 +321,6 @@ begin
 	update_LCD_state_line();
 end
 
-
->>>>>>> 28ed14580fda601760c79087a978cb638e4cbc99
 // state machine for keypad detection
 void update_state(void)
 begin
@@ -418,10 +416,11 @@ begin
 			maybe_button = keypad();
 		end
 		else current_state = done;
-		break;
+		break;	
 	end
 
 end
+*/
 
 
 int main(void)
