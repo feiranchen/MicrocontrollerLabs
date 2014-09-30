@@ -19,7 +19,7 @@
 #define end }
 typedef enum { false, true } bool;
 
-// task timer definitions
+// task time_elapsed r  definitions
 #define t_state 40
 #define t_led 500
 #define t_ramp 4
@@ -56,7 +56,7 @@ volatile char maybe_button;    // the number that might be pressed
 volatile char entry_state;    // tracks which part of the parameter entry you are on
 
 
-// task timers
+// task time_elapsed rs 
 volatile char state_timer;
 volatile int LED_timer;
 volatile char count_for_ms;
@@ -65,11 +65,6 @@ volatile char count_for_ms;
 volatile unsigned int accumulator;
 volatile unsigned int increment;
 volatile unsigned char highbyte;
-<<<<<<< HEAD
-volatile char sineTable[256];
-volatile char rampTable[256];
-volatile char keystr[17];
-=======
 volatile signed char sineTable[256];
 volatile signed char rampTable[256];
 volatile char DDS_en;
@@ -80,25 +75,20 @@ volatile int chirp_interval;
 volatile int num_syllables;
 volatile int dur_syllables;
 volatile int rpt_interval;
->>>>>>> 28ed14580fda601760c79087a978cb638e4cbc99
 
 // Time variables
 // the volitile is needed because the time is only set in the ISR
 // time counts mSec, sample counts DDS samples (62.5 KHz)
-volatile unsigned int time, sample, rampCount;
-volatile char  count;
+volatile unsigned int time_elapsed, sample, rampCount,
+					syllableCount, chirpCount;
+volatile char  count, LCD_char_count;
 
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
 const int8_t LCD_interval[] PROGMEM =  "Chirp Interval: \0";
 const int8_t LCD_num_syllable[] PROGMEM = "Num Syllables:  \0";
 const int8_t LCD_dur_syllable[] PROGMEM = "Dur Syllables:  \0";
 const int8_t LCD_rpt_interval[] PROGMEM = "Rpt interval:   \0";
-<<<<<<< HEAD
-const char keytable[16] = {0x7d,0xee,0xed,0xeb,0xde,0xdd,0xdb,0xbe,0xbd,0xbb,0x7e,0x7b,0xe7,0xd7,0xb7,0x77};
-=======
 const int8_t LCD_playing[] PROGMEM = "Chirp, Chirp    \0";
-
->>>>>>> 28ed14580fda601760c79087a978cb638e4cbc99
 const int8_t LCD_cap_clear[] PROGMEM = "            \0";
 volatile int8_t lcd_buffer[17];	// LCD display buffer
 volatile int8_t keystr[16];
@@ -127,8 +117,9 @@ begin
 	TCCR0A = 0;
 	TIMSK0 = 0;
 	TCCR0B = 0;
-	
-	TCCR0A = (1<<COM0A0) | (1<<COM0A1) | (1<<WGM00) | (1<<WGM01) ; // sets to fast_PWM mode (non-inverting) on B.3
+
+	// sets to fast_PWM mode (non-inverting) on B.3
+	TCCR0A = (1<<COM0A0) | (1<<COM0A1) | (1<<WGM00) | (1<<WGM01);
 	TIMSK0 = 1<<TOIE0;
 	TCCR0B = 1;    // sets the prescaler to one
 	DDRB = (1<<PINB3) ;// make B.3 an output
@@ -183,6 +174,7 @@ begin
 	LCDclr();				//clear the display
 	LCDGotoXY(0,0);
 	CopyStringtoLCD(LCD_initialize, 0, 0);
+	LCD_char_count = 0;
 end
 
 
@@ -200,6 +192,7 @@ begin
 	entry_state = chrp_int;
 	LED_timer = t_led;
 	count = 0;
+	time_elapsed = 0;
 end
 
 
@@ -230,12 +223,12 @@ begin
 
 	// generate time base for MAIN
 	// 62 counts is about 1 mSec
-	count--;
-	if (0 == count )
+	count++;
+	if (62 == count)
 	begin
 		LED_timer--;
-		count=countMS;
-		time++; //in mSec
+		count = countMS;
+		time_elapsed++; //in mSec
 	end 
 end 
 
@@ -289,7 +282,11 @@ end
 // saves the recently converted parameter into the relevent global variable
 void save_parameter(int data)
 begin
-	if (entry_state == b_freq) burst_frequency = data;
+	if (entry_state == b_freq)
+	begin
+		burst_frequency = data;
+		increment = (int)(burst_frequency/1.047);
+	end
 	if (entry_state == chrp_int) chirp_interval = data;
 	if (entry_state == num_syl) num_syllables = data;
 	if (entry_state == dur_syl) dur_syllables = data;
@@ -374,12 +371,12 @@ begin
 		case detect_term:
 		if (button_number == 15)
 		begin
-			keystr[count] = '\0';
+			keystr[LCD_char_count ] = '\0';
 			current_state = still_term;
 		end
 		else 
 		begin
-			if (count<17) keystr[count++] = button_number;
+			if (LCD_char_count <17) keystr[LCD_char_count ++] = button_number;
 			update_LCD();
 			current_state = pressed;
 			maybe_button = keypad();
@@ -447,25 +444,39 @@ begin
 	end
 */
 
+
+// volatile int chirp_interval;
+// volatile int num_syllables;
+// volatile int dur_syllables;
+// volatile int rpt_interval;
+
 	while(1)
 	begin
 		if (!LED_timer) LED_toggle();
 		if (!state_timer) update_state();
 
-		DDS_en = 1;
-		increment = (int)(burst_frequency/1.047);
-
-		if (time==50) 
+		// DDS_en = 1;
+		for (unsigned int i = 0; i < chirp_interval; i++)
 		begin
-			 // start a new 50 mSec cycle 
-			 time=0;
-		 
-			 // init ramp variables
-			 sample = 0 ;
-			 rampCount = 0;
-			 // phase lock the sine generator DDS
-			 accumulator = 0 ;
-		end //if (time==50)
+			for (unsigned int j = 0; j < num_syllables; j++)
+			begin
+				if (time_elapsed == rpt_interval) 
+				begin // syllable
+					 // init ramp variables
+					 sample = 0 ;
+					 rampCount = 0;
+					 // phase lock the sine generator DDS
+					 accumulator = 0 ;
+
+					
+					 // start a new  mSec cycle 
+					 time_elapsed = 0;
+				end //if (time_elapsed == 50)
+				
+				// after dur_syllables milliSec turn off PWM
+	     		if (time == dur_syllables) DDS_en = 0;
+	     	end
+	    end
 	end //end while
 	return 0;
 end
