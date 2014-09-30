@@ -35,6 +35,13 @@ typedef enum { false, true } bool;
 #define maybe_term_released 7
 #define str_buff_check 8
 
+// parameter state name definitions
+#define chrp_int 0
+#define num_syl 1
+#define dur_syl 2
+#define rpt_int 3
+#define playing 4
+
 // ramp constants
 #define RAMPUPEND 250 // = 4*62.5 or 4mSec * 62.5 samples/mSec NOTE:max=255
 #define RAMPDOWNSTART 625 // = 10*62.5
@@ -45,6 +52,8 @@ typedef enum { false, true } bool;
 volatile char current_state;    // the current state for the debounce state machine
 volatile char button_number;	// the number being pressed on the keypad
 volatile char maybe_button;    // the number that might be pressed
+volatile char entry_state;    // tracks which part of the parameter entry you are on
+
 
 // task timers
 volatile char state_timer;
@@ -57,6 +66,13 @@ volatile unsigned long increment;
 volatile unsigned char highbyte;
 volatile signed char sineTable[256];
 volatile signed char rampTable[256];
+volatile char DDS_en;
+
+// chirp parameters
+volatile int chirp_interval;
+volatile int num_syllables;
+volatile int dur_syllables;
+volatile int rpt_interval;
 
 // Time variables
 // the volitile is needed because the time is only set in the ISR
@@ -69,18 +85,28 @@ const int8_t LCD_interval[] PROGMEM =  "Chirp Interval: \0";
 const int8_t LCD_num_syllable[] PROGMEM = "Num Syllables:  \0";
 const int8_t LCD_dur_syllable[] PROGMEM = "Dur Syllables:  \0";
 const int8_t LCD_rpt_interval[] PROGMEM = "Rpt interval:   \0";
+const int8_t LCD_playing[] PROGMEM = "Chirp, Chirp    \0";
 
 const int8_t LCD_cap_clear[] PROGMEM = "            \0";
-int8_t lcd_buffer[13];	// LCD display buffer
-int8_t keystr[16];
+volatile int8_t lcd_buffer[13];	// LCD display buffer
+volatile int8_t keystr[16];
 
 //key pad scan table
 unsigned char key_table[16]={0xee, 0xed, 0xeb, 0xe7, 
 						  0xde, 0xdd, 0xdb, 0xd7, 
 						  0xbe, 0xbd, 0xbb, 0xb7, 
 						  0x7e, 0x7d, 0x7b, 0x77};
-// ==================== End of Debug Helper =====================
 
+// write to LCD
+void write_LCD(int num)
+begin
+	sprintf(lcd_buffer,"%-i", num);
+	//sprintf(lcd_buffer + strlen(lcd_buffer), "%c", '.');
+	//sprintf(lcd_buffer + strlen(lcd_buffer), "%-i nf  ", capacitance % 10);
+	LCDGotoXY(0, 0);
+	LCDstring(lcd_buffer, strlen(lcd_buffer));
+	CopyStringtoLCD("test", 1, 1);
+end
 
 
 // Initializes timer0 for fast PWM
@@ -155,35 +181,44 @@ begin
 	timer0_init();
 	DDS_init();
 	sei();
+
+	current_state = released;
+	entry_state = chrp_int;
+	LED_timer = t_led;
 end
 
 
-//void LED_toggle(void)
-//begin
-//	LED_timer = t_led;
-//	PORTB ^= 0x01;
-//end
+void LED_toggle(void)
+begin
+	LED_timer = t_led;
+	PORTB ^= 0x01;
+end
 
 // updates the OCR0A register at 62500 Hz
 ISR (TIMER0_OVF_vect)
 begin 
-	//the actual DDR
-	accumulator = accumulator + increment ;
-	highbyte = (char)(accumulator >> 24) ;
-	// output the wavefrom sample
-	OCR0A = 128 + (sineTable[highbyte] * rampTable[rampCount]>> 7) ;
 
-	sample++ ;
-	if (sample <= RAMPUPEND) rampCount++ ;
-	if (sample > RAMPUPEND && sample <= RAMPDOWNSTART ) rampCount = 255 ;
-	if (sample > RAMPDOWNSTART && sample <= RAMPDOWNEND ) rampCount-- ;
-	if (sample > RAMPDOWNEND) rampCount = 0;
+	if(DDS_en)
+	begin
+		//the actual DDR
+		accumulator = accumulator + increment ;
+		highbyte = (char)(accumulator >> 24) ;
+		// output the wavefrom sample
+		OCR0A = 128 + (sineTable[highbyte] * rampTable[rampCount]>> 7) ;
+
+		sample++ ;
+		if (sample <= RAMPUPEND) rampCount++ ;
+		if (sample > RAMPUPEND && sample <= RAMPDOWNSTART ) rampCount = 255 ;
+		if (sample > RAMPDOWNSTART && sample <= RAMPDOWNEND ) rampCount-- ;
+		if (sample > RAMPDOWNEND) rampCount = 0;
+	end
 
 	// generate time base for MAIN
 	// 62 counts is about 1 mSec
 	count--;
 	if (0 == count )
 	begin
+		LED_timer--;
 		count=countMS;
 		time++; //in mSec
 	end 
@@ -214,13 +249,72 @@ begin
 
 end
 
+/*
+// reads in the value of the string and saves it as a number
+int str2int(char[] string)
+begin
+
+end
+
+// saves the recently converted parameter into the relevent global variable
+void save_parameter(int data)
+begin
+	if (entry_state == chrp_int) chirp_interval = data;
+	if (entry_state == num_syl) num_syllables = data;
+	if (entry_state == dur_syl) dur_syllables = data;
+	if (entry_state == rpt_int)
+	begin
+		rpt_interval = data;
+		DDS_en = 1;
+	end
+end
+
+// displays the current keystr contents on the LCD
+void update_LCD(void)
+begin
+	write_LCD(str2int(keystr));
+end
+
+void update_LCD_state_line(void)
+begin
+	if (entry_state == chrp_int) // copy LCD_interval to LCD line 0
+	if (entry_state == num_syl) // copy LCD_num_syllable to LCD line 0
+	if (entry_state == dur_syl) // copy LCD_dur_syllable to LCD line 0
+	if (entry_state == rpt_int) // copy LCD_rpt_interval to LCD line 0 
+	if (entry_state == playing) // copy LCD_playing to LCD line 0
+end
+
+
+// state machine for parameter entry
+void update_entry_state(void)
+begin
+	entry_state++;
+	update_LCD_state_line();
+end
+
+
 // state machine for keypad detection
 void update_state(void)
 begin
+	int parameter_value;
 	switch(current_state)
 	begin
 		case done:
-
+		if (entry_state ~= playing)
+		begin
+			parameter_value = str2char(keystr);
+			save_parameter(parameter_value);
+			update_entry_state();
+			current_state = released;
+		end
+		else
+		begin
+			if (keypad() == 12)
+			begin
+				entry_state = chrp_int;
+				DDS_en = 0;
+			end
+		end
 		break;
 
 		case released:
@@ -297,6 +391,7 @@ begin
 	end
 
 end
+*/
 
 int main(void)
 begin
