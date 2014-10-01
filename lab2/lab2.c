@@ -80,9 +80,10 @@ volatile int rpt_interval;
 // Time variables
 // the volitile is needed because the time is only set in the ISR
 // time counts mSec, sample counts DDS samples (62.5 KHz)
-volatile unsigned int time_elapsed, sample, rampCount,
+volatile unsigned int time_elapsed, time_elapsed_total, sample, rampCount,
 					syllableCount, chirpCount;
-volatile char  count, LCD_char_count;
+volatile char count, LCD_char_count;
+volatile char stopped;
 
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
 const int8_t LCD_interval[] PROGMEM =  "Chirp Interval: \0";
@@ -195,6 +196,8 @@ begin
 	LED_timer = t_led;
 	count = 0;
 	time_elapsed = 0;
+	time_elapsed_total = 0;
+	stopped = 0;
 end
 
 
@@ -321,16 +324,8 @@ end
 void update_entry_state(void)
 begin
 	entry_state++;
+	if(entry_state == playing) stopped = 0;
 	update_LCD_state_line();
-	while(entry_state == playing)
-	begin
-		if(keypad() == 12)	// the stop button is pressed
-		begin
-			entry_state = b_freq;
-			current_state = released;
-			DDS_en = 0;
-		end
-	end
 end
 
 // state machine for keypad detection
@@ -342,21 +337,15 @@ begin
 	switch(current_state)
 	begin
 		case done:
-
 		if (entry_state ~= playing)
-		begin
-			parameter_value = str2char(keystr);
-			save_parameter(parameter_value);
-			update_entry_state();
 			current_state = released;
-		end
 		break;
 
 		case released:
-		if (button_number <= 16)
+		if (button_number < 17)
 		begin
-		current_state = maybe_pressed;
-		maybe_button = keypad();
+			current_state = maybe_pressed;
+			maybe_button = keypad();
 		end
 		else button_number = keypad();
 		break;
@@ -371,10 +360,11 @@ begin
 		break;
 
 		case detect_term:
-		if (button_number == 15)
+		if (button_number == 12)
 		begin
 			keystr[LCD_char_count ] = '\0';
 			current_state = still_term;
+			maybe_button = keypad();
 		end
 		else 
 		begin
@@ -403,7 +393,7 @@ begin
 		else 
 		begin
 			current_state = released;
-			button_number = 20;
+			button_number = keypad();
 		end
 		break;
 
@@ -422,12 +412,30 @@ begin
 			current_state = still_term;
 			maybe_button = keypad();
 		end
-		else current_state = done;
+		else 
+		begin
+			current_state = done;
+			parameter_value = atoi(keystr);
+			save_parameter(parameter_value);
+			keystr[0] = '\0';
+			update_entry_state();
+		end
 		break;	
 	end
 
 end
 
+void checkStop(void)
+begin
+	//check stop button
+	if (keypad() == 13) 
+	begin
+		DDS_en = 0;
+		entry_state = b_freq;
+		current_state = released;
+		stopped = 1;
+	end // keypad
+end
 
 int main(void)
 begin
@@ -445,40 +453,39 @@ begin
 		LCDstring(lcd_buffer, strlen(lcd_buffer));	
 	end
 */
-
-
-// volatile int chirp_interval;
-// volatile int num_syllables;
-// volatile int dur_syllables;
-// volatile int rpt_interval;
-
+//?????????????????????????????????????????????????????????? DDS_en 
 	while(1)
 	begin
 		if (!LED_timer) LED_toggle();
 		if (!state_timer) update_state();
 
-		// DDS_en = 1;
-		for (unsigned int i = 0; i < chirp_interval; i++)
+		while(DDS_en && !stopped)
 		begin
-			for (unsigned int j = 0; j < num_syllables; j++)
-			begin
-				if (time_elapsed == rpt_interval) 
-				begin // syllable
-					 // init ramp variables
-					 sample = 0 ;
-					 rampCount = 0;
-					 // phase lock the sine generator DDS
-					 accumulator = 0 ;
+			if (!LED_timer) LED_toggle();
 
-					
-					 // start a new  mSec cycle 
-					 time_elapsed = 0;
-				end //if (time_elapsed == 50)
-				
-				// after dur_syllables milliSec turn off PWM
-	     		if (time == dur_syllables) DDS_en = 0;
-	     	end
-	    end
+			if (time_elapsed_total >= chirp_interval)
+			begin
+				time_elapsed_total = 0;
+				for (unsigned int j = 0; j < num_syllables; j++)
+				begin
+					// init ramp variables
+					sample = 0 ;
+					rampCount = 0;
+					// phase lock the sine generator DDS
+					accumulator = 0 ;
+					// start a new  mSec cycle 
+					time_elapsed = 0;
+
+					// after dur_syllables milliSec turn off PWM
+		     		DDS_en = 1;
+		     		while (time_elapsed < dur_syllables) checkStop();
+		     		DDS_en = 0;
+
+					while (time_elapsed < rpt_interval) checkStop();
+		     	end // for j
+		    end // if time_elapsed
+			checkStop();
+		end // while DDS_en
 	end //end while
 	return 0;
 end
