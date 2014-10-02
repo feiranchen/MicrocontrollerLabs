@@ -86,6 +86,7 @@ volatile char count, LCD_char_count;
 volatile char stopped;
 
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
+const int8_t LCD_burst_freq[] PROGMEM = "Burst Frequency:\0";
 const int8_t LCD_interval[] PROGMEM =  "Chirp Interval: \0";
 const int8_t LCD_num_syllable[] PROGMEM = "Num Syllables:  \0";
 const int8_t LCD_dur_syllable[] PROGMEM = "Dur Syllables:  \0";
@@ -135,7 +136,7 @@ void DDS_init(void)
 begin
 
 	accumulator = 0;
-	
+	DDS_en = 0;
 	increment = 996; 
 
 	// init the sine table
@@ -148,7 +149,7 @@ begin
 	end
 
 	// init the time counter
-   time=0;
+   //time=0;
    OCR0A = 128 ; // set PWM to half full scale
 end
 
@@ -181,6 +182,25 @@ begin
 end
 
 
+void update_LCD_state_line(void)
+begin
+	if (entry_state == b_freq) {CopyStringtoLCD(LCD_burst_freq, 0, 0); CopyStringtoLCD(LCD_cap_clear,0,1);}    // copy LCD_burst_freq to LCD line 0 
+	if (entry_state == chrp_int) {CopyStringtoLCD(LCD_interval,0, 0);  CopyStringtoLCD(LCD_cap_clear,0,1);}   // copy LCD_interval to LCD line 0
+	if (entry_state == num_syl) {CopyStringtoLCD(LCD_num_syllable, 0, 0);  CopyStringtoLCD(LCD_cap_clear,0,1);}   // copy LCD_num_syllable to LCD line 0
+	if (entry_state == dur_syl) {CopyStringtoLCD(LCD_dur_syllable, 0, 0);   CopyStringtoLCD(LCD_cap_clear,0,1);}  // copy LCD_dur_syllable to LCD line 0
+	if (entry_state == rpt_int) {CopyStringtoLCD(LCD_rpt_interval, 0, 0);  CopyStringtoLCD(LCD_cap_clear,0,1);}   // copy LCD_rpt_interval to LCD line 0 
+	if (entry_state == playing) {CopyStringtoLCD(LCD_playing, 0, 0); CopyStringtoLCD(LCD_cap_clear,0,1);}    // copy LCD_playing to LCD line 0
+end
+
+
+// state machine for parameter entry
+void update_entry_state(void)
+begin
+	entry_state++;
+	if(entry_state == playing) stopped = 0;
+	update_LCD_state_line();
+end
+
 void initialize(void)
 begin
 
@@ -192,12 +212,13 @@ begin
 
 	state_timer = t_state;
 	current_state = released;
-	entry_state = chrp_int;
+	entry_state = -1;
 	LED_timer = t_led;
 	count = 0;
 	time_elapsed = 0;
 	time_elapsed_total = 0;
 	stopped = 0;
+	update_entry_state();
 end
 
 
@@ -213,7 +234,7 @@ begin
 
 	if(DDS_en)
 	begin
-		//the actual DDR
+		//the actual DDS
 		accumulator = accumulator + increment ;
 		highbyte = (char)(accumulator >> 8) ;
 		// output the wavefrom sample
@@ -228,10 +249,11 @@ begin
 
 	// generate time base for MAIN
 	// 62 counts is about 1 mSec
-	count++;
-	if (62 == count)
+	count--;
+	if (count == 0)
 	begin
-		LED_timer--;
+		if (LED_timer>0)  LED_timer--;
+		if (state_timer>0) state_timer--;
 		count = countMS;
 		time_elapsed++; //in mSec
 	end 
@@ -266,23 +288,26 @@ end
 
 
 // reads in the value of the string and saves it as a number
-int str2int(char[] string)
+int my_str2int(char str[])
 begin
 	char s2i_count = 0;
 	char tens_count = 0;
 	int temp = 0;
-	int strinteger = 0
+	int strinteger = 0;
 
-	while(string[s2i_count]!= "/0") s2i_count++;
+	while(str[s2i_count]!= "/0") s2i_count++;
 	while(s2i_count>=0)
 	begin
-		temp = string[s2i_count] - '0';
+		temp = str[s2i_count];
 		if (tens_count) temp = temp*(10*tens_count);
 		strinteger += temp;
 		s2i_count--;
 		tens_count++;
 	end
+
+	return strinteger;
 end
+
 
 // saves the recently converted parameter into the relevent global variable
 void save_parameter(int data)
@@ -305,28 +330,11 @@ end
 // displays the current keystr contents on the LCD
 void update_LCD(void)
 begin
-	LCDGotoXY(1, 1);
-	LCDstring(keystr, strlen(keystr));	
-end
-
-void update_LCD_state_line(void)
-begin
-	if (entry_state == b_freq) {CopyStringtoLCD(LCD_burst_freq, 0, 0); CopyStringtoLCD(LCD_cap_clear,0,1);}    // copy LCD_burst_freq to LCD line 0 
-	if (entry_state == chrp_int) {CopyStringtoLCD(LCD_interval,0, 0);  CopyStringtoLCD(LCD_cap_clear,0,1);}   // copy LCD_interval to LCD line 0
-	if (entry_state == num_syl) {CopyStringtoLCD(LCD_num_syllable, 0, 0);  CopyStringtoLCD(LCD_cap_clear,0,1);}   // copy LCD_num_syllable to LCD line 0
-	if (entry_state == dur_syl) {CopyStringtoLCD(LCD_dur_syllable, 0, 0);   CopyStringtoLCD(LCD_cap_clear,0,1);}  // copy LCD_dur_syllable to LCD line 0
-	if (entry_state == rpt_int) {CopyStringtoLCD(LCD_rpt_interval, 0, 0);  CopyStringtoLCD(LCD_cap_clear,0,1);}   // copy LCD_rpt_interval to LCD line 0 
-	if (entry_state == playing) {CopyStringtoLCD(LCD_playing, 0, 0); CopyStringtoLCD(LCD_cap_clear,0,1);}    // copy LCD_playing to LCD line 0
+	LCDGotoXY(1,1);
+	LCDstring(keystr,strlen(keystr));
 end
 
 
-// state machine for parameter entry
-void update_entry_state(void)
-begin
-	entry_state++;
-	if(entry_state == playing) stopped = 0;
-	update_LCD_state_line();
-end
 
 // state machine for keypad detection
 void update_state(void)
@@ -337,7 +345,7 @@ begin
 	switch(current_state)
 	begin
 		case done:
-		if (entry_state ~= playing)
+		if (entry_state != playing)
 			current_state = released;
 		break;
 
@@ -368,7 +376,7 @@ begin
 		end
 		else 
 		begin
-			if (LCD_char_count <17) keystr[LCD_char_count ++] = button_number;
+			if (LCD_char_count <17) keystr[LCD_char_count ++] = button_number + '0';
 			update_LCD();
 			current_state = pressed;
 			maybe_button = keypad();
@@ -439,21 +447,18 @@ end
 
 int main(void)
 begin
-	int temp = 0;
 	initialize();
-	CopyStringtoLCD(LCD_initialize, 0, 0);
 
-//Keypad testing code
-/*
-	while(1)
-	begin
-		temp = keypad();
-		sprintf(lcd_buffer,"%-i ",temp);
-		LCDGotoXY(1, 1);
-		LCDstring(lcd_buffer, strlen(lcd_buffer));	
-	end
-*/
 //?????????????????????????????????????????????????????????? DDS_en 
+int burst_frequency = 3000;
+int chirp_interval = 1000;
+int num_syllables = 5;
+int dur_syllables = 30;
+int rpt_interval = 50;
+
+
+
+
 	while(1)
 	begin
 		if (!LED_timer) LED_toggle();
