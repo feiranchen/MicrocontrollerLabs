@@ -197,25 +197,9 @@ end
 void update_entry_state(void)
 begin
 	entry_state++;
-	if(entry_state == playing) stopped = 0;
+	if(entry_state == playing) DDS_en = 1; stopped = 0;
 	update_LCD_state_line();
-
-	// Displays the entered values for debugging - delete this for the final code /////////////////////////
-	if(entry_state == playing)
-	begin
-		sprintf(lcd_buffer,"%-i", chirp_interval);
-		LCDGotoXY(0, 0);
-		LCDstring(lcd_buffer, strlen(lcd_buffer));	
-		sprintf(lcd_buffer,"%-i", num_syllables);
-		LCDGotoXY(8, 0);
-		LCDstring(lcd_buffer, strlen(lcd_buffer));
-		sprintf(lcd_buffer,"%-i", dur_syllables);
-		LCDGotoXY(0, 1);
-		LCDstring(lcd_buffer, strlen(lcd_buffer));
-		sprintf(lcd_buffer,"%-i", rpt_interval);
-		LCDGotoXY(8, 1);
-		LCDstring(lcd_buffer, strlen(lcd_buffer));	
-	end
+	current_state = released;
 end
 
 void initialize(void)
@@ -357,6 +341,7 @@ end
 // state machine for keypad detection
 void update_state(void)
 begin
+	char nn;
 	int parameter_value;
 	state_timer = t_state;
 
@@ -440,10 +425,12 @@ begin
 		end
 		else 
 		begin
-			current_state = done;
+			button_number = keypad();
+			current_state = released;
 			parameter_value = atoi(keystr);
 			save_parameter(parameter_value);
-			keystr[0] = '\0';
+			LCD_char_count = 0;
+			for (nn = 0; nn<16; nn++) keystr[nn] = '\0';
 			update_entry_state();
 		end
 		break;	
@@ -469,22 +456,10 @@ begin
 	initialize();
 
 //?????????????????????????????????????????????????????????? DDS_en 
-
-	 burst_frequency = 5000;
-	 increment = burst_frequency / 1.047;
-	 chirp_interval = 2000;
-	 num_syllables = 6;
-	 dur_syllables = 50;
-	 rpt_interval = 60;
-
-
-
-
 	while(1)
 	begin
 		if (!LED_timer) LED_toggle();
 		if (!state_timer) update_state();
-	DDS_en = 1;
 		while(DDS_en && !stopped)
 		begin
 			if (!LED_timer) LED_toggle();
