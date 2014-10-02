@@ -109,9 +109,9 @@ begin
 	sprintf(lcd_buffer,"%-i", num);
 	//sprintf(lcd_buffer + strlen(lcd_buffer), "%c", '.');
 	//sprintf(lcd_buffer + strlen(lcd_buffer), "%-i nf  ", capacitance % 10);
-	LCDGotoXY(0, 0);
+	LCDGotoXY(0, 1);
 	LCDstring(lcd_buffer, strlen(lcd_buffer));
-	CopyStringtoLCD("test", 1, 1);
+	//CopyStringtoLCD("test", 1, 1);
 end
 
 
@@ -199,6 +199,23 @@ begin
 	entry_state++;
 	if(entry_state == playing) stopped = 0;
 	update_LCD_state_line();
+
+	// Displays the entered values for debugging - delete this for the final code /////////////////////////
+	if(entry_state == playing)
+	begin
+		sprintf(lcd_buffer,"%-i", chirp_interval);
+		LCDGotoXY(0, 0);
+		LCDstring(lcd_buffer, strlen(lcd_buffer));	
+		sprintf(lcd_buffer,"%-i", num_syllables);
+		LCDGotoXY(8, 0);
+		LCDstring(lcd_buffer, strlen(lcd_buffer));
+		sprintf(lcd_buffer,"%-i", dur_syllables);
+		LCDGotoXY(0, 1);
+		LCDstring(lcd_buffer, strlen(lcd_buffer));
+		sprintf(lcd_buffer,"%-i", rpt_interval);
+		LCDGotoXY(8, 1);
+		LCDstring(lcd_buffer, strlen(lcd_buffer));	
+	end
 end
 
 void initialize(void)
@@ -256,6 +273,7 @@ begin
 		if (state_timer>0) state_timer--;
 		count = countMS;
 		time_elapsed++; //in mSec
+		time_elapsed_total++;
 	end 
 end 
 
@@ -440,6 +458,7 @@ begin
 	begin
 		DDS_en = 0;
 		entry_state = b_freq;
+		update_LCD_state_line();
 		current_state = released;
 		stopped = 1;
 	end // keypad
@@ -450,11 +469,13 @@ begin
 	initialize();
 
 //?????????????????????????????????????????????????????????? DDS_en 
-int burst_frequency = 3000;
-int chirp_interval = 1000;
-int num_syllables = 5;
-int dur_syllables = 30;
-int rpt_interval = 50;
+
+	 burst_frequency = 5000;
+	 increment = burst_frequency / 1.047;
+	 chirp_interval = 2000;
+	 num_syllables = 6;
+	 dur_syllables = 50;
+	 rpt_interval = 60;
 
 
 
@@ -463,7 +484,7 @@ int rpt_interval = 50;
 	begin
 		if (!LED_timer) LED_toggle();
 		if (!state_timer) update_state();
-
+	DDS_en = 1;
 		while(DDS_en && !stopped)
 		begin
 			if (!LED_timer) LED_toggle();
