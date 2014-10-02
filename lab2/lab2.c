@@ -199,7 +199,7 @@ begin
 	entry_state++;
 	if(entry_state == playing) DDS_en = 1; stopped = 0;
 	update_LCD_state_line();
-	current_state = released;
+	if(entry_state != playing) current_state = released;
 end
 
 void initialize(void)
@@ -426,7 +426,7 @@ begin
 		else 
 		begin
 			button_number = keypad();
-			current_state = released;
+			current_state = done;
 			parameter_value = atoi(keystr);
 			save_parameter(parameter_value);
 			LCD_char_count = 0;
@@ -460,6 +460,7 @@ begin
 	begin
 		if (!LED_timer) LED_toggle();
 		if (!state_timer) update_state();
+		checkStop();
 		while(DDS_en && !stopped)
 		begin
 			if (!LED_timer) LED_toggle();
@@ -483,6 +484,7 @@ begin
 		     		DDS_en = 0;
 
 					while (time_elapsed < rpt_interval) checkStop();
+					DDS_en = 1;
 		     	end // for j
 		    end // if time_elapsed
 			checkStop();
