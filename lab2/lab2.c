@@ -197,7 +197,11 @@ end
 void update_entry_state(void)
 begin
 	entry_state++;
-	if(entry_state == playing) DDS_en = 1; stopped = 0;
+	if(entry_state == playing)
+	begin
+		DDS_en = 1; 
+		stopped = 0;
+	end
 	update_LCD_state_line();
 	if(entry_state != playing) current_state = released;
 end
@@ -440,6 +444,7 @@ end
 
 void checkStop(void)
 begin
+//	char clear_count;
 	//check stop button
 	if (keypad() == 13) 
 	begin
@@ -448,6 +453,8 @@ begin
 		update_LCD_state_line();
 		current_state = released;
 		stopped = 1;
+		LCD_char_count = 0;
+//		for (clear_count = 0; clear_count<16; clear_count++) keystr[clear_count] = '\0';
 	end // keypad
 end
 
@@ -461,16 +468,48 @@ begin
 		if (!LED_timer) LED_toggle();
 		if (!state_timer) update_state();
 		checkStop();
-		while(DDS_en && !stopped)
-		begin
-			if (!LED_timer) LED_toggle();
 
-			if (time_elapsed_total >= chirp_interval)
+		if(num_syllables>1)
+		begin
+			while(DDS_en && !stopped)
 			begin
-				time_elapsed_total = 0;
-				for (unsigned int j = 0; j < num_syllables; j++)
+				if (!LED_timer) LED_toggle();
+
+				if (time_elapsed_total >= chirp_interval)
 				begin
-					// init ramp variables
+					time_elapsed_total = 0;
+					for (unsigned int j = 0; j < num_syllables; j++)
+					begin
+						// init ramp variables
+						sample = 0 ;
+						rampCount = 0;
+						// phase lock the sine generator DDS
+						accumulator = 0 ;
+						// start a new  mSec cycle 
+						time_elapsed = 0;
+
+						// after dur_syllables milliSec turn off PWM
+			     		DDS_en = 1;
+			     		while (time_elapsed < dur_syllables) checkStop();
+			     		DDS_en = 0;
+
+						while (time_elapsed < rpt_interval) checkStop();
+						DDS_en = 1;
+			     	end // for j
+			    end // if time_elapsed
+				checkStop();
+			end // while DDS_en
+		end // if # syll >1
+
+		else
+		begin
+			while(DDS_en && !stopped)
+			begin
+				if (!LED_timer) LED_toggle();
+
+				if (time_elapsed_total >= chirp_interval)
+				begin
+					time_elapsed_total = 0;
 					sample = 0 ;
 					rampCount = 0;
 					// phase lock the sine generator DDS
@@ -479,16 +518,12 @@ begin
 					time_elapsed = 0;
 
 					// after dur_syllables milliSec turn off PWM
-		     		DDS_en = 1;
-		     		while (time_elapsed < dur_syllables) checkStop();
 		     		DDS_en = 0;
-
-					while (time_elapsed < rpt_interval) checkStop();
-					DDS_en = 1;
-		     	end // for j
-		    end // if time_elapsed
-			checkStop();
-		end // while DDS_en
+		     		while (time_elapsed < (chirp_interval - dur_syllables)) checkStop();
+		     		DDS_en = 1;
+				end // if time_elapsed
+			end // while DDS_en
+		end
 	end //end while
 	return 0;
 end
