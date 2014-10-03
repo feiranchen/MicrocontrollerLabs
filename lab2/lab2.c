@@ -45,8 +45,8 @@ typedef enum { false, true } bool;
 
 // ramp constants
 #define RAMPUPEND 250 // = 4*62.5 or 4mSec * 62.5 samples/mSec NOTE:max=255
-#define RAMPDOWNSTART 625 // = 10*62.5
-#define RAMPDOWNEND 875 // = 14*62.5 NOTE: RAMPDOWNEND-RAMPDOWNSTART<255 
+volatile unsigned int RAMPDOWNSTART; // = 10*62.5
+volatile unsigned int RAMPDOWNEND; // = 14*62.5 NOTE: RAMPDOWNEND-RAMPDOWNSTART<255 
 #define countMS 62  //ticks/mSec
 
 // keypad variables
@@ -326,11 +326,16 @@ begin
 	if (entry_state == b_freq)
 	begin
 		burst_frequency = data;
-		increment = (int)(burst_frequency/1.047);
+		increment = (int)(burst_frequency*1.047);
 	end
 	if (entry_state == chrp_int) chirp_interval = data;
 	if (entry_state == num_syl)	num_syllables = data;
-	if (entry_state == dur_syl) dur_syllables = data;
+	if (entry_state == dur_syl)
+	begin
+		dur_syllables = data+4;
+		RAMPDOWNEND = (dur_syllables)*62.5;
+		RAMPDOWNSTART = (dur_syllables-4)*62.5;
+	end
 	if (entry_state == rpt_int) rpt_interval = data;
 end
 
