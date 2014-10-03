@@ -57,9 +57,9 @@ volatile char entry_state;    // tracks which part of the parameter entry you ar
 
 
 // task timers
-volatile char state_timer;
+volatile unsigned char state_timer;
 volatile int LED_timer;
-volatile char count_for_ms;
+volatile unsigned char count_for_ms;
 
 // DDS variables
 volatile unsigned int accumulator;
@@ -82,7 +82,7 @@ volatile int rpt_interval;
 // time counts mSec, sample counts DDS samples (62.5 KHz)
 volatile unsigned int time_elapsed, time_elapsed_total, sample, rampCount,
 					syllableCount, chirpCount;
-volatile char count, LCD_char_count;
+volatile unsigned char count, LCD_char_count;
 volatile char stopped;
 
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
@@ -197,9 +197,14 @@ end
 void update_entry_state(void)
 begin
 	entry_state++;
+	if(num_syllables == 1 && entry_state == rpt_int) 
+	begin
+		entry_state++;
+		rpt_interval = 0;
+	end
 	if(entry_state == playing)
 	begin
-		DDS_en = 1; 
+		DDS_en = 1;
 		stopped = 0;
 	end
 	update_LCD_state_line();
@@ -222,7 +227,7 @@ begin
 	count = 0;
 	time_elapsed = 0;
 	time_elapsed_total = 0;
-	stopped = 0;
+	stopped = 1;
 	update_entry_state();
 end
 
@@ -324,13 +329,9 @@ begin
 		increment = (int)(burst_frequency/1.047);
 	end
 	if (entry_state == chrp_int) chirp_interval = data;
-	if (entry_state == num_syl) num_syllables = data;
+	if (entry_state == num_syl)	num_syllables = data;
 	if (entry_state == dur_syl) dur_syllables = data;
-	if (entry_state == rpt_int)
-	begin
-		rpt_interval = data;
-		DDS_en = 1;
-	end
+	if (entry_state == rpt_int) rpt_interval = data;
 end
 
 // displays the current keystr contents on the LCD
@@ -345,7 +346,7 @@ end
 // state machine for keypad detection
 void update_state(void)
 begin
-	char nn;
+	unsigned char nn;
 	int parameter_value;
 	state_timer = t_state;
 
@@ -444,7 +445,7 @@ end
 
 void checkStop(void)
 begin
-//	char clear_count;
+	unsigned char clear_count;
 	//check stop button
 	if (keypad() == 13) 
 	begin
@@ -454,24 +455,24 @@ begin
 		current_state = released;
 		stopped = 1;
 		LCD_char_count = 0;
-//		for (clear_count = 0; clear_count<16; clear_count++) keystr[clear_count] = '\0';
+		for (clear_count = 0; clear_count<16; clear_count++) keystr[clear_count] = '\0';
 	end // keypad
 end
+
 
 int main(void)
 begin
 	initialize();
 
-//?????????????????????????????????????????????????????????? DDS_en 
 	while(1)
 	begin
 		if (!LED_timer) LED_toggle();
 		if (!state_timer) update_state();
 		checkStop();
 
-		if(num_syllables>1)
+	//	if(num_syllables>1)
 		begin
-			while(DDS_en && !stopped)
+			while(!stopped)
 			begin
 				if (!LED_timer) LED_toggle();
 
@@ -494,36 +495,38 @@ begin
 			     		DDS_en = 0;
 
 						while (time_elapsed < rpt_interval) checkStop();
-						DDS_en = 1;
 			     	end // for j
 			    end // if time_elapsed
 				checkStop();
 			end // while DDS_en
 		end // if # syll >1
-
+/*
 		else
 		begin
-			while(DDS_en && !stopped)
+			while(!stopped)
 			begin
+				checkStop();
 				if (!LED_timer) LED_toggle();
 
 				if (time_elapsed_total >= chirp_interval)
 				begin
 					time_elapsed_total = 0;
+					checkStop();
+					// after dur_syllables milliSec turn off PWM
+		     		DDS_en = 0;
+		     		while (time_elapsed < (chirp_interval - dur_syllables)) my_checkStop();
+
 					sample = 0 ;
 					rampCount = 0;
 					// phase lock the sine generator DDS
 					accumulator = 0 ;
 					// start a new  mSec cycle 
 					time_elapsed = 0;
-
-					// after dur_syllables milliSec turn off PWM
-		     		DDS_en = 0;
-		     		while (time_elapsed < (chirp_interval - dur_syllables)) checkStop();
 		     		DDS_en = 1;
 				end // if time_elapsed
 			end // while DDS_en
 		end
+		*/
 	end //end while
 	return 0;
 end
