@@ -1,0 +1,1 @@
+multASM.o: ../multASM.S
