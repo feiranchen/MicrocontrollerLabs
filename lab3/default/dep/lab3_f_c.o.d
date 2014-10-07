@@ -18,7 +18,8 @@ lab3_f_c.o: ../lab3_f_c.c ../lcd_lib.h \
   c:/winavr-20100110/lib/gcc/../../avr/include/string.h \
   c:/winavr-20100110/lib/gcc/../../avr/include/math.h \
   c:/winavr-20100110/lib/gcc/../../avr/include/util/delay.h \
-  c:/winavr-20100110/lib/gcc/../../avr/include/util/delay_basic.h
+  c:/winavr-20100110/lib/gcc/../../avr/include/util/delay_basic.h \
+  c:/winavr-20100110/lib/gcc/../../avr/include/avr/sleep.h
 
 ../lcd_lib.h:
 
@@ -61,3 +62,5 @@ c:/winavr-20100110/lib/gcc/../../avr/include/math.h:
 c:/winavr-20100110/lib/gcc/../../avr/include/util/delay.h:
 
 c:/winavr-20100110/lib/gcc/../../avr/include/util/delay_basic.h:
+
+c:/winavr-20100110/lib/gcc/../../avr/include/avr/sleep.h:
