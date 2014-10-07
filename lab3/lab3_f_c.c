@@ -216,6 +216,12 @@ begin
 
 	syncON = 0b00000000;
 	syncOFF = 0b00000001;
+
+	// Set up single video line timing
+	sei();
+	set_sleep_mode(SLEEP_MODE_IDLE);
+	sleep_enable();
+
 end
 
 
@@ -1460,7 +1466,9 @@ int main(void)
 begin
 	char width = screen_width-1;
 	char height = screen_height-1;
-	char temp = 0;
+	unsigned char prev_top = 0;
+	unsigned char top_of_paddle = 0;
+	int v_paddle;
 	initialize();
 	
 	video_line(width,0,width,height,1);
@@ -1468,6 +1476,7 @@ begin
 	video_line(0,0,width,0,1);
 	video_line(0,height,width,height,1);
 	video_puts(20,40,"hello world.");
+	/*
 	// ADC Test Code
 	while(1)
 	begin
@@ -1476,7 +1485,7 @@ begin
 		_delay_ms(50);
 		temp = ADCH;
 	end // adc test while 1
-
+*/
 	// guide for the real code
 	while(1)
 	begin
@@ -1484,10 +1493,24 @@ begin
 		begin
 			// 1. check for collisions and update velocities (including drag)
 			// 2. update positions for all balls and the paddle
+			// ball updates
+
+			//paddle update
+			video_line(2,top_of_paddle,2,top_of_paddle+8,2);
+			video_line(3,top_of_paddle,3,top_of_paddle+8,2);
+			prev_top = top_of_paddle;
+			top_of_paddle =(ADCH*43/255)+11;
+			v_paddle = top_of_paddle-prev_top;
+			video_line(2,top_of_paddle,2,top_of_paddle+8,1);
+			video_line(3,top_of_paddle,3,top_of_paddle+8,1);
+
+
 			// 3. update positions
 			// 4. remove balls that hit the left side of the screen or bins
 			// 5. update text (score, time...)
 			// 6. wait for interrupt
+
+			ADC_start_measure(0);
 		end // linecount == screenBot
 	end // while 1
 
