@@ -1469,6 +1469,30 @@ int multfix(int a, int b) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void remove_ball(int i)
+begin
+	video_pt(x_pos[i]+1,y_pos[i],0);
+	video_pt(x_pos[i]+2,y_pos[i],0);
+	video_pt(x_pos[i],y_pos[i]+1,0);
+	video_pt(x_pos[i],y_pos[i]+2,0);
+	video_pt(x_pos[i]+3,y_pos[i]+1,0);
+	video_pt(x_pos[i]+3,y_pos[i]+2,0);
+	video_pt(x_pos[i]+1,y_pos[i]+3,0);
+	video_pt(x_pos[i]+2,y_pos[i]+3,0);
+end
+
+void place_ball(int i)
+begin
+	video_pt(x_pos[i]+1,y_pos[i],1);
+	video_pt(x_pos[i]+2,y_pos[i],1);
+	video_pt(x_pos[i],y_pos[i]+1,1);
+	video_pt(x_pos[i],y_pos[i]+2,1);
+	video_pt(x_pos[i]+3,y_pos[i]+1,1);
+	video_pt(x_pos[i]+3,y_pos[i]+2,1);
+	video_pt(x_pos[i]+1,y_pos[i]+3,1);
+	video_pt(x_pos[i]+2,y_pos[i]+3,1);
+end
+
 // adds a ball to the screen
 void add_ball(void)
 begin
@@ -1476,27 +1500,12 @@ begin
 	while(is_on_screen[i]) i++;
 	i--;
 	is_on_screen[i] = 1;
-	x_pos[i] = 125;
+	x_pos[i] = 123;
 	y_pos[i] = 14;
-	x_velocity[i] = int2fix(30) | 0x8000;
-	y_velocity[i] = int2fix(3);
-
-	video_pt(x_pos[1],y_pos[i],1);
-	video_pt(x_pos[1]+1,y_pos[i],1);
-	video_pt(x_pos[1]+1,y_pos[i]+1,1);
-	video_pt(x_pos[1],y_pos[i]+1,1);
+	x_velocity[i] = 0xe200; 
+	y_velocity[i] = 0x0300;
+	place_ball(i);
 end
-
-void remove_ball(int i)
-begin
-	video_pt(x_pos[1],y_pos[i],0);
-	video_pt(x_pos[1]+1,y_pos[i],0);
-	video_pt(x_pos[1]+1,y_pos[i]+1,0);
-	video_pt(x_pos[1],y_pos[i]+1,0);
-end
-
-
-
 
 int main(void)
 begin
@@ -1537,16 +1546,7 @@ begin
 			frame_count++;
 			if (frame_count >= 30)
 			begin
-				is_on_screen[0] = 1;
-				x_pos[0] = 125;
-				y_pos[0] = 14;
-				x_velocity[0] = 0xe200; 
-				y_velocity[0] = 0x0300;
-
-				video_pt(x_pos[0],y_pos[0],1);
-				video_pt(x_pos[0]+1,y_pos[0],1);
-				video_pt(x_pos[0]+1,y_pos[0]+1,1);
-				video_pt(x_pos[0],y_pos[0]+1,1);
+				add_ball();
 
 				frame_count = 0;
 				time_elapsed_HS++; 
@@ -1574,14 +1574,11 @@ begin
 					begin
 						if(is_on_screen[j])
 						begin
-							if((x_pos[i]-x_pos[j])<=4)
+							if(0)// check collision here)<4))
 							begin
-								if((y_pos[i]-y_pos[j])<=4)
-								begin
-								// COLLISION CODE HERE
-					
-								end // y check
-							end // x check
+								//collision code here
+
+							end // rij check
 						end // is on screen j
 					end // for j
 					delta_x_velocity = multfix(x_velocity[i],0x0001);
@@ -1598,19 +1595,13 @@ begin
 
 			// 3.2. Update position of balls
 
-					video_pt(x_pos[1],y_pos[i],0);
-					video_pt(x_pos[1]+1,y_pos[i],0);
-					video_pt(x_pos[1]+1,y_pos[i]+1,0);
-					video_pt(x_pos[1],y_pos[i]+1,0);
+					remove_ball(i);
 
 
 					x_pos[i] += x_velocity[i];
 					y_pos[i] += y_velocity[i];
 
-					video_pt(x_pos[1],y_pos[i],1);
-					video_pt(x_pos[1]+1,y_pos[i],1);
-					video_pt(x_pos[1]+1,y_pos[i]+1,1);
-					video_pt(x_pos[1],y_pos[i]+1,1);
+					place_ball(i);
 
 			// 3.3 remove balls that hit the left side of the screen or bins
 					if(x_pos[i] <= 1) // hit left wall
@@ -1641,7 +1632,7 @@ begin
 	while(1)
 	begin
 		sprintf(score_str, "%i",score);
-		video_puts(30,30,"Time Up!");
+		video_puts(30,30,"Time Is Up!");
 		video_puts(30,42,"Your score:");
 		video_puts(100,42,score_str);
 	end
