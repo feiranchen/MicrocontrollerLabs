@@ -1527,7 +1527,8 @@ begin
 
 
 	initialize();
-	
+	x_pos[0] = 40;
+	y_pos[0] = 30;
 	video_line(width,0,width,height,1);
 	video_line(0,0,width,0,1);
 	video_line(0,height,width-17,height,1);
@@ -1546,8 +1547,8 @@ begin
 			frame_count++;
 			if (frame_count >= 30)
 			begin
-				add_ball();
-
+				add_ball();		// check to make sure that I'm not adding outside of frame
+				//place_ball(0);
 				frame_count = 0;
 				time_elapsed_HS++; 
 				sprintf(time_str, "%3d", (time_elapsed_HS>>1));
