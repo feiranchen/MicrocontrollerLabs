@@ -75,7 +75,8 @@ volatile signed int x_velocity[Max_num_balls];
 volatile signed int y_velocity[Max_num_balls];
 volatile unsigned char is_on_screen[Max_num_balls];
 volatile unsigned char hit_count[Max_num_balls];
-volatile unsigned char score = 0;
+volatile unsigned char score;
+volatile unsigned char time_elapsed_HS;
 
 // put the MCU to sleep JUST before the CompA ISR goes off
 ISR(TIMER1_COMPB_vect, ISR_NAKED)
@@ -237,7 +238,8 @@ begin
 	end
 
 	for(int y=0; y<screen_array_size;y++) screen[y] = 0;
-	
+	time_elapsed_HS = 0;
+	score = 0;
 
 	// Set up single video line timing
 	sei();
@@ -1526,26 +1528,24 @@ end
 void add_ball(void)
 begin
 	unsigned char i = 0;
-	if(is_on_screen[0])
+	if(is_on_screen[i])
 	begin
 		i++;
 		while(is_on_screen[i] & i<(Max_num_balls-1)) i++;
-		if(i==(Max_num_balls-1))  i = remove_oldest_ball();
-		i--; 
+		if(i==(Max_num_balls-1))  i = remove_oldest_ball(); 
 	end
 
 	age[i] = 0;
 	is_on_screen[i] = 1;
 	x_pos[i] = int2fix(120);
 	y_pos[i] = int2fix(14);
-	x_velocity[i] = 0x00a0;//xe200; 
-	y_velocity[i] = 0x0040;
+	x_velocity[i] = 0xff00;//xe200; 
+	y_velocity[i] = 0x00a0;//((signed int)time_elapsed_HS)<<2;
 	place_ball(i);
 end
 
 int main(void)
 begin
-	unsigned char time_elapsed_HS = 0;
 	char width = screen_width-1;
 	char height = screen_height-1;
 	unsigned char prev_top = 0;
@@ -1584,7 +1584,7 @@ begin
 			frame_count++;
 			if (frame_count >= 30)
 			begin
-				if (time_elapsed_HS < 6) add_ball();
+				add_ball();
 				frame_count = 0;
 				time_elapsed_HS++; 
 				sprintf(time_str, "%3d", (time_elapsed_HS>>1));
@@ -1640,9 +1640,9 @@ begin
 
 					remove_ball(i);
 
-					if(fix2int(x_pos[i])>123) x_velocity[i] = multfix(x_velocity[i],int2fix(-1));
+					if(fix2int(x_pos[i])>122) x_velocity[i] = multfix(x_velocity[i],int2fix(-1));
 					if(fix2int(y_pos[i])<3) y_velocity[i] = multfix(y_velocity[i],int2fix(-1));
-					if(fix2int(y_pos[i])>61) y_velocity[i] = multfix(y_velocity[i],int2fix(-1));
+					if(fix2int(y_pos[i])>58) y_velocity[i] = multfix(y_velocity[i],int2fix(-1));
 
 					x_pos[i] += x_velocity[i];
 					y_pos[i] += y_velocity[i];
@@ -1650,7 +1650,7 @@ begin
 
 
 			// 3.3 remove balls that hit the left side of the screen or bins
-					if(fix2int(x_pos[i]) < 3) // hit left wall
+					if(fix2int(x_pos[i]) < 4) // hit left wall
 					begin
 						is_on_screen[i] = 0;
 						if(score) score--;
@@ -1658,9 +1658,9 @@ begin
 						remove_ball(i);
 					end // hit left wall
 
-					if(fix2int(x_pos[i])<100 & fix2int(x_pos[i])>60)
+					if(fix2int(x_pos[i])<80 & fix2int(x_pos[i])>40)
 					begin
-						if(fix2int(y_pos[i])<=1 | fix2int(y_pos[i])>=(height-2))
+						if(fix2int(y_pos[i])<=3 | fix2int(y_pos[i])>=(height-4))
 						begin
 							is_on_screen[i] = 0;
 							age[i] = 0;
@@ -1679,7 +1679,7 @@ begin
 
 		end // linecount == screenBot
 	end // while time < 200
-
+	for(int gh = 0; gh<Max_num_balls; gh++) remove_ball(gh); // clear the screen
 	while(1)
 	begin
 		sprintf(score_str, "%i",score);
