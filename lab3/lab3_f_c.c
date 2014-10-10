@@ -1527,6 +1527,7 @@ end
 // adds a ball to the screen
 void add_ball(void)
 begin
+	int temp = 0;
 	unsigned char i = 0;
 	if(is_on_screen[i])
 	begin
@@ -1539,13 +1540,19 @@ begin
 	is_on_screen[i] = 1;
 	x_pos[i] = int2fix(120);
 	y_pos[i] = int2fix(14);
-	x_velocity[i] = 0xff00;//xe200; 
-	y_velocity[i] = 0x00a0;//((signed int)time_elapsed_HS)<<2;
+	x_velocity[i] = 0xff80;//xe200;
+	temp = time_elapsed_HS % 8; 
+	y_velocity[i] = int2fix(temp)>>2;//((signed int)time_elapsed_HS)<<2;
 	place_ball(i);
 end
 
 int main(void)
 begin
+	signed int rij_x;
+	signed int rij_y;
+	signed int vij_x;
+	signed int vij_y;
+	signed int dot_prod;
 	char width = screen_width-1;
 	char height = screen_height-1;
 	unsigned char prev_top = 0;
@@ -1568,10 +1575,10 @@ begin
 	video_line(width,0,width,height,1);
 	video_line(0,0,width,0,1);
 	video_line(0,height,width-17,height,1);
-	video_pt(40,1,1);
-	video_pt(80,1,1);
-	video_pt(40,height-1,1);
-	video_pt(80,height-1,1);
+	video_pt(50,1,1);
+	video_pt(75,1,1);
+	video_pt(50,height-1,1);
+	video_pt(75,height-1,1);
 
 
 	
@@ -1589,6 +1596,12 @@ begin
 				time_elapsed_HS++; 
 				sprintf(time_str, "%3d", (time_elapsed_HS>>1));
 				video_puts(110,57,time_str);
+				video_line(0,0,width,0,1);
+				video_line(0,height,width-17,height,1);
+				video_pt(50,1,1);
+				video_pt(75,1,1);
+				video_pt(50,height-1,1);
+				video_pt(75,height-1,1);
 			end
 
 			// 2. update positions for the paddle
@@ -1614,23 +1627,40 @@ begin
 					begin
 						if(is_on_screen[j])
 						begin
-							if(0)// check collision here)<4))
+	
+						// Collision code is commented out because it causes a lot of issues
+						/*
+						rij_x = x_pos[i] - x_pos[j];
+						rij_y = y_pos[i] - y_pos[j];
+							if (rij_x < 3)
 							begin
-								//collision code here
-								//delta_x_velocity = 
-								//delta_y_velocity =
-								//x_velocity += delta_x_velocity;
-								//y_velocity += delta_y_velocity; 
-							end // rij check
+								if (rij_y <3)
+								begin
+									if(multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= 4)// check collision here)<4))
+									begin
+										vij_x = x_velocity[i]-x_velocity[j];
+										vij_y = y_velocity[i]-y_velocity[j];
+										//collision code here
+										dot_prod = multfix(rij_x,(vij_x>>2)) + multfix(rij_y,(vij_y>>2));
+										delta_x_velocity = multfix(rij_x,(dot_prod>>2));
+										delta_y_velocity = multfix(rij_y,(dot_prod>>2));
+										x_velocity[i] += delta_x_velocity;
+										y_velocity[i] += delta_y_velocity; 
+										x_velocity[j] -= delta_x_velocity;
+										y_velocity[j] -= delta_y_velocity; 
+									end // rij check
+								end
+							end
+							*/
 						end // is on screen j
 					end // for j
 				
-
+					// drag
 					//x_velocity[i] -= multfix(x_velocity[i],0x0001);
 					//y_velocity[i] -= multfix(y_velocity[i],0x0001);
 
 				
-					if((fix2int(x_pos[i]) < 5) & ((fix2int(y_pos[i])-top_of_paddle)>0) & ((fix2int(y_pos[i])-top_of_paddle)<7))
+					if((fix2int(x_pos[i]) < 5) & ((fix2int(y_pos[i])-top_of_paddle)>-4) & ((fix2int(y_pos[i])-top_of_paddle)<9))
 					begin
 						x_velocity[i] = multfix(x_velocity[i],int2fix(-1));
 						y_velocity[i] += int2fix(v_paddle_y);
@@ -1650,26 +1680,28 @@ begin
 
 
 			// 3.3 remove balls that hit the left side of the screen or bins
-					if(fix2int(x_pos[i]) < 4) // hit left wall
+					if(fix2int(x_pos[i]) <= 2) // hit left wall
 					begin
 						is_on_screen[i] = 0;
 						if(score) score--;
 						age[i] = 0;
 						remove_ball(i);
 					end // hit left wall
-
-					if(fix2int(x_pos[i])<80 & fix2int(x_pos[i])>40)
+					else
 					begin
-						if(fix2int(y_pos[i])<=3 | fix2int(y_pos[i])>=(height-4))
+						if(fix2int(x_pos[i])<75 & fix2int(x_pos[i])>50)
 						begin
-							is_on_screen[i] = 0;
-							age[i] = 0;
-							score++;
-							remove_ball(i);
-						end // y check bins
+							if(fix2int(y_pos[i])<=3 | fix2int(y_pos[i])>=(height-4))
+							begin
+								is_on_screen[i] = 0;
+								age[i] = 0;
+								score++;
+								remove_ball(i);
+							end // y check bins
+							else place_ball(i);
+						end // x check bins
 						else place_ball(i);
-					end // x check bins
-					else place_ball(i);
+					end // left wall check
 				end // is on screen i
 			end // for i
 
