@@ -68,11 +68,14 @@ char pos[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
 
 //Ball variables
 #define Max_num_balls 15
+volatile unsigned int age[Max_num_balls];
 volatile signed int x_pos[Max_num_balls];
 volatile signed int y_pos[Max_num_balls];
 volatile signed int x_velocity[Max_num_balls];
 volatile signed int y_velocity[Max_num_balls];
-volatile char is_on_screen[Max_num_balls];
+volatile unsigned char is_on_screen[Max_num_balls];
+volatile unsigned char hit_count[Max_num_balls];
+volatile unsigned char score = 0;
 
 // put the MCU to sleep JUST before the CompA ISR goes off
 ISR(TIMER1_COMPB_vect, ISR_NAKED)
@@ -226,8 +229,15 @@ begin
 	syncOFF = 0b00000001;
 
 	// init no balls on screen	
-	for(int n=0; n<Max_num_balls;n++) is_on_screen[n] = 0;
+	for(int n=0; n<Max_num_balls;n++)
+	begin
+		is_on_screen[n] = 0;
+		age[n] = 0;
+		hit_count[n] = 0;
+	end
+
 	for(int y=0; y<screen_array_size;y++) screen[y] = 0;
+	
 
 	// Set up single video line timing
 	sei();
@@ -1471,45 +1481,70 @@ int multfix(int a, int b) {
 
 void remove_ball(int i)
 begin
-	video_pt(x_pos[i]+1,y_pos[i],0);
-	video_pt(x_pos[i]+2,y_pos[i],0);
-	video_pt(x_pos[i],y_pos[i]+1,0);
-	video_pt(x_pos[i],y_pos[i]+2,0);
-	video_pt(x_pos[i]+3,y_pos[i]+1,0);
-	video_pt(x_pos[i]+3,y_pos[i]+2,0);
-	video_pt(x_pos[i]+1,y_pos[i]+3,0);
-	video_pt(x_pos[i]+2,y_pos[i]+3,0);
+	video_pt(fix2int(x_pos[i])+1,fix2int(y_pos[i]),0);
+	video_pt(fix2int(x_pos[i])+2,fix2int(y_pos[i]),0);
+	video_pt(fix2int(x_pos[i]),fix2int(y_pos[i])+1,0);
+	video_pt(fix2int(x_pos[i]),fix2int(y_pos[i])+2,0);
+	video_pt(fix2int(x_pos[i])+3,fix2int(y_pos[i])+1,0);
+	video_pt(fix2int(x_pos[i])+3,fix2int(y_pos[i])+2,0);
+	video_pt(fix2int(x_pos[i])+1,fix2int(y_pos[i])+3,0);
+	video_pt(fix2int(x_pos[i])+2,fix2int(y_pos[i])+3,0);
 end
 
 void place_ball(int i)
 begin
-	video_pt(x_pos[i]+1,y_pos[i],1);
-	video_pt(x_pos[i]+2,y_pos[i],1);
-	video_pt(x_pos[i],y_pos[i]+1,1);
-	video_pt(x_pos[i],y_pos[i]+2,1);
-	video_pt(x_pos[i]+3,y_pos[i]+1,1);
-	video_pt(x_pos[i]+3,y_pos[i]+2,1);
-	video_pt(x_pos[i]+1,y_pos[i]+3,1);
-	video_pt(x_pos[i]+2,y_pos[i]+3,1);
+	video_pt(fix2int(x_pos[i])+1,fix2int(y_pos[i]),1);
+	video_pt(fix2int(x_pos[i])+2,fix2int(y_pos[i]),1);
+	video_pt(fix2int(x_pos[i]),fix2int(y_pos[i])+1,1);
+	video_pt(fix2int(x_pos[i]),fix2int(y_pos[i])+2,1);
+	video_pt(fix2int(x_pos[i])+3,fix2int(y_pos[i])+1,1);
+	video_pt(fix2int(x_pos[i])+3,fix2int(y_pos[i])+2,1);
+	video_pt(fix2int(x_pos[i])+1,fix2int(y_pos[i])+3,1);
+	video_pt(fix2int(x_pos[i])+2,fix2int(y_pos[i])+3,1);
+end
+
+char remove_oldest_ball(void)
+begin
+	unsigned char i = 0;
+	unsigned char j = 0;
+	unsigned int max = 0;
+	for (i=0;i<Max_num_balls;i++)
+	begin
+		if(age[i]> max)
+		begin
+			j = i;
+			max = age[i];
+		end	
+	end	
+	remove_ball(j);
+	is_on_screen[j] = 0;
+	score++;
+	return j;
 end
 
 // adds a ball to the screen
 void add_ball(void)
 begin
-	int i = 0;
-	while(is_on_screen[i]) i++;
-	i--;
+	unsigned char i = 0;
+	if(is_on_screen[0])
+	begin
+		i++;
+		while(is_on_screen[i] & i<(Max_num_balls-1)) i++;
+		if(i==(Max_num_balls-1))  i = remove_oldest_ball();
+		i--; 
+	end
+
+	age[i] = 0;
 	is_on_screen[i] = 1;
-	x_pos[i] = 123;
-	y_pos[i] = 14;
-	x_velocity[i] = 0xe200; 
-	y_velocity[i] = 0x0300;
+	x_pos[i] = int2fix(120);
+	y_pos[i] = int2fix(14);
+	x_velocity[i] = 0x00a0;//xe200; 
+	y_velocity[i] = 0x0040;
 	place_ball(i);
 end
 
 int main(void)
 begin
-	unsigned char score = 0;
 	unsigned char time_elapsed_HS = 0;
 	char width = screen_width-1;
 	char height = screen_height-1;
@@ -1525,10 +1560,11 @@ begin
 	unsigned char time_str[3];
 	unsigned char score_str[3];
 
+	int test = 0;
 
+	
 	initialize();
-	x_pos[0] = 40;
-	y_pos[0] = 30;
+	
 	video_line(width,0,width,height,1);
 	video_line(0,0,width,0,1);
 	video_line(0,height,width-17,height,1);
@@ -1537,7 +1573,8 @@ begin
 	video_pt(40,height-1,1);
 	video_pt(80,height-1,1);
 
-	// guide for the real code
+
+	
 	while(time_elapsed_HS<=200)
 	begin
 		if (LineCount == ScreenBot)
@@ -1547,8 +1584,7 @@ begin
 			frame_count++;
 			if (frame_count >= 30)
 			begin
-				add_ball();		// check to make sure that I'm not adding outside of frame
-				//place_ball(0);
+				if (time_elapsed_HS < 6) add_ball();
 				frame_count = 0;
 				time_elapsed_HS++; 
 				sprintf(time_str, "%3d", (time_elapsed_HS>>1));
@@ -1565,11 +1601,14 @@ begin
 				video_line(3,top_of_paddle,3,top_of_paddle+8,1);
 				ADC_start_measure(0);
 
+		
 			// 3. update ball information
 			for(int i = 0; i<Max_num_balls-1;i++)
 			begin
 				if(is_on_screen[i])
 				begin
+					age[i]++;
+					
 				// 3.1. check for collisions and update velocities (including drag)
 					for(int j = i+1; j<Max_num_balls;j++)
 					begin
@@ -1578,48 +1617,59 @@ begin
 							if(0)// check collision here)<4))
 							begin
 								//collision code here
-
+								//delta_x_velocity = 
+								//delta_y_velocity =
+								//x_velocity += delta_x_velocity;
+								//y_velocity += delta_y_velocity; 
 							end // rij check
 						end // is on screen j
 					end // for j
-					delta_x_velocity = multfix(x_velocity[i],0x0001);
-					delta_y_velocity = multfix(y_velocity[i],0x0001);
-					x_velocity[i] -= delta_x_velocity;
-					y_velocity[i] -= delta_y_velocity;
+				
 
+					//x_velocity[i] -= multfix(x_velocity[i],0x0001);
+					//y_velocity[i] -= multfix(y_velocity[i],0x0001);
 
-					if((x_pos[i] <= 4) & ((y_pos[i]-top_of_paddle)>0) & ((y_pos[i]-top_of_paddle)<7))
+				
+					if((fix2int(x_pos[i]) < 5) & ((fix2int(y_pos[i])-top_of_paddle)>0) & ((fix2int(y_pos[i])-top_of_paddle)<7))
 					begin
-						x_velocity[i] |= 0x8000;
-						y_velocity[i] += v_paddle_y;
+						x_velocity[i] = multfix(x_velocity[i],int2fix(-1));
+						y_velocity[i] += int2fix(v_paddle_y);
 					end
-
+				
 			// 3.2. Update position of balls
 
 					remove_ball(i);
 
+					if(fix2int(x_pos[i])>123) x_velocity[i] = multfix(x_velocity[i],int2fix(-1));
+					if(fix2int(y_pos[i])<3) y_velocity[i] = multfix(y_velocity[i],int2fix(-1));
+					if(fix2int(y_pos[i])>61) y_velocity[i] = multfix(y_velocity[i],int2fix(-1));
 
 					x_pos[i] += x_velocity[i];
 					y_pos[i] += y_velocity[i];
 
-					place_ball(i);
+
 
 			// 3.3 remove balls that hit the left side of the screen or bins
-					if(x_pos[i] <= 1) // hit left wall
+					if(fix2int(x_pos[i]) < 3) // hit left wall
 					begin
 						is_on_screen[i] = 0;
 						if(score) score--;
-						// remove_ball(x_pos[q],y_pos[q]);
+						age[i] = 0;
+						remove_ball(i);
 					end // hit left wall
-					if(x_pos[i]<100 & x_pos[i]>60)
+
+					if(fix2int(x_pos[i])<100 & fix2int(x_pos[i])>60)
 					begin
-						if(y_pos[i]<=1 | y_pos[i]>=(height-2))
+						if(fix2int(y_pos[i])<=1 | fix2int(y_pos[i])>=(height-2))
 						begin
 							is_on_screen[i] = 0;
+							age[i] = 0;
 							score++;
 							remove_ball(i);
 						end // y check bins
+						else place_ball(i);
 					end // x check bins
+					else place_ball(i);
 				end // is on screen i
 			end // for i
 
