@@ -45,8 +45,8 @@ typedef enum { false, true } bool;
 
 // ramp constants
 #define RAMPUPEND 250 // = 4*62.5 or 4mSec * 62.5 samples/mSec NOTE:max=255
-volatile unsigned int RAMPDOWNSTART; // = 10*62.5
-volatile unsigned int RAMPDOWNEND; // = 14*62.5 NOTE: RAMPDOWNEND-RAMPDOWNSTART<255 
+volatile unsigned int RAMPDOWNSTART;
+volatile unsigned int RAMPDOWNEND;
 #define countMS 62  //ticks/mSec
 
 // keypad variables
@@ -505,33 +505,6 @@ begin
 				checkStop();
 			end // while DDS_en
 		end // if # syll >1
-/*
-		else
-		begin
-			while(!stopped)
-			begin
-				checkStop();
-				if (!LED_timer) LED_toggle();
-
-				if (time_elapsed_total >= chirp_interval)
-				begin
-					time_elapsed_total = 0;
-					checkStop();
-					// after dur_syllables milliSec turn off PWM
-		     		DDS_en = 0;
-		     		while (time_elapsed < (chirp_interval - dur_syllables)) my_checkStop();
-
-					sample = 0 ;
-					rampCount = 0;
-					// phase lock the sine generator DDS
-					accumulator = 0 ;
-					// start a new  mSec cycle 
-					time_elapsed = 0;
-		     		DDS_en = 1;
-				end // if time_elapsed
-			end // while DDS_en
-		end
-		*/
 	end //end while
 	return 0;
 end

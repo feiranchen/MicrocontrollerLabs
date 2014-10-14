@@ -1629,14 +1629,16 @@ begin
 						begin
 	
 						// Collision code is commented out because it causes a lot of issues
-						/*
+						
 						rij_x = x_pos[i] - x_pos[j];
 						rij_y = y_pos[i] - y_pos[j];
 							if (rij_x < 3)
 							begin
 								if (rij_y <3)
 								begin
-									if(multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= 4)// check collision here)<4))
+									if((multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= 4)
+										&& hit_count[i]==0
+										&& hit_count[j]==0)// check collision here)<4))
 									begin
 										vij_x = x_velocity[i]-x_velocity[j];
 										vij_y = y_velocity[i]-y_velocity[j];
@@ -1648,10 +1650,18 @@ begin
 										y_velocity[i] += delta_y_velocity; 
 										x_velocity[j] -= delta_x_velocity;
 										y_velocity[j] -= delta_y_velocity; 
+
+										hit_count[i] = 3;
+										hit_count[j] = 3;
 									end // rij check
+									else
+									begin 
+										if (hit_count[i] > 0) hit_count[i]--;
+										if (hit_count[j] > 0) hit_count[j]--;
+									end
 								end
 							end
-							*/
+							
 						end // is on screen j
 					end // for j
 				
