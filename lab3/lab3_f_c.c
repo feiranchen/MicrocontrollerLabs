@@ -1618,24 +1618,21 @@ begin
 			// 3. update ball information
 			for(int i = 0; i<Max_num_balls-1;i++)
 			begin
-				if(is_on_screen[i])
-				begin
+				if(!is_on_screen[i]) continue;
 					age[i]++;
 					
 				// 3.1. check for collisions and update velocities (including drag)
 					for(int j = i+1; j<Max_num_balls;j++)
 					begin
-						if(is_on_screen[j])
-						begin
-	
-						// Collision code is commented out because it causes a lot of issues
+						if(!is_on_screen[j]) continue;
+						if(i == j) continue; // don't consider the situation for one ball.
 						
 						rij_x = x_pos[i] - x_pos[j];
 						rij_y = y_pos[i] - y_pos[j];
-							if (rij_x < 3)
-							begin
-								if (rij_y <3)
-								begin
+							// if (rij_x < 3)
+							// begin
+							// 	if (rij_y <3)
+							// 	begin
 									if((multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= 4)
 										&& hit_count[i]==0
 										&& hit_count[j]==0)// check collision here)<4))
@@ -1659,10 +1656,8 @@ begin
 										if (hit_count[i] > 0) hit_count[i]--;
 										if (hit_count[j] > 0) hit_count[j]--;
 									end
-								end
-							end
-							
-						end // is on screen j
+							// 	end
+							// end
 					end // for j
 				
 					// drag
@@ -1712,7 +1707,6 @@ begin
 						end // x check bins
 						else place_ball(i);
 					end // left wall check
-				end // is on screen i
 			end // for i
 
 			// 5. update text (score, time...)
