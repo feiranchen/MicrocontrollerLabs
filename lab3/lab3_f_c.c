@@ -1629,36 +1629,37 @@ begin
 					
 					rij_x = x_pos[i] - x_pos[j];
 					rij_y = y_pos[i] - y_pos[j];
-						if (abs(rij_x) <= 0x0400)
-						begin
-						 	if (abs(rij_y) <= 0x0400)
-						 	begin
-								if((multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= int2fix(16))
-									&& hit_count[i]==0
-									&& hit_count[j]==0)// check collision here)<4))
-								begin
-									vij_x = x_velocity[i] - x_velocity[j];
-									vij_y = y_velocity[i] - y_velocity[j];
-									//collision code here
-									dot_prod = multfix(rij_x>>2,(vij_x)) + multfix(rij_y>>2,(vij_y));
-									delta_x_velocity = multfix(rij_x>>2,(dot_prod))>>1;
-									delta_y_velocity = multfix(rij_y>>2,(dot_prod))>>1;
-									x_velocity[i] += delta_x_velocity;
-									y_velocity[i] += delta_y_velocity; 
-									x_velocity[j] -= delta_x_velocity;
-									y_velocity[j] -= delta_y_velocity; 
 
-									hit_count[i] = 10;
-									hit_count[j] = 10;
-									
-								end // rij check
-						 	end
-						end
+					if (abs(rij_x) <= 0x0400)
+					begin
+					 	if (abs(rij_y) <= 0x0400)
+					 	begin
+							if((multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= int2fix(16))
+								&& hit_count[i]==0
+								&& hit_count[j]==0)// check collision here)<4))
+							begin
+								vij_x = x_velocity[i] - x_velocity[j];
+								vij_y = y_velocity[i] - y_velocity[j];
+								//collision code here
+								dot_prod = multfix(rij_x>>2,(vij_x)) + multfix(rij_y>>2,(vij_y));
+								delta_x_velocity = multfix(rij_x>>2,(dot_prod));
+								delta_y_velocity = multfix(rij_y>>2,(dot_prod));
+								x_velocity[i] += delta_x_velocity;
+								y_velocity[i] += delta_y_velocity; 
+								x_velocity[j] -= delta_x_velocity;
+								y_velocity[j] -= delta_y_velocity; 
+
+								hit_count[i] = 5;
+								hit_count[j] = 5;
+								
+							end // rij check
+					 	end
+					end
 				end // for j
 				
 				// drag
-				//x_velocity[i] -= multfix(x_velocity[i],0x0001);
-				//y_velocity[i] -= multfix(y_velocity[i],0x0001);
+				x_velocity[i] -= multfix(x_velocity[i],0x0001);
+			    y_velocity[i] -= multfix(y_velocity[i],0x0001);
 
 			
 				if((fix2int(x_pos[i]) <= 6)
