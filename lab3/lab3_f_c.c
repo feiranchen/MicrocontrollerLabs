@@ -1540,7 +1540,7 @@ begin
 	is_on_screen[i] = 1;
 	x_pos[i] = int2fix(120);
 	y_pos[i] = int2fix(14);
-	x_velocity[i] = 0xff80;//xe200;
+	x_velocity[i] = 0xff80; //xe200;
 	temp = time_elapsed_HS % 8; 
 	y_velocity[i] = int2fix(temp)>>2;//((signed int)time_elapsed_HS)<<2;
 	place_ball(i);
@@ -1566,6 +1566,9 @@ begin
 
 	unsigned char time_str[3];
 	unsigned char score_str[3];
+
+	//unsigned char start_calc;
+	//unsigned char end_calc;
 
 	int test = 0;
 
@@ -1605,17 +1608,22 @@ begin
 			end
 
 			// 2. update positions for the paddle
-				video_line(2,top_of_paddle,2,top_of_paddle+8,0);
-				video_line(3,top_of_paddle,3,top_of_paddle+8,0);
-				prev_top = top_of_paddle;
-				top_of_paddle =(ADCH*53/255)+1;
-				v_paddle_y = top_of_paddle-prev_top;
-				video_line(2,top_of_paddle,2,top_of_paddle+8,1);
-				video_line(3,top_of_paddle,3,top_of_paddle+8,1);
-				ADC_start_measure(0);
+			video_line(2,top_of_paddle,2,top_of_paddle+8,0);
+			video_line(3,top_of_paddle,3,top_of_paddle+8,0);
+			prev_top = top_of_paddle;
+			top_of_paddle =(ADCH*53/255)+1;
+			v_paddle_y = top_of_paddle-prev_top;
+			video_line(2,top_of_paddle,2,top_of_paddle+8,1);
+			video_line(3,top_of_paddle,3,top_of_paddle+8,1);
+			ADC_start_measure(0);
 
 		
 			// 3. update ball information
+
+			//start_calc = Max_num_balls/3 * (time_elapsed_HS%3);
+			//end_calc = Max_num_balls - Max_num_balls/3 * (2 - time_elapsed_HS % 3);
+
+
 			for(int i = 0; i<Max_num_balls-1;i++)
 			begin
 				if(!is_on_screen[i]) continue;
@@ -1624,6 +1632,8 @@ begin
 			// 3.1. check for collisions and update velocities (including drag)
 				for(int j = i+1; j<Max_num_balls;j++)
 				begin
+				
+					if (i%3 != time_elapsed_HS%3) continue;
 					//if(!is_on_screen[j]) continue;
 					if(i == j) continue; // don't consider the situation for one ball.
 					
@@ -1641,16 +1651,16 @@ begin
 								vij_x = x_velocity[i] - x_velocity[j];
 								vij_y = y_velocity[i] - y_velocity[j];
 								//collision code here
-								dot_prod = multfix(rij_x>>2,(vij_x)) + multfix(rij_y>>2,(vij_y));
-								delta_x_velocity = multfix(rij_x>>2,(dot_prod));
-								delta_y_velocity = multfix(rij_y>>2,(dot_prod));
+								dot_prod = multfix(rij_x,(vij_x>>2)) + multfix(rij_y,(vij_y>>2));
+								delta_x_velocity = multfix(rij_x,(dot_prod>>2));
+								delta_y_velocity = multfix(rij_y,(dot_prod>>2));
 								x_velocity[i] += delta_x_velocity;
 								y_velocity[i] += delta_y_velocity; 
 								x_velocity[j] -= delta_x_velocity;
 								y_velocity[j] -= delta_y_velocity; 
 
-								hit_count[i] = 5;
-								hit_count[j] = 5;
+								hit_count[i] = 3;
+								hit_count[j] = 3;
 								
 							end // rij check
 					 	end
