@@ -1624,40 +1624,41 @@ begin
 				// 3.1. check for collisions and update velocities (including drag)
 					for(int j = i+1; j<Max_num_balls;j++)
 					begin
-						if(!is_on_screen[j]) continue;
+						//if(!is_on_screen[j]) continue;
 						if(i == j) continue; // don't consider the situation for one ball.
 						
 						rij_x = x_pos[i] - x_pos[j];
 						rij_y = y_pos[i] - y_pos[j];
-							// if (rij_x < 3)
-							// begin
-							// 	if (rij_y <3)
-							// 	begin
-									if((multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= 4)
-										&& hit_count[i]==0
-										&& hit_count[j]==0)// check collision here)<4))
-									begin
-										vij_x = x_velocity[i]-x_velocity[j];
-										vij_y = y_velocity[i]-y_velocity[j];
+							if (abs(rij_x) <= 0x0400)
+							begin
+							 	if (abs(rij_y) <= 0x0400)
+							 	begin
+									//if(//(multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= 16) &&
+									//	 hit_count[i]==0
+									//	&& hit_count[j]==0)// check collision here)<4))
+									//begin
+										vij_x = x_velocity[i] - x_velocity[j];
+										vij_y = y_velocity[i] - y_velocity[j];
 										//collision code here
-										dot_prod = multfix(rij_x,(vij_x>>2)) + multfix(rij_y,(vij_y>>2));
-										delta_x_velocity = multfix(rij_x,(dot_prod>>2));
-										delta_y_velocity = multfix(rij_y,(dot_prod>>2));
+										dot_prod = multfix(rij_x>>2,(vij_x)) + multfix(rij_y>>2,(vij_y));
+										delta_x_velocity = multfix(rij_x>>2,(dot_prod));
+										delta_y_velocity = multfix(rij_y>>2,(dot_prod));
 										x_velocity[i] += delta_x_velocity;
 										y_velocity[i] += delta_y_velocity; 
 										x_velocity[j] -= delta_x_velocity;
 										y_velocity[j] -= delta_y_velocity; 
 
-										hit_count[i] = 3;
-										hit_count[j] = 3;
-									end // rij check
-									else
-									begin 
-										if (hit_count[i] > 0) hit_count[i]--;
-										if (hit_count[j] > 0) hit_count[j]--;
-									end
-							// 	end
-							// end
+										hit_count[i] = 5;
+										hit_count[j] = 5;
+										
+									//end // rij check
+									//else
+									//begin 
+									//	if (hit_count[i] > 0) hit_count[i]--;
+									//	if (hit_count[j] > 0) hit_count[j]--;
+									//end
+							 	end
+							end
 					end // for j
 				
 					// drag
@@ -1665,7 +1666,9 @@ begin
 					//y_velocity[i] -= multfix(y_velocity[i],0x0001);
 
 				
-					if((fix2int(x_pos[i]) < 5) & ((fix2int(y_pos[i])-top_of_paddle)>-4) & ((fix2int(y_pos[i])-top_of_paddle)<9))
+					if((fix2int(x_pos[i]) <= 6)
+						&& ((fix2int(y_pos[i])-top_of_paddle) > -4) 
+						&& ((fix2int(y_pos[i])-top_of_paddle) < 9))
 					begin
 						x_velocity[i] = multfix(x_velocity[i],int2fix(-1));
 						y_velocity[i] += int2fix(v_paddle_y);
@@ -1675,9 +1678,24 @@ begin
 
 					remove_ball(i);
 
-					if(fix2int(x_pos[i])>122) x_velocity[i] = multfix(x_velocity[i],int2fix(-1));
-					if(fix2int(y_pos[i])<3) y_velocity[i] = multfix(y_velocity[i],int2fix(-1));
-					if(fix2int(y_pos[i])>58) y_velocity[i] = multfix(y_velocity[i],int2fix(-1));
+					if(fix2int(x_pos[i])>=122)
+					begin
+						x_pos[i] = int2fix(121);
+						x_velocity[i] = -(x_velocity[i]);
+						//hit_count[i] = 5;
+					end
+					if(fix2int(y_pos[i])<=3)
+					begin
+						y_pos[i] = int2fix(4);
+						y_velocity[i] = -(y_velocity[i]);
+						//hit_count[i] = 5;
+					end
+					if(fix2int(y_pos[i])>=58)
+					begin
+						y_pos[i] = int2fix(57);
+						y_velocity[i] = -(y_velocity[i]);
+						//hit_count[i] = 5;
+					end
 
 					x_pos[i] += x_velocity[i];
 					y_pos[i] += y_velocity[i];
