@@ -154,7 +154,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000     0x1dca
+.text           0x00000000     0x1db4
  *(.vectors)
  .vectors       0x00000000       0x8c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51/crtm1284p.o
                 0x00000000                __vectors
@@ -255,14 +255,14 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a
                 0x00000516                __vector_16
                 0x00000516                __vector_18
                 0x00000516                __vector_20
- .text          0x0000051a      0xfaa lab3_f_c.o
+ .text          0x0000051a      0xf94 lab3_f_c.o
                 0x00000692                port_init
                 0x000009dc                video_puts
                 0x00000a14                video_set
                 0x00000662                USART_init
-                0x0000143a                write_LCD
+                0x00001424                write_LCD
                 0x00000634                timer1_init
-                0x0000149e                LCD_init
+                0x00001488                LCD_init
                 0x0000069c                ADC_start_measure
                 0x00000754                video_pt
                 0x00000520                __vector_13
@@ -276,70 +276,70 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a
                 0x00000cb0                remove_oldest_ball
                 0x0000051a                __vector_14
                 0x000008fe                video_putchar
- .text          0x000014c4      0x2ea lcd_lib.o
-                0x0000160e                LCDinit
-                0x000016f6                LCDcursorLeft
-                0x000016de                LCDcursorOFF
-                0x000016ce                LCDcursorOn
-                0x00001506                LCDsendCommand
-                0x000016b2                LCDshiftRight
-                0x00001712                LCDcursorRight
-                0x000015c6                LCDdefinechar
-                0x00001696                LCDshiftLeft
-                0x000014c4                LCDsendChar
-                0x000016ee                LCDvisible
-                0x00001548                LCDhome
-                0x00001598                CopyStringtoLCD
-                0x0000172e                LCDprogressBar
-                0x000016d6                LCDcursorOnBlink
-                0x0000157a                LCDGotoXY
-                0x00001540                LCDclr
-                0x00001550                LCDstring
-                0x000016e6                LCDblank
- .text          0x000017ae       0x1c multASM.o
-                0x000017ae                multfix
- .text          0x000017ca        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_udivmodhi4.o)
- .text          0x000017ca        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_divmodhi4.o)
- .text          0x000017ca        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_exit.o)
- .text          0x000017ca        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_clear_bss.o)
- .text          0x000017ca        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(sprintf.o)
- .text          0x000017ca        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
- .text          0x000017ca        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(strnlen_P.o)
- .text          0x000017ca        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(strnlen.o)
- .text          0x000017ca        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(fputc.o)
- .text          0x000017ca        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(ultoa_invert.o)
-                0x000017ca                . = ALIGN (0x2)
+ .text          0x000014ae      0x2ea lcd_lib.o
+                0x000015f8                LCDinit
+                0x000016e0                LCDcursorLeft
+                0x000016c8                LCDcursorOFF
+                0x000016b8                LCDcursorOn
+                0x000014f0                LCDsendCommand
+                0x0000169c                LCDshiftRight
+                0x000016fc                LCDcursorRight
+                0x000015b0                LCDdefinechar
+                0x00001680                LCDshiftLeft
+                0x000014ae                LCDsendChar
+                0x000016d8                LCDvisible
+                0x00001532                LCDhome
+                0x00001582                CopyStringtoLCD
+                0x00001718                LCDprogressBar
+                0x000016c0                LCDcursorOnBlink
+                0x00001564                LCDGotoXY
+                0x0000152a                LCDclr
+                0x0000153a                LCDstring
+                0x000016d0                LCDblank
+ .text          0x00001798       0x1c multASM.o
+                0x00001798                multfix
+ .text          0x000017b4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_udivmodhi4.o)
+ .text          0x000017b4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_divmodhi4.o)
+ .text          0x000017b4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_exit.o)
+ .text          0x000017b4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_clear_bss.o)
+ .text          0x000017b4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(sprintf.o)
+ .text          0x000017b4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+ .text          0x000017b4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(strnlen_P.o)
+ .text          0x000017b4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(strnlen.o)
+ .text          0x000017b4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(fputc.o)
+ .text          0x000017b4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(ultoa_invert.o)
+                0x000017b4                . = ALIGN (0x2)
  *(.text.*)
- .text.libgcc   0x000017ca       0x28 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_udivmodhi4.o)
-                0x000017ca                __udivmodhi4
- .text.libgcc   0x000017f2       0x26 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_divmodhi4.o)
-                0x000017f2                __divmodhi4
-                0x000017f2                _div
- .text.libgcc   0x00001818        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_exit.o)
- .text.libgcc   0x00001818        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_clear_bss.o)
+ .text.libgcc   0x000017b4       0x28 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_udivmodhi4.o)
+                0x000017b4                __udivmodhi4
+ .text.libgcc   0x000017dc       0x26 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_divmodhi4.o)
+                0x000017dc                __divmodhi4
+                0x000017dc                _div
+ .text.libgcc   0x00001802        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_exit.o)
+ .text.libgcc   0x00001802        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_clear_bss.o)
  .text.avr-libc
-                0x00001818       0x62 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(sprintf.o)
-                0x00001818                sprintf
+                0x00001802       0x62 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(sprintf.o)
+                0x00001802                sprintf
  .text.avr-libc
-                0x0000187a      0x40c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
-                0x0000187a                vfprintf
+                0x00001864      0x40c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(vfprintf_std.o)
+                0x00001864                vfprintf
  .text.avr-libc
-                0x00001c86       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(strnlen_P.o)
-                0x00001c86                strnlen_P
+                0x00001c70       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(strnlen_P.o)
+                0x00001c70                strnlen_P
  .text.avr-libc
-                0x00001c9c       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(strnlen.o)
-                0x00001c9c                strnlen
+                0x00001c86       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(strnlen.o)
+                0x00001c86                strnlen
  .text.avr-libc
-                0x00001cb2       0x58 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(fputc.o)
-                0x00001cb2                fputc
+                0x00001c9c       0x58 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(fputc.o)
+                0x00001c9c                fputc
  .text.avr-libc
-                0x00001d0a       0xbc c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(ultoa_invert.o)
-                0x00001d0a                __ultoa_invert
-                0x00001dc6                . = ALIGN (0x2)
+                0x00001cf4       0xbc c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51\libc.a(ultoa_invert.o)
+                0x00001cf4                __ultoa_invert
+                0x00001db0                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x00001dc6        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_exit.o)
-                0x00001dc6                exit
-                0x00001dc6                _exit
+ .fini9         0x00001db0        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_exit.o)
+                0x00001db0                exit
+                0x00001db0                _exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -358,11 +358,11 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x00001dc6        0x4 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_exit.o)
+ .fini0         0x00001db0        0x4 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a(_exit.o)
  *(.fini0)
-                0x00001dca                _etext = .
+                0x00001db4                _etext = .
 
-.data           0x00800100       0x28 load address 0x00001dca
+.data           0x00800100       0x28 load address 0x00001db4
                 0x00800100                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00800100        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr51/crtm1284p.o
@@ -427,8 +427,8 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a
                 0x008005e8                y_pos
                 0x00800606                syncOFF
                 0x00800607                PROVIDE (__bss_end, .)
-                0x00001dca                __data_load_start = LOADADDR (.data)
-                0x00001df2                __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x00001db4                __data_load_start = LOADADDR (.data)
+                0x00001ddc                __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x00800607        0x0
                 0x00800607                PROVIDE (__noinit_start, .)
@@ -516,11 +516,11 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a
  .debug_abbrev  0x0000029d      0x1bb lcd_lib.o
  .debug_abbrev  0x00000458       0x14 multASM.o
 
-.debug_line     0x00000000      0xfc1
+.debug_line     0x00000000      0xfa9
  *(.debug_line)
- .debug_line    0x00000000      0xa4f lab3_f_c.o
- .debug_line    0x00000a4f      0x52c lcd_lib.o
- .debug_line    0x00000f7b       0x46 multASM.o
+ .debug_line    0x00000000      0xa37 lab3_f_c.o
+ .debug_line    0x00000a37      0x52c lcd_lib.o
+ .debug_line    0x00000f63       0x46 multASM.o
 
 .debug_frame    0x00000000      0x290
  *(.debug_frame)
@@ -534,10 +534,10 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr51\libgcc.a
  .debug_str     0x0000039f      0x14e lcd_lib.o
                                 0x26b (size before relaxing)
 
-.debug_loc      0x00000000      0xb3b
+.debug_loc      0x00000000      0xb2b
  *(.debug_loc)
- .debug_loc     0x00000000      0x5d7 lab3_f_c.o
- .debug_loc     0x000005d7      0x564 lcd_lib.o
+ .debug_loc     0x00000000      0x5c7 lab3_f_c.o
+ .debug_loc     0x000005c7      0x564 lcd_lib.o
 
 .debug_macinfo
  *(.debug_macinfo)

@@ -1641,8 +1641,8 @@ begin
 										vij_y = y_velocity[i] - y_velocity[j];
 										//collision code here
 										dot_prod = multfix(rij_x>>2,(vij_x)) + multfix(rij_y>>2,(vij_y));
-										delta_x_velocity = multfix(rij_x>>2,(dot_prod));
-										delta_y_velocity = multfix(rij_y>>2,(dot_prod));
+										delta_x_velocity = multfix(rij_x>>2,(dot_prod))>>1;
+										delta_y_velocity = multfix(rij_y>>2,(dot_prod))>>1;
 										x_velocity[i] += delta_x_velocity;
 										y_velocity[i] += delta_y_velocity; 
 										x_velocity[j] -= delta_x_velocity;
@@ -1680,19 +1680,16 @@ begin
 
 					if(fix2int(x_pos[i])>=122)
 					begin
-						x_pos[i] = int2fix(121);
 						x_velocity[i] = -(x_velocity[i]);
 						//hit_count[i] = 5;
 					end
 					if(fix2int(y_pos[i])<=3)
 					begin
-						y_pos[i] = int2fix(4);
 						y_velocity[i] = -(y_velocity[i]);
 						//hit_count[i] = 5;
 					end
 					if(fix2int(y_pos[i])>=58)
 					begin
-						y_pos[i] = int2fix(57);
 						y_velocity[i] = -(y_velocity[i]);
 						//hit_count[i] = 5;
 					end
