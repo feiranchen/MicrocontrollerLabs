@@ -2529,7 +2529,7 @@ begin
     12e8:	83 33       	cpi	r24, 0x33	; 51
     12ea:	1c f1       	brlt	.+70     	; 0x1332 <main+0x57e>
 						begin
-							if(fix2int(y_pos[i])<=3 | fix2int(y_pos[i])>=(height-4))
+							if(fix2int(y_pos[i])<=4 | fix2int(y_pos[i])>=(height-5))
     12ec:	80 81       	ld	r24, Z
     12ee:	91 81       	ldd	r25, Z+1	; 0x01
     12f0:	20 81       	ld	r18, Z
@@ -2537,13 +2537,13 @@ begin
     12f4:	89 2f       	mov	r24, r25
     12f6:	99 0f       	add	r25, r25
     12f8:	99 0b       	sbc	r25, r25
-    12fa:	84 30       	cpi	r24, 0x04	; 4
+    12fa:	85 30       	cpi	r24, 0x05	; 5
     12fc:	34 f0       	brlt	.+12     	; 0x130a <main+0x556>
     12fe:	83 2f       	mov	r24, r19
     1300:	99 27       	eor	r25, r25
     1302:	87 fd       	sbrc	r24, 7
     1304:	9a 95       	dec	r25
-    1306:	8b 33       	cpi	r24, 0x3B	; 59
+    1306:	8a 33       	cpi	r24, 0x3A	; 58
     1308:	a4 f0       	brlt	.+40     	; 0x1332 <main+0x57e>
 							begin
 								is_on_screen[i] = 0;

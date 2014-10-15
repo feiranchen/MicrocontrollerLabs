@@ -1711,7 +1711,7 @@ begin
 					begin
 						if(fix2int(x_pos[i])<75 & fix2int(x_pos[i])>50)
 						begin
-							if(fix2int(y_pos[i])<=3 | fix2int(y_pos[i])>=(height-4))
+							if(fix2int(y_pos[i])<=4 | fix2int(y_pos[i])>=(height-5))
 							begin
 								is_on_screen[i] = 0;
 								age[i] = 0;
