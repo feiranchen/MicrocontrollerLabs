@@ -1582,9 +1582,33 @@ begin
 	video_pt(75,1,1);
 	video_pt(50,height-1,1);
 	video_pt(75,height-1,1);
+/*
+	while(ADCH<200)
+	begin
+		video_puts(30,30,"Ready?");
+		video_puts(27,(200*53/255)+1,"paddle here");
+		// 2. update positions for the paddle
+		video_line(5,(200*53/255)+1,20,(200*53/255)+1,1);
+		video_pt(6,(200*53/255)+2,1);
+		video_pt(6,(200*53/255),1);
+		video_line(2,top_of_paddle,2,top_of_paddle+8,0);
+		video_line(3,top_of_paddle,3,top_of_paddle+8,0);
+		prev_top = top_of_paddle;
+		top_of_paddle =(ADCH*53/255)+1;
+		v_paddle_y = top_of_paddle-prev_top;
+		video_line(2,top_of_paddle,2,top_of_paddle+8,1);
+		video_line(3,top_of_paddle,3,top_of_paddle+8,1);
+		ADC_start_measure(0);
+	end
 
-
-	
+	video_line(2,top_of_paddle,2,top_of_paddle+8,0);
+	video_line(3,top_of_paddle,3,top_of_paddle+8,0);
+	video_line(5,(200*53/255)+1,20,(200*53/255)+1,0);
+	video_pt(6,(200*53/255)+2,0);
+	video_pt(6,(200*53/255),0);
+	video_puts(30,30,"       ");
+	video_puts(27,(200*53/255)+1,"           ");
+*/	
 	while(time_elapsed_HS<=200)
 	begin
 		if (LineCount == ScreenBot)
@@ -1592,7 +1616,7 @@ begin
 
 			// 1. Timing and ball addition
 			frame_count++;
-			if (frame_count >= 20)
+			if (frame_count >= 30)
 			begin
 				add_ball();
 				frame_count = 0;
@@ -1609,13 +1633,13 @@ begin
 			end
 
 			// 2. update positions for the paddle
-			video_line(2,top_of_paddle,2,top_of_paddle+8,0);
-			video_line(3,top_of_paddle,3,top_of_paddle+8,0);
+			video_line(2,top_of_paddle,2,top_of_paddle+16,0);
+			video_line(3,top_of_paddle,3,top_of_paddle+16,0);
 			prev_top = top_of_paddle;
-			top_of_paddle =(ADCH*53/255)+1;
+			top_of_paddle =(ADCH*45/255)+1;
 			v_paddle_y = top_of_paddle-prev_top;
-			video_line(2,top_of_paddle,2,top_of_paddle+8,1);
-			video_line(3,top_of_paddle,3,top_of_paddle+8,1);
+			video_line(2,top_of_paddle,2,top_of_paddle+16,1);
+			video_line(3,top_of_paddle,3,top_of_paddle+16,1);
 			ADC_start_measure(0);
 
 		
@@ -1674,8 +1698,8 @@ begin
 
 			
 				if((fix2int(x_pos[i]) <= 6)
-					&& ((fix2int(y_pos[i])-top_of_paddle) > -4) 
-					&& ((fix2int(y_pos[i])-top_of_paddle) < 9))
+					&& ((fix2int(y_pos[i])-top_of_paddle) > -5) 
+					&& ((fix2int(y_pos[i])-top_of_paddle) < 17))
 				begin
 					x_velocity[i] = multfix(x_velocity[i],int2fix(-1));
 					y_velocity[i] += int2fix(v_paddle_y);
@@ -1723,6 +1747,7 @@ begin
 							is_on_screen[i] = 0;
 							age[i] = 0;
 							score++;
+							if(frame_count<=20)add_ball();
 							remove_ball(i);
 						end // y check bins
 						else place_ball(i);
