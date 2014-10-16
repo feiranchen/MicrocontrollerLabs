@@ -67,7 +67,7 @@ int* screenindex;
 char pos[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
 
 //Ball variables
-#define Max_num_balls 15
+#define Max_num_balls 20
 volatile unsigned int age[Max_num_balls];
 volatile signed int x_pos[Max_num_balls];
 volatile signed int y_pos[Max_num_balls];
@@ -1540,7 +1540,7 @@ begin
 	is_on_screen[i] = 1;
 	x_pos[i] = int2fix(120);
 	y_pos[i] = int2fix(14);
-	x_velocity[i] = 0xff80; //xe200;
+	x_velocity[i] = int2fix(-1); //xe200;
 	temp = time_elapsed_HS % 8; 
 	y_velocity[i] = int2fix(temp)>>2;//((signed int)time_elapsed_HS)<<2;
 	place_ball(i);
@@ -1592,7 +1592,7 @@ begin
 
 			// 1. Timing and ball addition
 			frame_count++;
-			if (frame_count >= 30)
+			if (frame_count >= 20)
 			begin
 				add_ball();
 				frame_count = 0;
@@ -1601,6 +1601,7 @@ begin
 				video_puts(110,57,time_str);
 				video_line(0,0,width,0,1);
 				video_line(0,height,width-17,height,1);
+				video_line(width,0,width,height,1);
 				video_pt(50,1,1);
 				video_pt(75,1,1);
 				video_pt(50,height-1,1);
@@ -1644,7 +1645,7 @@ begin
 					begin
 					 	if (abs(rij_y) <= 0x0400)
 					 	begin
-							if((multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= int2fix(16))
+							if((multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= int2fix(32))
 								&& hit_count[i]==0
 								&& hit_count[j]==0)// check collision here)<4))
 							begin
@@ -1736,7 +1737,19 @@ begin
 
 		end // linecount == screenBot
 	end // while time < 200
+
 	for(int gh = 0; gh<Max_num_balls; gh++) remove_ball(gh); // clear the screen
+
+	video_line(0,0,width,0,1);
+	video_line(0,height,width-17,height,1);
+	video_pt(50,1,1);
+	video_pt(75,1,1);
+	video_pt(50,height-1,1);
+	video_pt(75,height-1,1);
+	video_line(width,0,width,height,1);
+	video_line(1,1,1,height-1,0);
+	video_line(2,1,2,height-1,0);
+
 	while(1)
 	begin
 		sprintf(score_str, "%i",score);
