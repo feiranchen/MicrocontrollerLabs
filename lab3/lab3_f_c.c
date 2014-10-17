@@ -67,7 +67,7 @@ int* screenindex;
 char pos[8] = {0x80,0x40,0x20,0x10,0x08,0x04,0x02,0x01};
 
 //Ball variables
-#define Max_num_balls 20
+#define Max_num_balls 12
 volatile unsigned int age[Max_num_balls];
 volatile signed int x_pos[Max_num_balls];
 volatile signed int y_pos[Max_num_balls];
@@ -184,7 +184,7 @@ begin
 	ADCSRA = 0;
 
 	ADMUX = (1<<REFS0) + (1<<ADLAR);
-	ADCSRA = (1<<ADEN) + 7 ; 
+	ADCSRA = (1<<ADEN) + 6 ; 
 end
 
 
@@ -200,8 +200,8 @@ end
 // performs an ADC on the selected channel.
 void ADC_start_measure(char channel)
 begin
-	ADMUX = 0;
-	ADMUX = (1<<REFS0) + (1<<ADLAR) + channel;
+	//ADMUX = 0;
+	//ADMUX = (1<<REFS0) + (1<<ADLAR) + channel;
 	ADCSRA |= (1<<ADSC);
 end
 
@@ -1556,17 +1556,20 @@ begin
 	char width = screen_width-1;
 	char height = screen_height-1;
 	unsigned char prev_top = 0;
-	unsigned char top_of_paddle = 2;
+	unsigned char top_of_paddle;
 	int frame_count = 0;
 	int v_paddle_y;
 	#define v_paddle_x 0
-
+	char max_balls_on_screen = 0;
+	char balls_on_screen = 0;
 	int delta_x_velocity;
 	int delta_y_velocity;
-
-	unsigned char time_str[3];
-	unsigned char score_str[3];
-
+	signed int temp;
+	unsigned char time_str[4];
+	unsigned char score_str[4];
+	unsigned char max_str[4];
+	unsigned char real_time_str[4];
+	unsigned char adc_str[4];
 	//unsigned char start_calc;
 	//unsigned char end_calc;
 
@@ -1578,11 +1581,11 @@ begin
 	video_line(width,0,width,height,1);
 	video_line(0,0,width,0,1);
 	video_line(0,height,width-17,height,1);
-	video_pt(50,1,1);
+	video_pt(60,1,1);
 	video_pt(75,1,1);
-	video_pt(50,height-1,1);
+	video_pt(60,height-1,1);
 	video_pt(75,height-1,1);
-/*
+
 	while(ADCH<200)
 	begin
 		video_puts(30,30,"Ready?");
@@ -1594,7 +1597,7 @@ begin
 		video_line(2,top_of_paddle,2,top_of_paddle+8,0);
 		video_line(3,top_of_paddle,3,top_of_paddle+8,0);
 		prev_top = top_of_paddle;
-		top_of_paddle =(ADCH*53/255)+1;
+		top_of_paddle =(ADCH*53/255)+2;
 		v_paddle_y = top_of_paddle-prev_top;
 		video_line(2,top_of_paddle,2,top_of_paddle+8,1);
 		video_line(3,top_of_paddle,3,top_of_paddle+8,1);
@@ -1608,12 +1611,13 @@ begin
 	video_pt(6,(200*53/255),0);
 	video_puts(30,30,"       ");
 	video_puts(27,(200*53/255)+1,"           ");
-*/	
+
 	while(time_elapsed_HS<=200)
 	begin
+		balls_on_screen = 0;
 		if (LineCount == ScreenBot)
 		begin
-
+			
 			// 1. Timing and ball addition
 			frame_count++;
 			if (frame_count >= 30)
@@ -1626,9 +1630,9 @@ begin
 				video_line(0,0,width,0,1);
 				video_line(0,height,width-17,height,1);
 				video_line(width,0,width,height,1);
-				video_pt(50,1,1);
+				video_pt(60,1,1);
 				video_pt(75,1,1);
-				video_pt(50,height-1,1);
+				video_pt(60,height-1,1);
 				video_pt(75,height-1,1);
 			end
 
@@ -1636,11 +1640,12 @@ begin
 			video_line(2,top_of_paddle,2,top_of_paddle+16,0);
 			video_line(3,top_of_paddle,3,top_of_paddle+16,0);
 			prev_top = top_of_paddle;
-			top_of_paddle =(ADCH*45/255)+1;
+			temp =(ADCH*45/255)+1;
+			top_of_paddle =(char)temp;
 			v_paddle_y = top_of_paddle-prev_top;
 			video_line(2,top_of_paddle,2,top_of_paddle+16,1);
 			video_line(3,top_of_paddle,3,top_of_paddle+16,1);
-			ADC_start_measure(0);
+			
 
 		
 			// 3. update ball information
@@ -1653,8 +1658,10 @@ begin
 			begin
 				if(!is_on_screen[i]) continue;
 				age[i]++;
+				balls_on_screen++;
 				if (hit_count[i] > 0) hit_count[i]--;
 			// 3.1. check for collisions and update velocities (including drag)
+
 				for(int j = i+1; j<Max_num_balls;j++)
 				begin
 				
@@ -1665,33 +1672,33 @@ begin
 					rij_x = x_pos[i] - x_pos[j];
 					rij_y = y_pos[i] - y_pos[j];
 
-					if (abs(rij_x) <= 0x0400)
+					if (abs(rij_x) <= 0x0450)
 					begin
-					 	if (abs(rij_y) <= 0x0400)
+					 	if (abs(rij_y) <= 0x0450)
 					 	begin
-							if((multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= int2fix(32))
-								&& hit_count[i]==0
+							if(//(multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= int2fix(32))
+							 hit_count[i]==0
 								&& hit_count[j]==0)// check collision here)<4))
 							begin
 								vij_x = x_velocity[i] - x_velocity[j];
 								vij_y = y_velocity[i] - y_velocity[j];
 								//collision code here
 								dot_prod = multfix(rij_x,(vij_x>>2)) + multfix(rij_y,(vij_y>>2));
-								delta_x_velocity = multfix(rij_x,(dot_prod>>2));
-								delta_y_velocity = multfix(rij_y,(dot_prod>>2));
+								delta_x_velocity = multfix(rij_x,(dot_prod>>2))>>1;
+								delta_y_velocity = multfix(rij_y,(dot_prod>>2))>>1;
 								x_velocity[i] += delta_x_velocity;
 								y_velocity[i] += delta_y_velocity; 
 								x_velocity[j] -= delta_x_velocity;
 								y_velocity[j] -= delta_y_velocity; 
 
-								hit_count[i] = 3;
-								hit_count[j] = 3;
+								hit_count[i] = 4;
+								hit_count[j] = 4;
 								
 							end // rij check
 					 	end
 					end
 				end // for j
-				
+
 				// drag
 				x_velocity[i] -= multfix(x_velocity[i],0x0001);
 			    y_velocity[i] -= multfix(y_velocity[i],0x0001);
@@ -1725,9 +1732,17 @@ begin
 					//hit_count[i] = 5;
 				end
 
-				x_pos[i] += x_velocity[i];
-				y_pos[i] += y_velocity[i];
 
+				if((x_pos[i] + x_velocity[i])<int2fix(127)) 
+				begin
+					if((x_pos[i] + x_velocity[i])>int2fix(0)) x_pos[i] += x_velocity[i];
+				end
+
+				 //x_pos[i] += x_velocity[i];
+				if((y_pos[i] + y_velocity[i])<int2fix(64)) 
+				begin
+					if((y_pos[i] + y_velocity[i])>int2fix(0)) y_pos[i] += y_velocity[i];
+				end
 
 
 		// 3.3 remove balls that hit the left side of the screen or bins
@@ -1736,11 +1751,12 @@ begin
 					is_on_screen[i] = 0;
 					if(score) score--;
 					age[i] = 0;
+					if(frame_count<15)add_ball();
 					remove_ball(i);
 				end // hit left wall
 				else
 				begin
-					if(fix2int(x_pos[i])<75 & fix2int(x_pos[i])>50)
+					if(fix2int(x_pos[i])<75 & fix2int(x_pos[i])>60)
 					begin
 						if(fix2int(y_pos[i])<=4 | fix2int(y_pos[i])>=(height-5))
 						begin
@@ -1755,11 +1771,14 @@ begin
 					else place_ball(i);
 				end // left wall check
 			end // for i
-
+			ADC_start_measure(0);
+			if(balls_on_screen>max_balls_on_screen) max_balls_on_screen = balls_on_screen;
 			// 5. update text (score, time...)
 			sprintf(score_str, "%3d",score);
 			video_puts(110,1,score_str);
-
+			sprintf(real_time_str, "%3d", balls_on_screen);
+			video_puts(6,1,real_time_str);
+	
 		end // linecount == screenBot
 	end // while time < 200
 
@@ -1767,9 +1786,9 @@ begin
 
 	video_line(0,0,width,0,1);
 	video_line(0,height,width-17,height,1);
-	video_pt(50,1,1);
+	video_pt(60,1,1);
 	video_pt(75,1,1);
-	video_pt(50,height-1,1);
+	video_pt(60,height-1,1);
 	video_pt(75,height-1,1);
 	video_line(width,0,width,height,1);
 	video_line(1,1,1,height-1,0);
@@ -1778,6 +1797,9 @@ begin
 	while(1)
 	begin
 		sprintf(score_str, "%i",score);
+		sprintf(max_str, "%i",max_balls_on_screen);
+		video_puts(95,52,max_str);
+		video_puts(30,52,"Max balls:");
 		video_puts(30,30,"Time Is Up!");
 		video_puts(30,42,"Your score:");
 		video_puts(100,42,score_str);
