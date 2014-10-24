@@ -2,7 +2,7 @@
 //trtSettings.h
 // include before trtkernel
 
-#define MAXNBRTASKS 4
+#define MAXNBRTASKS 3
 #define MAXNBRSEMAPHORES 7 // 3 sem (1-3) are needed for uart
 #define MAXNBRMUTEX 1
 
