@@ -122,7 +122,7 @@ end
 // write to LCD
 void write_3digit_LCD(int num, int x, int y)
 begin
-	sprintf(lcd_buffer,"%4d", num);
+	sprintf(lcd_buffer,"%4.4d", num);
 	LCDGotoXY(x, y);
 	LCDstring(lcd_buffer, strlen(lcd_buffer));
 end
@@ -130,8 +130,8 @@ end
 // write to LCD
 void write_LCD(int num)
 begin
-	sprintf(lcd_buffer,"%i", num);
-	LCDGotoXY(1, 1);
+	sprintf(lcd_buffer,"%-i", num);
+	LCDGotoXY(0, 1);
 	LCDstring(lcd_buffer, strlen(lcd_buffer));
 end
 
@@ -211,14 +211,13 @@ void calc_PWM_Const(void* args)
 	while(1)
 	begin
 		rpm_isr = fan_period*7;    // time for one rotation
-		rpm_isr = rpm_isr/250000;    // convert one rotation period to seconds
-		rpm_isr = 60/rpm_isr;    // divide 60 seconsd by rotations/sec for rpm
+		rpm_isr = 250000*60/rpm_isr;    // divide 60 seconsd by rotations/sec for rpm
 
 		prev_error = error;
 		sum_error += error;
 		// lock and look at error
 		trtWait(SEM_SHARED_RPM);
-		RPM = rpm_isr;    // saves the calculated value into a global that LCD func can use
+		RPM = (int)rpm_isr;    // saves the calculated value into a global that LCD func can use
 		trtWait(SEM_SHARED_S);
 		error = RPM-s_value;
 		trtSignal(SEM_SHARED_S);
@@ -227,14 +226,23 @@ void calc_PWM_Const(void* args)
 		// check if error had a zero crossing and reset the i term
 				
 		// calculate CF
+		trtWait(SEM_SHARED_S);
+		trtWait(SEM_SHARED_P);
+		trtWait(SEM_SHARED_I);
+		trtWait(SEM_SHARED_D);
 		CF = p * error + d * (error-prev_error) + i * (sum_error);
+		trtSignal(SEM_SHARED_D);
+		trtSignal(SEM_SHARED_I);
+		trtSignal(SEM_SHARED_P);
+		trtSignal(SEM_SHARED_S);
+
 		if (CF>255) OCR0A = 255;
 		if (CF<0) OCR0A = 0;
 		if (CF<=255 && CF>=0) OCR0A = CF; 
 
 		// Sleep
-	    rel = trtCurrentTime() + SECONDS2TICKS(0.01);
-	    dead = trtCurrentTime() + SECONDS2TICKS(0.03);
+	    rel = trtCurrentTime() + SECONDS2TICKS(0.02);
+	    dead = trtCurrentTime() + SECONDS2TICKS(0.05);
 	    trtSleepUntil(rel, dead);
 	end
   end
