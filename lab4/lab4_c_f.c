@@ -58,7 +58,7 @@ volatile int8_t keystr[17];
 volatile char LCD_char_count;
 
 // rpm variables
-volatile unsigned int rpm_isr;
+volatile float rpm_isr;
 volatile unsigned int fan_period;
 
 // --- control LEDs from buttons and uart -------------------
@@ -71,7 +71,7 @@ uint8_t s_value; // sem 3
 uint8_t p_value; // sem 4
 uint8_t i_value; // sem 5
 uint8_t d_value; // sem 6
-uint8_t RPM; // sem 7
+volatile int RPM; // sem 7
 
 //Helper functions
 void port_init(void)
@@ -96,10 +96,37 @@ begin
 	CopyStringtoLCD(LCD_initialize, 0, 0);
 	LCD_char_count = 0;
 end
-// write to LCD
-void write_3digit_LCD(char num, int x, int y)
+
+// sets timer2 to be a counter
+void timer2_init(void)
 begin
-	sprintf(lcd_buffer,"%3d", num);
+	TCCR2A = 0x00;
+	TCCR2B = 0x00;
+	TIMSK2 = 0x00;
+
+	TCCR2B |= (1<<CS22);    // sets the prescaler to 64
+end
+
+void timer0_init(void)
+begin
+	TCCR0A = 0x00;
+	TCCR0B = 0x00;
+	TIMSK0 = 0x00;
+	OCR0A = 150;    // sets up 0 duty cycle
+	EICRA = 0x00;
+	EIMSK = 0x00;
+
+	EICRA |= (1<<ISC01);    // falling edge triggers INT0
+	EIMSK |= (1<<INT0);    // enables INT0
+
+	TCCR0A |= (1<<COM0A1) + (1<<WGM01) + (1<<WGM00);    // fast pwm
+	TCCR0B |= (1<<CS01) + (1<<CS00);    // prescaler of 64 -> 976 cycles/sec
+end
+
+// write to LCD
+void write_3digit_LCD(int num, int x, int y)
+begin
+	sprintf(lcd_buffer,"%4d", num);
 	LCDGotoXY(x, y);
 	LCDstring(lcd_buffer, strlen(lcd_buffer));
 end
@@ -115,6 +142,7 @@ end
 // --- define task 1  ----------------------------------------
 void get_User_Input(void* args) 
   begin
+  	uint32_t rel, dead ;
 	uint16_t inputValue;
 	char cmd[4] ;
 
@@ -154,6 +182,12 @@ void get_User_Input(void* args)
 			d_value = inputValue;
 			trtSignal(SEM_SHARED_D);
 		end
+		
+		// Sleep
+	    rel = trtCurrentTime() + SECONDS2TICKS(0.1);
+	    dead = trtCurrentTime() + SECONDS2TICKS(0.3);
+	    trtSleepUntil(rel, dead);
+
 	end
   end
 
@@ -161,14 +195,36 @@ void get_User_Input(void* args)
 void calc_PWM_Const(void* args) 
   begin	
   	uint32_t rel, dead ;
-	// init timer2 for our use
-	// init timer0 for PWM output
-	// init port B and port D
+	int error, prev_error, sum_error, CF;
+	char p, i, d;
+	s_value = 1000;
+	p = 70;
+	i = 0;
+	d = 0;
+	prev_error = 0;
+
 	while(1)
 	begin
+		prev_error = error;
+		sum_error += error;
+		// lock and look at error
+		trtWait(SEM_SHARED_RPM);
+		trtWait(SEM_SHARED_S);
+		error = RPM-s_value;
+		trtSignal(SEM_SHARED_S);
+		trtSignal(SEM_SHARED_RPM);
+
+		// check if error had a zero crossing and reset the i term
+				
+		// calculate CF
+		CF = p * error + d * (error-prev_error) + i * (sum_error);
+		if (CF>255) OCR0A = 255;
+		if (CF<0) OCR0A = 0;
+		if (CF<=255 && CF>=0) OCR0A = CF; 
+
 		// Sleep
 	    rel = trtCurrentTime() + SECONDS2TICKS(0.05);
-	    dead = trtCurrentTime() + SECONDS2TICKS(0.05);
+	    dead = trtCurrentTime() + SECONDS2TICKS(0.08);
 	    trtSleepUntil(rel, dead);
 	end
   end
@@ -179,16 +235,24 @@ void calc_PWM_Const(void* args)
 void get_Fan_Speed(void* args) 
   begin	
   	uint32_t rel, dead ;
-	// init LCD for our use
-	// init port c
-	LCD_init();
-	port_init();
+	timer2_init();
+	timer0_init();    // sets up the fast pwm
+	LCD_init();    // init LCD for our use
+	port_init();    // init port c
+
 	while(1)
 	begin
-		write_string_LCD("fae",2,1);
+		rpm_isr = (float)fan_period*7;
+		rpm_isr = 1/rpm_isr;
+
+		trtWait(SEM_SHARED_RPM);
+		RPM = (int)rpm_isr;
+		write_3digit_LCD(RPM, 1, 1);
+		trtSignal(SEM_SHARED_RPM);
+
 		// Sleep
 	    rel = trtCurrentTime() + SECONDS2TICKS(0.2);
-	    dead = trtCurrentTime() + SECONDS2TICKS(0.5);
+	    dead = trtCurrentTime() + SECONDS2TICKS(0.3);
 	    trtSleepUntil(rel, dead);
 	end
   end
@@ -196,19 +260,13 @@ void get_Fan_Speed(void* args)
 // pin change interrupt on D.2. Initialized in task 2
 ISR(INT0_vect)
 begin
-
-
+	fan_period = TCNT2;
+    TCNT2 = 0;
 end
 
 
 // --- Main Program ----------------------------------
 int main(void) {
-
-  DDRC = 0xff;    // led connections
-  PORTC = 0xff;
-  DDRB = 0x00 ; 
-  PORTB = 0xff ; // button pullups on
-
   //init the UART -- trt_uart_init() is in trtUart.c
   trt_uart_init();
   stdout = stdin = stderr = &uart_str;
