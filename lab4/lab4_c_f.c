@@ -58,19 +58,15 @@ volatile int8_t keystr[17];
 volatile char LCD_char_count;
 
 // rpm variables
-volatile float rpm_isr;
 volatile unsigned int fan_period;
 
-// --- control LEDs from buttons and uart -------------------
-// input arguments to each thread
-// not actually used in this example
 int args[3] ;
 
 // shared S,P,I,D, RPM
-uint8_t s_value; // sem 3
-uint8_t p_value; // sem 4
-uint8_t i_value; // sem 5
-uint8_t d_value; // sem 6
+uint16_t s_value; // sem 3
+uint16_t p_value; // sem 4
+uint16_t i_value; // sem 5
+uint16_t d_value; // sem 6
 volatile int RPM; // sem 7
 
 //Helper functions
@@ -128,6 +124,14 @@ void write_3digit_LCD(int num, int x, int y)
 begin
 	sprintf(lcd_buffer,"%4d", num);
 	LCDGotoXY(x, y);
+	LCDstring(lcd_buffer, strlen(lcd_buffer));
+end
+
+// write to LCD
+void write_LCD(int num)
+begin
+	sprintf(lcd_buffer,"%i", num);
+	LCDGotoXY(1, 1);
 	LCDstring(lcd_buffer, strlen(lcd_buffer));
 end
 
@@ -197,18 +201,24 @@ void calc_PWM_Const(void* args)
   	uint32_t rel, dead ;
 	int error, prev_error, sum_error, CF;
 	char p, i, d;
+	float rpm_isr;
 	s_value = 1000;
-	p = 70;
+	p = 17;
 	i = 0;
 	d = 0;
 	prev_error = 0;
 
 	while(1)
 	begin
+		rpm_isr = fan_period*7;    // time for one rotation
+		rpm_isr = rpm_isr/250000;    // convert one rotation period to seconds
+		rpm_isr = 60/rpm_isr;    // divide 60 seconsd by rotations/sec for rpm
+
 		prev_error = error;
 		sum_error += error;
 		// lock and look at error
 		trtWait(SEM_SHARED_RPM);
+		RPM = rpm_isr;    // saves the calculated value into a global that LCD func can use
 		trtWait(SEM_SHARED_S);
 		error = RPM-s_value;
 		trtSignal(SEM_SHARED_S);
@@ -223,8 +233,8 @@ void calc_PWM_Const(void* args)
 		if (CF<=255 && CF>=0) OCR0A = CF; 
 
 		// Sleep
-	    rel = trtCurrentTime() + SECONDS2TICKS(0.05);
-	    dead = trtCurrentTime() + SECONDS2TICKS(0.08);
+	    rel = trtCurrentTime() + SECONDS2TICKS(0.01);
+	    dead = trtCurrentTime() + SECONDS2TICKS(0.03);
 	    trtSleepUntil(rel, dead);
 	end
   end
@@ -242,12 +252,8 @@ void get_Fan_Speed(void* args)
 
 	while(1)
 	begin
-		rpm_isr = (float)fan_period*7;
-		rpm_isr = 1/rpm_isr;
-
 		trtWait(SEM_SHARED_RPM);
-		RPM = (int)rpm_isr;
-		write_3digit_LCD(RPM, 1, 1);
+		write_LCD(RPM);
 		trtSignal(SEM_SHARED_RPM);
 
 		// Sleep
@@ -289,9 +295,9 @@ int main(void) {
 
 
  // --- creat tasks  ----------------
-  trtCreateTask(get_User_Input, 100, SECONDS2TICKS(0.1), SECONDS2TICKS(0.1), &(args[0]));
-  trtCreateTask(get_User_Input, 100, SECONDS2TICKS(0.1), SECONDS2TICKS(0.1), &(args[1]));
-  trtCreateTask(get_Fan_Speed, 100, SECONDS2TICKS(0.05), SECONDS2TICKS(0.05), &(args[2]));
+  trtCreateTask(get_User_Input, 100, SECONDS2TICKS(0.01), SECONDS2TICKS(0.1), &(args[0]));
+  trtCreateTask(calc_PWM_Const, 100, SECONDS2TICKS(0.01), SECONDS2TICKS(0.05), &(args[1]));
+  trtCreateTask(get_Fan_Speed, 100, SECONDS2TICKS(0.05), SECONDS2TICKS(0.2), &(args[2]));
   
   
   // --- Idle task --------------------------------------
