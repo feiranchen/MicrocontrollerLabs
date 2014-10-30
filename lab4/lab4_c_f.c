@@ -67,7 +67,8 @@ uint16_t s_value; // sem 3
 uint16_t p_value; // sem 4
 uint16_t i_value; // sem 5
 uint16_t d_value; // sem 6
-volatile int RPM; // sem 7
+uint16_t RPM; // sem 7
+uint16_t motor_period_ovlf;
 
 //Helper functions
 void port_init(void)
@@ -100,7 +101,8 @@ begin
 	TCCR2B = 0x00;
 	TIMSK2 = 0x00;
 
-	TCCR2B |= (1<<CS22);    // sets the prescaler to 64
+	TIMSK2 |= (1<<TOIE2);    // enables the overflow ISR
+	TCCR2B |= (1<<CS21) + (1<<CS20);    // sets the prescaler to 64
 end
 
 void timer0_init(void)
@@ -108,7 +110,7 @@ begin
 	TCCR0A = 0x00;
 	TCCR0B = 0x00;
 	TIMSK0 = 0x00;
-	OCR0A = 150;    // sets up 0 duty cycle
+	OCR0A = 0;    // sets up 0 duty cycle
 	EICRA = 0x00;
 	EIMSK = 0x00;
 
@@ -119,6 +121,7 @@ begin
 	TCCR0B |= (1<<CS01) + (1<<CS00);    // prescaler of 64 -> 976 cycles/sec
 end
 
+/*
 // write to LCD
 void write_3digit_LCD(int num, int x, int y)
 begin
@@ -141,7 +144,7 @@ begin
 	LCDGotoXY(x, y);
 	LCDstring(lcd_buffer, strlen(lcd_buffer));
 end
-
+*/
 
 // --- define task 1  ----------------------------------------
 void get_User_Input(void* args) 
@@ -166,24 +169,28 @@ void get_User_Input(void* args)
 		begin
 			trtWait(SEM_SHARED_S) ;
 			s_value = inputValue;
+			fprintf(stdout,"value of s changed to %i\n\n",inputValue);
 			trtSignal(SEM_SHARED_S);
 		end
 		if (cmd[0] == 'p')
 		begin
 			trtWait(SEM_SHARED_P) ;
 			p_value = inputValue;
+			fprintf(stdout,"value of p changed to %i\n\n",inputValue);
 			trtSignal(SEM_SHARED_P);
 		end
 		if (cmd[0] == 'i')
 		begin
 			trtWait(SEM_SHARED_I) ;
 			i_value = inputValue;
+			fprintf(stdout,"value of i changed to %i\n\n",inputValue);
 			trtSignal(SEM_SHARED_I);
 		end
 		if (cmd[0] == 'd')
 		begin
 			trtWait(SEM_SHARED_D) ;
 			d_value = inputValue;
+			fprintf(stdout,"value of d changed to %i\n\n",inputValue);
 			trtSignal(SEM_SHARED_D);
 		end
 		
@@ -199,32 +206,38 @@ void get_User_Input(void* args)
 void calc_PWM_Const(void* args) 
   begin	
   	uint32_t rel, dead ;
-	int error, prev_error, sum_error, CF;
-	char p, i, d;
+	int error, prev_error, sum_error; 
+	int CF;
+	float p, i, d;
 	float rpm_isr;
-	s_value = 1000;
+
+	s_value = 1000; // <------------------------------------- This is a test statement only
 	p = 17;
 	i = 0;
 	d = 0;
+	error = 0;
+	OCR0A = 150;
 	prev_error = 0;
 
 	while(1)
 	begin
-		rpm_isr = fan_period*7;    // time for one rotation
-		rpm_isr = 250000*60/rpm_isr;    // divide 60 seconsd by rotations/sec for rpm
+		fan_period = fan_period*7;    // ticks for one rotation
+		rpm_isr = 500000*60/fan_period;    // divide 60 seconsd by rotations/sec for rpm
 
 		prev_error = error;
-		sum_error += error;
+		
 		// lock and look at error
 		trtWait(SEM_SHARED_RPM);
 		RPM = (int)rpm_isr;    // saves the calculated value into a global that LCD func can use
 		trtWait(SEM_SHARED_S);
-		error = RPM-s_value;
+		error = s_value - RPM;
 		trtSignal(SEM_SHARED_S);
 		trtSignal(SEM_SHARED_RPM);
 
 		// check if error had a zero crossing and reset the i term
-				
+		if((error>0 && prev_error>0) || (error<0 && prev_error<0)) sum_error += error;
+		else sum_error = 0;
+
 		// calculate CF
 		trtWait(SEM_SHARED_S);
 		trtWait(SEM_SHARED_P);
@@ -236,13 +249,18 @@ void calc_PWM_Const(void* args)
 		trtSignal(SEM_SHARED_P);
 		trtSignal(SEM_SHARED_S);
 
+
+		CF = 0.8574*CF;
+
 		if (CF>255) OCR0A = 255;
 		if (CF<0) OCR0A = 0;
-		if (CF<=255 && CF>=0) OCR0A = CF; 
+		if (CF<=255 && CF>=0) OCR0A = (char)CF; 
+		
+		OCR0B = OCR0A; // set for the Oscope measurement
 
 		// Sleep
-	    rel = trtCurrentTime() + SECONDS2TICKS(0.02);
-	    dead = trtCurrentTime() + SECONDS2TICKS(0.05);
+	    rel = trtCurrentTime() + SECONDS2TICKS(0.01);
+	    dead = trtCurrentTime() + SECONDS2TICKS(0.04);
 	    trtSleepUntil(rel, dead);
 	end
   end
@@ -260,12 +278,21 @@ void get_Fan_Speed(void* args)
 
 	while(1)
 	begin
+		trtWait(SEM_SHARED_S) ;
+		sprintf(lcd_buffer,"input RPM: %-i ", s_value);
+		trtSignal(SEM_SHARED_S) ;
+		LCDGotoXY(0, 0);
+		LCDstring(lcd_buffer, strlen(lcd_buffer));
+
 		trtWait(SEM_SHARED_RPM);
-		write_LCD(RPM);
+		sprintf(lcd_buffer,"fan RPM: %-i  ", RPM);
 		trtSignal(SEM_SHARED_RPM);
+		LCDGotoXY(0, 1);
+		LCDstring(lcd_buffer, strlen(lcd_buffer));
+		
 
 		// Sleep
-	    rel = trtCurrentTime() + SECONDS2TICKS(0.2);
+	    rel = trtCurrentTime() + SECONDS2TICKS(0.1);
 	    dead = trtCurrentTime() + SECONDS2TICKS(0.3);
 	    trtSleepUntil(rel, dead);
 	end
@@ -274,10 +301,15 @@ void get_Fan_Speed(void* args)
 // pin change interrupt on D.2. Initialized in task 2
 ISR(INT0_vect)
 begin
-	fan_period = TCNT2;
+	fan_period = TCNT2 + motor_period_ovlf;
     TCNT2 = 0;
+	motor_period_ovlf = 0 ;
 end
 
+// --- set up extra 8 bits on timer 2 ----------------
+ISR (TIMER2_OVF_vect) {
+        motor_period_ovlf = motor_period_ovlf + 256 ;
+}
 
 // --- Main Program ----------------------------------
 int main(void) {
@@ -303,9 +335,9 @@ int main(void) {
 
 
  // --- creat tasks  ----------------
-  trtCreateTask(get_User_Input, 100, SECONDS2TICKS(0.01), SECONDS2TICKS(0.1), &(args[0]));
-  trtCreateTask(calc_PWM_Const, 100, SECONDS2TICKS(0.01), SECONDS2TICKS(0.05), &(args[1]));
-  trtCreateTask(get_Fan_Speed, 100, SECONDS2TICKS(0.05), SECONDS2TICKS(0.2), &(args[2]));
+  trtCreateTask(get_User_Input, 1000, SECONDS2TICKS(0.01), SECONDS2TICKS(0.1), &(args[0]));
+  trtCreateTask(calc_PWM_Const, 1000, SECONDS2TICKS(0.01), SECONDS2TICKS(0.05), &(args[1]));
+  trtCreateTask(get_Fan_Speed, 1000, SECONDS2TICKS(0.05), SECONDS2TICKS(0.2), &(args[2]));
   
   
   // --- Idle task --------------------------------------
