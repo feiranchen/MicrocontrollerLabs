@@ -1663,9 +1663,9 @@ begin
      a72:	80 81       	ld	r24, Z
      a74:	81 60       	ori	r24, 0x01	; 1
      a76:	80 83       	st	Z, r24
-	TCCR2B |= (1<<CS21) + (1<<CS20);    // sets the prescaler to 64
+	TCCR2B |= (1<<CS22) + (1<<CS21);    // sets the prescaler to 256
      a78:	8c 91       	ld	r24, X
-     a7a:	83 60       	ori	r24, 0x03	; 3
+     a7a:	86 60       	ori	r24, 0x06	; 6
      a7c:	8c 93       	st	X, r24
 end
      a7e:	08 95       	ret
@@ -1770,7 +1770,7 @@ void calc_PWM_Const(void* args)
      aec:	93 0b       	sbc	r25, r19
      aee:	90 93 eb 02 	sts	0x02EB, r25
      af2:	80 93 ea 02 	sts	0x02EA, r24
-		rpm_isr = 500000*60/fan_period;    // divide 60 seconsd by rotations/sec for rpm
+		rpm_isr = 62500*60/fan_period;    // divide 60 seconsd by rotations/sec for rpm
      af6:	e0 90 ea 02 	lds	r14, 0x02EA
      afa:	f0 90 eb 02 	lds	r15, 0x02EB
 
@@ -1783,10 +1783,10 @@ void calc_PWM_Const(void* args)
 		RPM = (int)rpm_isr;    // saves the calculated value into a global that LCD func can use
      b04:	00 e0       	ldi	r16, 0x00	; 0
      b06:	10 e0       	ldi	r17, 0x00	; 0
-     b08:	60 e8       	ldi	r22, 0x80	; 128
-     b0a:	73 ec       	ldi	r23, 0xC3	; 195
-     b0c:	89 ec       	ldi	r24, 0xC9	; 201
-     b0e:	91 e0       	ldi	r25, 0x01	; 1
+     b08:	60 e7       	ldi	r22, 0x70	; 112
+     b0a:	78 e3       	ldi	r23, 0x38	; 56
+     b0c:	89 e3       	ldi	r24, 0x39	; 57
+     b0e:	90 e0       	ldi	r25, 0x00	; 0
      b10:	a8 01       	movw	r20, r16
      b12:	97 01       	movw	r18, r14
      b14:	0e 94 33 0c 	call	0x1866	; 0x1866 <__divmodsi4>
@@ -2322,7 +2322,7 @@ void get_User_Input(void* args)
 		begin
 			trtWait(SEM_SHARED_S) ;
 			s_value = inputValue;
-			fprintf(stdout,"value of s changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of s changed to %f\n\n",inputValue);
      e68:	90 e1       	ldi	r25, 0x10	; 16
      e6a:	69 2e       	mov	r6, r25
      e6c:	91 e0       	ldi	r25, 0x01	; 1
@@ -2332,7 +2332,7 @@ void get_User_Input(void* args)
 		begin
 			trtWait(SEM_SHARED_P) ;
 			p_value = inputValue;
-			fprintf(stdout,"value of p changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of p changed to %f\n\n",inputValue);
      e70:	8b e2       	ldi	r24, 0x2B	; 43
      e72:	88 2e       	mov	r8, r24
      e74:	81 e0       	ldi	r24, 0x01	; 1
@@ -2342,7 +2342,7 @@ void get_User_Input(void* args)
 		begin
 			trtWait(SEM_SHARED_I) ;
 			i_value = inputValue;
-			fprintf(stdout,"value of i changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of i changed to %f\n\n",inputValue);
      e78:	06 e4       	ldi	r16, 0x46	; 70
      e7a:	a0 2e       	mov	r10, r16
      e7c:	01 e0       	ldi	r16, 0x01	; 1
@@ -2352,7 +2352,7 @@ void get_User_Input(void* args)
 		begin
 			trtWait(SEM_SHARED_D) ;
 			d_value = inputValue;
-			fprintf(stdout,"value of d changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of d changed to %f\n\n",inputValue);
      e80:	11 e6       	ldi	r17, 0x61	; 97
      e82:	c1 2e       	mov	r12, r17
      e84:	11 e0       	ldi	r17, 0x01	; 1
@@ -2422,7 +2422,7 @@ void get_User_Input(void* args)
      ef4:	3a 81       	ldd	r19, Y+2	; 0x02
      ef6:	30 93 e2 02 	sts	0x02E2, r19
      efa:	20 93 e1 02 	sts	0x02E1, r18
-			fprintf(stdout,"value of s changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of s changed to %f\n\n",inputValue);
      efe:	00 d0       	rcall	.+0      	; 0xf00 <get_User_Input+0xd8>
      f00:	00 d0       	rcall	.+0      	; 0xf02 <get_User_Input+0xda>
      f02:	00 d0       	rcall	.+0      	; 0xf04 <get_User_Input+0xdc>
@@ -2467,7 +2467,7 @@ void get_User_Input(void* args)
      f4e:	3a 81       	ldd	r19, Y+2	; 0x02
      f50:	30 93 e7 02 	sts	0x02E7, r19
      f54:	20 93 e6 02 	sts	0x02E6, r18
-			fprintf(stdout,"value of p changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of p changed to %f\n\n",inputValue);
      f58:	00 d0       	rcall	.+0      	; 0xf5a <get_User_Input+0x132>
      f5a:	00 d0       	rcall	.+0      	; 0xf5c <get_User_Input+0x134>
      f5c:	00 d0       	rcall	.+0      	; 0xf5e <get_User_Input+0x136>
@@ -2512,7 +2512,7 @@ void get_User_Input(void* args)
      fa8:	3a 81       	ldd	r19, Y+2	; 0x02
      faa:	30 93 e9 02 	sts	0x02E9, r19
      fae:	20 93 e8 02 	sts	0x02E8, r18
-			fprintf(stdout,"value of i changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of i changed to %f\n\n",inputValue);
      fb2:	00 d0       	rcall	.+0      	; 0xfb4 <get_User_Input+0x18c>
      fb4:	00 d0       	rcall	.+0      	; 0xfb6 <get_User_Input+0x18e>
      fb6:	00 d0       	rcall	.+0      	; 0xfb8 <get_User_Input+0x190>
@@ -2557,7 +2557,7 @@ void get_User_Input(void* args)
     1002:	3a 81       	ldd	r19, Y+2	; 0x02
     1004:	30 93 e5 02 	sts	0x02E5, r19
     1008:	20 93 e4 02 	sts	0x02E4, r18
-			fprintf(stdout,"value of d changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of d changed to %f\n\n",inputValue);
     100c:	00 d0       	rcall	.+0      	; 0x100e <get_User_Input+0x1e6>
     100e:	00 d0       	rcall	.+0      	; 0x1010 <get_User_Input+0x1e8>
     1010:	00 d0       	rcall	.+0      	; 0x1012 <get_User_Input+0x1ea>

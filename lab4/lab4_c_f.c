@@ -102,7 +102,7 @@ begin
 	TIMSK2 = 0x00;
 
 	TIMSK2 |= (1<<TOIE2);    // enables the overflow ISR
-	TCCR2B |= (1<<CS21) + (1<<CS20);    // sets the prescaler to 64
+	TCCR2B |= (1<<CS22) + (1<<CS21);    // sets the prescaler to 256
 end
 
 void timer0_init(void)
@@ -169,28 +169,28 @@ void get_User_Input(void* args)
 		begin
 			trtWait(SEM_SHARED_S) ;
 			s_value = inputValue;
-			fprintf(stdout,"value of s changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of s changed to %f\n\n",inputValue);
 			trtSignal(SEM_SHARED_S);
 		end
 		if (cmd[0] == 'p')
 		begin
 			trtWait(SEM_SHARED_P) ;
 			p_value = inputValue;
-			fprintf(stdout,"value of p changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of p changed to %f\n\n",inputValue);
 			trtSignal(SEM_SHARED_P);
 		end
 		if (cmd[0] == 'i')
 		begin
 			trtWait(SEM_SHARED_I) ;
 			i_value = inputValue;
-			fprintf(stdout,"value of i changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of i changed to %f\n\n",inputValue);
 			trtSignal(SEM_SHARED_I);
 		end
 		if (cmd[0] == 'd')
 		begin
 			trtWait(SEM_SHARED_D) ;
 			d_value = inputValue;
-			fprintf(stdout,"value of d changed to %i\n\n",inputValue);
+			fprintf(stdout,"value of d changed to %f\n\n",inputValue);
 			trtSignal(SEM_SHARED_D);
 		end
 		
@@ -222,7 +222,7 @@ void calc_PWM_Const(void* args)
 	while(1)
 	begin
 		fan_period = fan_period*7;    // ticks for one rotation
-		rpm_isr = 500000*60/fan_period;    // divide 60 seconsd by rotations/sec for rpm
+		rpm_isr = 62500*60/fan_period;    // divide 60 seconsd by rotations/sec for rpm
 
 		prev_error = error;
 		
