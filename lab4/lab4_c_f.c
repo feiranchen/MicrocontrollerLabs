@@ -18,13 +18,15 @@
 #define SEM_RX_ISR_SIGNAL 1
 #define SEM_STRING_DONE 2 // user hit <enter>
 #define F_CPU 16000000UL
+#include <stdlib.h>
+#include <string.h>
+#include <float.h>
+#include <math.h>
 #include "lcd_lib.h"
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <inttypes.h>
-#include <stdlib.h>
-#include <string.h>
 #include <util/delay.h> // needed for lcd_lib
 #include "trtUart.h"
 #include "trtUart.c"
@@ -63,12 +65,12 @@ volatile unsigned int fan_period;
 int args[3] ;
 
 // shared S,P,I,D, RPM
-uint16_t s_value; // sem 3
-uint16_t p_value; // sem 4
-uint16_t i_value; // sem 5
-uint16_t d_value; // sem 6
+volatile uint16_t s_value; // sem 3
+volatile float p_value; // sem 4
+volatile float i_value; // sem 5
+volatile float d_value; // sem 6
 uint16_t RPM; // sem 7
-uint16_t motor_period_ovlf;
+volatile uint16_t motor_period_ovlf;
 
 //Helper functions
 void port_init(void)
@@ -102,7 +104,7 @@ begin
 	TIMSK2 = 0x00;
 
 	TIMSK2 |= (1<<TOIE2);    // enables the overflow ISR
-	TCCR2B |= (1<<CS22) + (1<<CS21);    // sets the prescaler to 256
+	TCCR2B |= (1<<CS22) + (1<<CS21);// + (1<<CS20);    // sets the prescaler to 256
 end
 
 void timer0_init(void)
@@ -117,7 +119,7 @@ begin
 	EICRA |= (1<<ISC01);    // falling edge triggers INT0
 	EIMSK |= (1<<INT0);    // enables INT0
 
-	TCCR0A |= (1<<COM0A1) + (1<<WGM01) + (1<<WGM00);    // fast pwm
+	TCCR0A |= (1<<COM0A1) + (1<<COM0B1) + (1<<WGM01) + (1<<WGM00);    // fast pwm
 	TCCR0B |= (1<<CS01) + (1<<CS00);    // prescaler of 64 -> 976 cycles/sec
 end
 
@@ -150,7 +152,8 @@ end
 void get_User_Input(void* args) 
   begin
   	uint32_t rel, dead ;
-	uint16_t inputValue;
+	int inputValue;
+	float finputValue;////////////////////update at one point
 	char cmd[4] ;
 
 	while(1)
@@ -169,28 +172,28 @@ void get_User_Input(void* args)
 		begin
 			trtWait(SEM_SHARED_S) ;
 			s_value = inputValue;
-			fprintf(stdout,"value of s changed to %f\n\n",inputValue);
+			fprintf(stdout,"value of s changed to %d\n\n",inputValue);
 			trtSignal(SEM_SHARED_S);
 		end
 		if (cmd[0] == 'p')
 		begin
 			trtWait(SEM_SHARED_P) ;
 			p_value = inputValue;
-			fprintf(stdout,"value of p changed to %f\n\n",inputValue);
+			fprintf(stdout,"value of p changed to %d\n\n",inputValue);
 			trtSignal(SEM_SHARED_P);
 		end
 		if (cmd[0] == 'i')
 		begin
 			trtWait(SEM_SHARED_I) ;
 			i_value = inputValue;
-			fprintf(stdout,"value of i changed to %f\n\n",inputValue);
+			fprintf(stdout,"value of i changed to %d\n\n",inputValue);
 			trtSignal(SEM_SHARED_I);
 		end
 		if (cmd[0] == 'd')
 		begin
 			trtWait(SEM_SHARED_D) ;
 			d_value = inputValue;
-			fprintf(stdout,"value of d changed to %f\n\n",inputValue);
+			fprintf(stdout,"value of d changed to %d\n\n",inputValue);
 			trtSignal(SEM_SHARED_D);
 		end
 		
@@ -206,24 +209,25 @@ void get_User_Input(void* args)
 void calc_PWM_Const(void* args) 
   begin	
   	uint32_t rel, dead ;
-	int error, prev_error, sum_error; 
+	int error, prev_error, sum_error, temp; 
 	int CF;
-	float p, i, d;
+	int p, i, d;
 	float rpm_isr;
 
 	s_value = 1000; // <------------------------------------- This is a test statement only
-	p = 17;
+	p = 1;
 	i = 0;
 	d = 0;
+	p_value = 10;
 	error = 0;
 	OCR0A = 150;
 	prev_error = 0;
 
 	while(1)
 	begin
-		fan_period = fan_period*7;    // ticks for one rotation
-		rpm_isr = 62500*60/fan_period;    // divide 60 seconsd by rotations/sec for rpm
-
+		temp = fan_period*7;    // ticks for one rotation
+		rpm_isr = 62500 * 60 /temp;    // divide 60 seconsd by rotations/sec for rpm
+		
 		prev_error = error;
 		
 		// lock and look at error
@@ -235,28 +239,38 @@ void calc_PWM_Const(void* args)
 		trtSignal(SEM_SHARED_RPM);
 
 		// check if error had a zero crossing and reset the i term
-		if((error>0 && prev_error>0) || (error<0 && prev_error<0)) sum_error += error;
+		if((error>0 && prev_error>0) || (error<0 && prev_error<0))
+		begin
+			sum_error += error;
+		end
 		else sum_error = 0;
 
 		// calculate CF
-		trtWait(SEM_SHARED_S);
 		trtWait(SEM_SHARED_P);
-		trtWait(SEM_SHARED_I);
-		trtWait(SEM_SHARED_D);
-		CF = p * error + d * (error-prev_error) + i * (sum_error);
-		trtSignal(SEM_SHARED_D);
-		trtSignal(SEM_SHARED_I);
+		p = p_value;
 		trtSignal(SEM_SHARED_P);
-		trtSignal(SEM_SHARED_S);
+
+		trtWait(SEM_SHARED_I);
+		i = i_value;
+		trtSignal(SEM_SHARED_I);
+
+		trtWait(SEM_SHARED_D);
+		d = d_value;
+		trtSignal(SEM_SHARED_D);
+
+		CF = p * error + d * (error-prev_error) + i * (sum_error);
+		
+		
+		
 
 
-		CF = 0.8574*CF;
+		//CF = 0.8574*CF; // normalize to 255
 
 		if (CF>255) OCR0A = 255;
 		if (CF<0) OCR0A = 0;
 		if (CF<=255 && CF>=0) OCR0A = (char)CF; 
 		
-		OCR0B = OCR0A; // set for the Oscope measurement
+		OCR0B = RPM*.857; // set for the Oscope measurement
 
 		// Sleep
 	    rel = trtCurrentTime() + SECONDS2TICKS(0.01);
@@ -285,7 +299,7 @@ void get_Fan_Speed(void* args)
 		LCDstring(lcd_buffer, strlen(lcd_buffer));
 
 		trtWait(SEM_SHARED_RPM);
-		sprintf(lcd_buffer,"fan RPM: %-i  ", RPM);
+		sprintf(lcd_buffer,"fan RPM: %-i   ", RPM);
 		trtSignal(SEM_SHARED_RPM);
 		LCDGotoXY(0, 1);
 		LCDstring(lcd_buffer, strlen(lcd_buffer));

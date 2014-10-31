@@ -13,10 +13,12 @@ lab4_c_f.o: ../lab4_c_f.c ../trtSettings.h ../trtkernel_1284.c \
   c:/winavr-20100110/lib/gcc/../../avr/include/stdio.h \
   c:\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stdarg.h \
   c:\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stddef.h \
-  c:/winavr-20100110/lib/gcc/../../avr/include/avr/sleep.h ../lcd_lib.h \
-  c:/winavr-20100110/lib/gcc/../../avr/include/avr/pgmspace.h \
+  c:/winavr-20100110/lib/gcc/../../avr/include/avr/sleep.h \
   c:/winavr-20100110/lib/gcc/../../avr/include/stdlib.h \
   c:/winavr-20100110/lib/gcc/../../avr/include/string.h \
+  c:\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/float.h \
+  c:/winavr-20100110/lib/gcc/../../avr/include/math.h ../lcd_lib.h \
+  c:/winavr-20100110/lib/gcc/../../avr/include/avr/pgmspace.h \
   c:/winavr-20100110/lib/gcc/../../avr/include/util/delay.h \
   c:/winavr-20100110/lib/gcc/../../avr/include/util/delay_basic.h \
   ../trtUart.h ../trtUart.c ../trtuart.h
@@ -55,13 +57,17 @@ c:\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/stddef.h:
 
 c:/winavr-20100110/lib/gcc/../../avr/include/avr/sleep.h:
 
-../lcd_lib.h:
-
-c:/winavr-20100110/lib/gcc/../../avr/include/avr/pgmspace.h:
-
 c:/winavr-20100110/lib/gcc/../../avr/include/stdlib.h:
 
 c:/winavr-20100110/lib/gcc/../../avr/include/string.h:
+
+c:\winavr-20100110\bin\../lib/gcc/avr/4.3.3/include/float.h:
+
+c:/winavr-20100110/lib/gcc/../../avr/include/math.h:
+
+../lcd_lib.h:
+
+c:/winavr-20100110/lib/gcc/../../avr/include/avr/pgmspace.h:
 
 c:/winavr-20100110/lib/gcc/../../avr/include/util/delay.h:
 
