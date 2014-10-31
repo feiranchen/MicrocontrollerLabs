@@ -47,7 +47,7 @@ FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 #define end }
 
 // LCD globals
-const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
+const int8_t LCD_initialize[] PROGMEM = "LCD Initiali    \0";
 const int8_t LCD_burst_freq[] PROGMEM = "Burst Frequency:\0";
 const int8_t LCD_interval[] PROGMEM = "Chirp Interval: \0";
 const int8_t LCD_num_syllable[] PROGMEM = "Num Syllables: \0";
@@ -65,7 +65,7 @@ volatile unsigned int fan_period;
 int args[3] ;
 
 // shared S,P,I,D, RPM
-volatile uint16_t s_value; // sem 3
+volatile float s_value; // sem 3
 volatile float p_value; // sem 4
 volatile float i_value; // sem 5
 volatile float d_value; // sem 6
@@ -163,7 +163,7 @@ void get_User_Input(void* args)
 		// 'c 4' turns off led 4
 		// 't 1' toggles led 1
 		fprintf(stdout, ">") ;
-		fscanf(stdin, "%s %d", cmd, &inputValue) ;
+		fscanf(stdin, "%s %f", cmd, &finputValue) ;
 		//trtWait(SEM_STRING_DONE);
 
 		// update shared leds
@@ -171,29 +171,29 @@ void get_User_Input(void* args)
 		if (cmd[0] == 's')
 		begin
 			trtWait(SEM_SHARED_S) ;
-			s_value = inputValue;
-			fprintf(stdout,"value of s changed to %d\n\n",inputValue);
+			s_value = finputValue;
+			fprintf(stdout,"value of s changed to %.1f\n\n",finputValue);
 			trtSignal(SEM_SHARED_S);
 		end
 		if (cmd[0] == 'p')
 		begin
 			trtWait(SEM_SHARED_P) ;
-			p_value = inputValue;
-			fprintf(stdout,"value of p changed to %d\n\n",inputValue);
+			p_value = finputValue;
+			fprintf(stdout,"value of p changed to %.1f\n\n",finputValue);
 			trtSignal(SEM_SHARED_P);
 		end
 		if (cmd[0] == 'i')
 		begin
 			trtWait(SEM_SHARED_I) ;
-			i_value = inputValue;
-			fprintf(stdout,"value of i changed to %d\n\n",inputValue);
+			i_value = finputValue;
+			fprintf(stdout,"value of i changed to %.1f\n\n",finputValue);
 			trtSignal(SEM_SHARED_I);
 		end
 		if (cmd[0] == 'd')
 		begin
 			trtWait(SEM_SHARED_D) ;
-			d_value = inputValue;
-			fprintf(stdout,"value of d changed to %d\n\n",inputValue);
+			d_value = finputValue;
+			fprintf(stdout,"value of d changed to %.1f\n\n",finputValue);
 			trtSignal(SEM_SHARED_D);
 		end
 		
@@ -209,16 +209,18 @@ void get_User_Input(void* args)
 void calc_PWM_Const(void* args) 
   begin	
   	uint32_t rel, dead ;
-	int error, prev_error, sum_error, temp; 
-	int CF;
-	int p, i, d;
+	signed int error, prev_error, sum_error, temp; 
+	float CF,i_calc;
+	signed int p, i, d;
 	float rpm_isr;
 
 	s_value = 1000; // <------------------------------------- This is a test statement only
-	p = 1;
+	p = 0;
 	i = 0;
 	d = 0;
-	p_value = 10;
+	p_value = 4;
+	i_value = .25;
+	d_value = .3;
 	error = 0;
 	OCR0A = 150;
 	prev_error = 0;
@@ -234,7 +236,7 @@ void calc_PWM_Const(void* args)
 		trtWait(SEM_SHARED_RPM);
 		RPM = (int)rpm_isr;    // saves the calculated value into a global that LCD func can use
 		trtWait(SEM_SHARED_S);
-		error = s_value - RPM;
+		error = (int)s_value - RPM;
 		trtSignal(SEM_SHARED_S);
 		trtSignal(SEM_SHARED_RPM);
 
@@ -246,6 +248,7 @@ void calc_PWM_Const(void* args)
 		else sum_error = 0;
 
 		// calculate CF
+		/*
 		trtWait(SEM_SHARED_P);
 		p = p_value;
 		trtSignal(SEM_SHARED_P);
@@ -256,21 +259,25 @@ void calc_PWM_Const(void* args)
 
 		trtWait(SEM_SHARED_D);
 		d = d_value;
+		trtSignal(SEM_SHARED_D);*/
+		
+		
+		trtWait(SEM_SHARED_P);
+		trtWait(SEM_SHARED_I);
+		trtWait(SEM_SHARED_D);
+		//CF = p * error + d * (error-prev_error) + i * (sum_error);
+		i_calc = i_value * (sum_error) > 50 ? 50 : i_value * (sum_error);
+		i_calc = i_value * (sum_error) < -50? -50 : i_value * (sum_error);
+		CF = p_value * error + d_value * (error-prev_error) + i_calc;
+		trtSignal(SEM_SHARED_P);
+		trtSignal(SEM_SHARED_I);
 		trtSignal(SEM_SHARED_D);
-
-		CF = p * error + d * (error-prev_error) + i * (sum_error);
-		
-		
-		
-
-
-		//CF = 0.8574*CF; // normalize to 255
 
 		if (CF>255) OCR0A = 255;
 		if (CF<0) OCR0A = 0;
 		if (CF<=255 && CF>=0) OCR0A = (char)CF; 
 		
-		OCR0B = RPM*.857; // set for the Oscope measurement
+		OCR0B = (char)(rpm_isr*.0853); // set for the Oscope measurement
 
 		// Sleep
 	    rel = trtCurrentTime() + SECONDS2TICKS(0.01);
@@ -293,13 +300,16 @@ void get_Fan_Speed(void* args)
 	while(1)
 	begin
 		trtWait(SEM_SHARED_S) ;
-		sprintf(lcd_buffer,"input RPM: %-i ", s_value);
+		sprintf(lcd_buffer,"input RPM: %-i ", (int)s_value);
+		//sprintf(lcd_buffer,"%d, %d", (int)s_value, RPM);
 		trtSignal(SEM_SHARED_S) ;
 		LCDGotoXY(0, 0);
 		LCDstring(lcd_buffer, strlen(lcd_buffer));
 
 		trtWait(SEM_SHARED_RPM);
 		sprintf(lcd_buffer,"fan RPM: %-i   ", RPM);
+		//sprintf(lcd_buffer,"err %d %d", error, (int)d_value * (error-prev_error));
+		//sprintf(lcd_buffer," %-i %-i %-i",(int)p_value, (int)i_value,(int)d_value);
 		trtSignal(SEM_SHARED_RPM);
 		LCDGotoXY(0, 1);
 		LCDstring(lcd_buffer, strlen(lcd_buffer));
