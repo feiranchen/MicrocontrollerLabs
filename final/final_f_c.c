@@ -25,6 +25,7 @@
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
 const int8_t LCD_printing[] PROGMEM = "Printing        \0";
 const int8_t LCD_waiting[] PROGMEM = "Waiting for file\0";
+const int8_t LCD_null[] PROGMEM = "                \0";
 volatile int8_t lcd_buffer[17];	// LCD display buffer
 volatile int8_t keystr[17];
 volatile char LCD_char_count;
@@ -87,6 +88,13 @@ begin
 	sprintf(lcd_buffer,"X: %3d  Y: %3d ",x_pos,y_pos);
 	LCDGotoXY(0,1)
 	LCDstring(lcd_buffer, strlen(lcd_buffer);
+end
+
+// draw a circle
+void circle(void)
+begin
+	// do this
+
 end
 
 
