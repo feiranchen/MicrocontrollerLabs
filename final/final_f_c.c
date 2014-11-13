@@ -33,8 +33,8 @@ volatile char LCD_char_count;
 // Plotter Head Globals
 volatile unsigned int x_pos;
 volatile unsigned int y_pos;
-#define x_axis 7
-#define y_axis 6
+#define x_axis 0
+#define y_axis 1
 
 // Inits ----------------------------------------------------------------------
 void LCD_init(void)
@@ -54,22 +54,37 @@ begin
 	ADMUX = 0;
 	ADCSRA = 0;
 
-	ADMUX = (1<<REFS0) + (1<<ADLAR);
-	ADCSRA = (1<<ADEN) + 6 ; 
+	ADMUX = (1<<REFS0);
+	ADCSRA = (1<<ADEN) + 7; 
 end
 
 
 void port_init(void)
 begin
-
+	DDRA = 0x00;    // all inputs to avoid ADC coupling, no pull ups
+	DDRD = 0xff;    // all outputs - bottom 2 are USART top 6 are motor control
+	PORTA = 0x00;    // no pull up resistors
+	PORTD = 0x00;    // start with no power
 end
+
+void initialize(void)
+begin
+	port_init();
+	LCD_init();
+	ADC_init();
+
+	sei();
+end
+
+// ISRS -----------------------------------------------------------------------
+
 
 // Helper Functions -----------------------------------------------------------
 // performs an ADC on the selected channel.
 void ADC_start_measure(char channel)
 begin
 	ADMUX = 0;
-	ADMUX = (1<<REFS0) + (1<<ADLAR) + channel;
+	ADMUX = (1<<REFS1) + (1<<REFS0) + channel;
 	ADCSRA |= (1<<ADSC);
 end
 
@@ -85,23 +100,132 @@ end
 // writes the X and Y positions of the head to the second LCD line
 void print_position(void)
 begin
-	sprintf(lcd_buffer,"X: %3d  Y: %3d ",x_pos,y_pos);
-	LCDGotoXY(0,1)
-	LCDstring(lcd_buffer, strlen(lcd_buffer);
+	sprintf(lcd_buffer,"X: %-i ",x_pos);  
+	LCDGotoXY(0,1);
+	LCDstring(lcd_buffer, strlen(lcd_buffer));
+	sprintf(lcd_buffer,"Y: %-i ",y_pos);
+	LCDGotoXY(8,1);
+	LCDstring(lcd_buffer, strlen(lcd_buffer));
+end
+
+
+void move_positive_x(void)
+begin
+	PORTD &= ~0x08;
+	_delay_us(5);
+	PORTD |= 0x10;
+end
+
+void move_negative_x(void)
+begin
+	PORTD &= ~0x10;
+	_delay_us(5);
+	PORTD |= 0x08;
+end
+
+void move_positive_y(void)
+begin
+	PORTD &= ~0x40;
+	_delay_us(5);
+	PORTD |= 0x80;
+end
+
+void move_negative_y(void)
+begin
+	PORTD &= ~0x80;
+	_delay_us(5);
+	PORTD |= 0x40;
+end
+
+void stop_x(void)
+begin
+	// checks previous direction and provides a short pulse backwards to slow motor
+	if (PIND & 0x10)
+	begin
+		move_negative_x();
+		_delay_us(5);
+		PORTD &= ~0x08;
+	end
+	if (PIND & 0x08)
+	begin
+		move_positive_x();
+		_delay_us(5);
+		PORTD &= ~0x10;
+	end
+
+	PORTD &= ~0x18;
+end
+
+void stop_y(void)
+begin
+	if(PIND & 0x80)
+	begin
+		move_negative_y();
+		_delay_us(5);
+		PORTD &= ~0x40;
+	end
+	if(PIND & 0x40)
+	begin
+		move_positive_y();
+		_delay_us(5);
+		PORTD &= ~0x80;
+	end
+
+	PORTD &= ~0xc0;
+
+end
+
+// all motors coast to a stop
+void stop_all(void)
+begin
+	PORTD &= 0x03;
 end
 
 // draw a circle
 void circle(void)
 begin
-	// do this
+	move_positive_x();
+	_delay_us(100);
+	stop_all();
+	move_positive_y();
+	_delay_us(100);
+	move_negative_x();
+	_delay_us(100);
+	stop_all();
+	move_negative_y();
+	_delay_us(75);
+	stop_all();
 
+	move_positive_x();
+	_delay_us(60);
+	stop_all();
+	move_positive_y();
+	_delay_us(60);
+	move_negative_x();
+	_delay_us(60);
+	stop_all();
+	move_negative_y();
+	_delay_us(35);
+	stop_all();
+
+	move_positive_x();
+	_delay_us(20);
+	stop_all();
+	move_positive_y();
+	_delay_us(20);
+	move_negative_x();
+	_delay_us(20);
+	stop_all();
+	move_negative_y();
+	_delay_us(10);
+	stop_all();
 end
-
 
 int main(void)
 begin
-
+	initialize();
 	while(1)
+	begin
 		// while loop until there is a file waiting to be sent over Putty
 			// update LCD to say "waiting for file input"
 
@@ -110,13 +234,47 @@ begin
 			// update LCD to say "printing"
 
 		// for each vector in the file
-			// if x_pos != x_start 
-				// move motor x using while statement from the ADC
-			// end if x_pos
+				 // move motor x to start using while statement from the ADC
+				ADC_start_measure(x_axis);
+				while(ADCSRA & (1<<ADSC));
+				x_pos = (int)ADCL;
+				x_pos += (int)(ADCH*256);
+				
+				/*
+				if (x_pos > x_start)
+				begin
+				
 
-			// if y_pos != y_start
-				// move motor y using while statement from the ADC
-			// end if y_pos
+				end
+
+				if (x_pos < x_start)
+				begin
+				
+
+				end
+				*/
+		
+				// move motor y to start using while statement from the ADC
+				ADC_start_measure(y_axis);
+				while(ADCSRA & (1<<ADSC));
+				y_pos = (int)ADCL;
+				y_pos += (int)(ADCH*256);
+				
+				/*
+				if (y_pos > y_start)
+				begin
+				
+
+				end
+
+				if (y_pos < y_start)
+				begin
+				
+
+				end
+				*/
+
+			print_position();
 
 			// turn on the solenoid to drop the pen (set D.7 high)
 			
@@ -128,7 +286,7 @@ begin
 				// update the LCD with the current positions
 			// end for each point
 
-			// move both motors slightly to make a circle or square at the end of each vector
+			// draw a circle at the end
 			
 			// turn off the solenoid to raise the pen (set D.7 low)
 		// end for each vector
