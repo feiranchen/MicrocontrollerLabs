@@ -26,6 +26,9 @@ const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
 const int8_t LCD_printing[] PROGMEM = "Printing        \0";
 const int8_t LCD_waiting[] PROGMEM = "Waiting for file\0";
 const int8_t LCD_null[] PROGMEM = "                \0";
+const int8_t LCD_hello[] PROGMEM = "hello world     \0";
+const int8_t LCD_move[] PROGMEM = "about to move   \0";
+const int8_t LCD_moving[] PROGMEM = "moving          \0";
 volatile int8_t lcd_buffer[17];	// LCD display buffer
 volatile int8_t keystr[17];
 volatile char LCD_char_count;
@@ -111,28 +114,28 @@ end
 
 void move_positive_x(void)
 begin
-	PORTD &= ~0x08;
+	PORTD &= 0xf7;
 	_delay_us(5);
-	PORTD |= 0x10;
+	PORTD |= 0x04;
 end
 
 void move_negative_x(void)
 begin
-	PORTD &= ~0x10;
+	PORTD &= 0xfb;
 	_delay_us(5);
 	PORTD |= 0x08;
 end
 
-void move_positive_y(void)
+void move_negative_y(void)
 begin
-	PORTD &= ~0x40;
+	PORTD &= 0xbf;
 	_delay_us(5);
 	PORTD |= 0x80;
 end
 
-void move_negative_y(void)
+void move_positive_y(void)
 begin
-	PORTD &= ~0x80;
+	PORTD &= 0x7f;
 	_delay_us(5);
 	PORTD |= 0x40;
 end
@@ -140,6 +143,7 @@ end
 void stop_x(void)
 begin
 	// checks previous direction and provides a short pulse backwards to slow motor
+/*
 	if (PIND & 0x10)
 	begin
 		move_negative_x();
@@ -152,12 +156,13 @@ begin
 		_delay_us(5);
 		PORTD &= ~0x10;
 	end
-
+*/
 	PORTD &= ~0x18;
 end
 
 void stop_y(void)
 begin
+/*
 	if(PIND & 0x80)
 	begin
 		move_negative_y();
@@ -170,7 +175,7 @@ begin
 		_delay_us(5);
 		PORTD &= ~0x80;
 	end
-
+*/
 	PORTD &= ~0xc0;
 
 end
@@ -178,7 +183,7 @@ end
 // all motors coast to a stop
 void stop_all(void)
 begin
-	PORTD &= 0x03;
+	PORTD &= 0x23;
 end
 
 // draw a circle
@@ -224,6 +229,33 @@ end
 int main(void)
 begin
 	initialize();
+
+	CopyStringtoLCD(LCD_hello, 0, 0);
+	_delay_ms(1000);
+	while(1)
+	begin
+	CopyStringtoLCD(LCD_move, 0, 0);
+	_delay_ms(1000);
+	move_positive_x();
+	_delay_ms(250);
+	stop_all();
+	CopyStringtoLCD(LCD_moving, 0, 0);
+//print_position();
+	move_positive_y();
+	_delay_ms(250);
+	stop_all();
+//print_position();
+	move_negative_x();
+	_delay_ms(250);
+	stop_all();
+//print_position();
+	move_negative_y();
+	_delay_ms(250);
+	stop_all();
+//print_position();
+
+	end
+
 	while(1)
 	begin
 		// while loop until there is a file waiting to be sent over Putty
