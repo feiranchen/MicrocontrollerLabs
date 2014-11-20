@@ -1411,53 +1411,7 @@ void video_puts(char x, char y, char *str) {
 		x = x+6;	
 	}
 }
-      
-//==================================
-// put a small character on the screen
-// x-coord must be on divisible by 4 
-// c is index into bitmap
-/*
-void video_smallchar(char x, char y, char c) { 
-	char mask;
-	//int i=((int)x>>3) + ((int)y<<4) + ((int)y<<1);
-	int i=((int)x>>3) + (int)y * bytes_per_line ;
 
-	if (x == (x & 0xf8)) mask = 0x0f;     //f8
-	else mask = 0xf0;
-	
-	uint8_t j = pgm_read_byte(((uint32_t)(smallbitmap)) + c*5);
-	screen[i]    =    (screen[i] & mask) | (j & ~mask);
-
-	j = pgm_read_byte(((uint32_t)(smallbitmap)) + c*5 + 1);
-   	screen[i+bytes_per_line] = (screen[i+bytes_per_line] & mask) | (j & ~mask);
-
-	j = pgm_read_byte(((uint32_t)(smallbitmap)) + c*5 + 2);
-    screen[i+bytes_per_line*2] = (screen[i+bytes_per_line*2] & mask) | (j & ~mask);
-    
-	j = pgm_read_byte(((uint32_t)(smallbitmap)) + c*5 + 3);
-	screen[i+bytes_per_line*3] = (screen[i+bytes_per_line*3] & mask) | (j & ~mask);
-   	
-	j = pgm_read_byte(((uint32_t)(smallbitmap)) + c*5 + 4);
-	screen[i+bytes_per_line*4] = (screen[i+bytes_per_line*4] & mask) | (j & ~mask); 
-}
-
-//==================================
-// put a string of small characters on the screen
-// x-cood must be on divisible by 4 
-void video_putsmalls(char x, char y, char *str) {
-	char i;
-	x = x & 0b11111100; //make it divisible by 4
-	for (i = 0; str[i] != 0; i++) {
-		if (str[i] >= 0x30 && str[i] <= 0x3a) 
-			video_smallchar(x, y, str[i] - 0x30);
-
-        else video_smallchar(x, y, str[i]-0x40+12);
-		x += 4;	
-	}
-}
-*/
-
-//==================================
 //return the value of one point 
 //at x,y with color 1=white 0=black 2=invert
 char video_set(char x, char y) {
@@ -1468,16 +1422,6 @@ char video_set(char x, char y) {
 
     return (screen[i] & 1<<(7-(x & 0x7)));   	
 }
-
-/*/=== fixed point mult ===============================
-int multfix(int a, int b) {
-  int result1 = a * b;
-  int result2 = (a>>8) * (b>>8);
-
-  return (result2 << 8) | (result1 >> 8);
-} 
-*/
-
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1645,23 +1589,16 @@ begin
 			v_paddle_y = top_of_paddle-prev_top;
 			video_line(2,top_of_paddle,2,top_of_paddle+16,1);
 			video_line(3,top_of_paddle,3,top_of_paddle+16,1);
-			
 
-		
 			// 3. update ball information
-
-			//start_calc = Max_num_balls/3 * (time_elapsed_HS%3);
-			//end_calc = Max_num_balls - Max_num_balls/3 * (2 - time_elapsed_HS % 3);
-
-
 			for(int i = 0; i<Max_num_balls-1;i++)
 			begin
 				if(!is_on_screen[i]) continue;
 				age[i]++;
 				balls_on_screen++;
 				if (hit_count[i] > 0) hit_count[i]--;
-			// 3.1. check for collisions and update velocities (including drag)
 
+				// 3.1. check for collisions and update velocities (including drag)
 				for(int j = i+1; j<Max_num_balls;j++)
 				begin
 				
@@ -1676,9 +1613,7 @@ begin
 					begin
 					 	if (abs(rij_y) <= 0x0450)
 					 	begin
-							if(//(multfix(rij_x,rij_x) + multfix(rij_y,rij_y) <= int2fix(32))
-							 hit_count[i]==0
-								&& hit_count[j]==0)// check collision here)<4))
+							if(hit_count[i]==0 && hit_count[j]==0)// check collision here)<4))
 							begin
 								vij_x = x_velocity[i] - x_velocity[j];
 								vij_y = y_velocity[i] - y_velocity[j];
@@ -1719,17 +1654,14 @@ begin
 				if(fix2int(x_pos[i])>=122)
 				begin
 					x_velocity[i] = -(x_velocity[i]);
-					//hit_count[i] = 5;
 				end
 				if(fix2int(y_pos[i])<=3)
 				begin
 					y_velocity[i] = -(y_velocity[i]);
-					//hit_count[i] = 5;
 				end
 				if(fix2int(y_pos[i])>=58)
 				begin
 					y_velocity[i] = -(y_velocity[i]);
-					//hit_count[i] = 5;
 				end
 
 

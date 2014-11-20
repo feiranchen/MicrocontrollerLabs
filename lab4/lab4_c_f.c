@@ -75,11 +75,11 @@ volatile uint16_t motor_period_ovlf;
 //Helper functions
 void port_init(void)
 begin
-	DDRA = 0x00; // all of PORTA is an input to avoid coupling with ADC meas
-	PORTA = 0x00; // no pull-up resistors to avoid coupling
-	DDRC = 0xff; // all output
+	DDRA = 0x00;   // all of PORTA is an input to avoid coupling with ADC meas
+	PORTA = 0x00;  // no pull-up resistors to avoid coupling
+	DDRC = 0xff;   // all output
 	PORTC = 0x00;
-	DDRB = 0xff; // all output esp port B.3
+	DDRB = 0xff;   // all output esp port B.3
 	PORTB = 0x00;
 	DDRD &= ~0x04; // d.2 is an input
 	PORTD |= 0x04; // pull-up resistor on d.2 
@@ -103,8 +103,8 @@ begin
 	TCCR2B = 0x00;
 	TIMSK2 = 0x00;
 
-	TIMSK2 |= (1<<TOIE2);    // enables the overflow ISR
-	TCCR2B |= (1<<CS22) + (1<<CS21);// + (1<<CS20);    // sets the prescaler to 256
+	TIMSK2 |= (1<<TOIE2);            // enables the overflow ISR
+	TCCR2B |= (1<<CS22) + (1<<CS21); // sets the prescaler to 256
 end
 
 void timer0_init(void)
@@ -112,48 +112,23 @@ begin
 	TCCR0A = 0x00;
 	TCCR0B = 0x00;
 	TIMSK0 = 0x00;
-	OCR0A = 0;    // sets up 0 duty cycle
+	OCR0A = 0;             // sets up 0 duty cycle
 	EICRA = 0x00;
 	EIMSK = 0x00;
 
-	EICRA |= (1<<ISC01);    // falling edge triggers INT0
+	EICRA |= (1<<ISC01);   // falling edge triggers INT0
 	EIMSK |= (1<<INT0);    // enables INT0
 
 	TCCR0A |= (1<<COM0A1) + (1<<COM0B1) + (1<<WGM01) + (1<<WGM00);    // fast pwm
 	TCCR0B |= (1<<CS01) + (1<<CS00);    // prescaler of 64 -> 976 cycles/sec
 end
 
-/*
-// write to LCD
-void write_3digit_LCD(int num, int x, int y)
-begin
-	sprintf(lcd_buffer,"%4.4d", num);
-	LCDGotoXY(x, y);
-	LCDstring(lcd_buffer, strlen(lcd_buffer));
-end
-
-// write to LCD
-void write_LCD(int num)
-begin
-	sprintf(lcd_buffer,"%-i", num);
-	LCDGotoXY(0, 1);
-	LCDstring(lcd_buffer, strlen(lcd_buffer));
-end
-
-void write_string_LCD(char* str, int x, int y)
-begin
-	sprintf(lcd_buffer,"%12s\n", str);
-	LCDGotoXY(x, y);
-	LCDstring(lcd_buffer, strlen(lcd_buffer));
-end
-*/
-
 // --- define task 1  ----------------------------------------
 void get_User_Input(void* args) 
   begin
   	uint32_t rel, dead ;
 	int inputValue;
-	float finputValue;////////////////////update at one point
+	float finputValue; //temporary value that stores the scanned inputs
 	char cmd[4] ;
 
 	while(1)
@@ -164,7 +139,6 @@ void get_User_Input(void* args)
 		// 't 1' toggles led 1
 		fprintf(stdout, ">") ;
 		fscanf(stdin, "%s %f", cmd, &finputValue) ;
-		//trtWait(SEM_STRING_DONE);
 
 		// update shared leds
 		
@@ -201,7 +175,6 @@ void get_User_Input(void* args)
 	    rel = trtCurrentTime() + SECONDS2TICKS(0.1);
 	    dead = trtCurrentTime() + SECONDS2TICKS(0.3);
 	    trtSleepUntil(rel, dead);
-
 	end
   end
 
@@ -214,10 +187,8 @@ void calc_PWM_Const(void* args)
 	signed int p, i, d;
 	float rpm_isr;
 
-	s_value = 1000; // <------------------------------------- This is a test statement only
-	p = 0;
-	i = 0;
-	d = 0;
+	s_value = 1000; // initial values. Can be reset at runtime
+	// parameters that seem to render stable results
 	p_value = 4;
 	i_value = .25;
 	d_value = .3;
@@ -227,8 +198,8 @@ void calc_PWM_Const(void* args)
 
 	while(1)
 	begin
-		temp = fan_period*7;    // ticks for one rotation
-		rpm_isr = 62500 * 60 /temp;    // divide 60 seconsd by rotations/sec for rpm
+		temp = fan_period * 7;        // ticks for one rotation
+		rpm_isr = 62500 * 60 /temp; // divide 60 seconsd by rotations/sec for rpm
 		
 		prev_error = error;
 		
@@ -247,27 +218,12 @@ void calc_PWM_Const(void* args)
 		end
 		else sum_error = 0;
 
-		// calculate CF
-		/*
-		trtWait(SEM_SHARED_P);
-		p = p_value;
-		trtSignal(SEM_SHARED_P);
-
-		trtWait(SEM_SHARED_I);
-		i = i_value;
-		trtSignal(SEM_SHARED_I);
-
-		trtWait(SEM_SHARED_D);
-		d = d_value;
-		trtSignal(SEM_SHARED_D);*/
-		
-		
 		trtWait(SEM_SHARED_P);
 		trtWait(SEM_SHARED_I);
 		trtWait(SEM_SHARED_D);
-		//CF = p * error + d * (error-prev_error) + i * (sum_error);
 		i_calc = i_value * (sum_error) > 50 ? 50 : i_value * (sum_error);
-		i_calc = i_value * (sum_error) < -50? -50 : i_value * (sum_error);
+		i_calc = i_value * (sum_error) < -50 ? -50 : i_value * (sum_error);
+		// calculate CF
 		CF = p_value * error + d_value * (error-prev_error) + i_calc;
 		trtSignal(SEM_SHARED_P);
 		trtSignal(SEM_SHARED_I);
@@ -290,37 +246,33 @@ void calc_PWM_Const(void* args)
 // writes the desired fan speed and the current fan speed to the LCD
 // approx five times a second
 void get_Fan_Speed(void* args) 
-  begin	
+begin	
   	uint32_t rel, dead ;
 	timer2_init();
-	timer0_init();    // sets up the fast pwm
+	timer0_init(); // sets up the fast pwm
 	LCD_init();    // init LCD for our use
-	port_init();    // init port c
+	port_init();   // init port c
 
 	while(1)
 	begin
 		trtWait(SEM_SHARED_S) ;
 		sprintf(lcd_buffer,"input RPM: %-i ", (int)s_value);
-		//sprintf(lcd_buffer,"%d, %d", (int)s_value, RPM);
 		trtSignal(SEM_SHARED_S) ;
 		LCDGotoXY(0, 0);
 		LCDstring(lcd_buffer, strlen(lcd_buffer));
 
 		trtWait(SEM_SHARED_RPM);
 		sprintf(lcd_buffer,"fan RPM: %-i   ", RPM);
-		//sprintf(lcd_buffer,"err %d %d", error, (int)d_value * (error-prev_error));
-		//sprintf(lcd_buffer," %-i %-i %-i",(int)p_value, (int)i_value,(int)d_value);
 		trtSignal(SEM_SHARED_RPM);
 		LCDGotoXY(0, 1);
 		LCDstring(lcd_buffer, strlen(lcd_buffer));
-		
 
 		// Sleep
 	    rel = trtCurrentTime() + SECONDS2TICKS(0.1);
 	    dead = trtCurrentTime() + SECONDS2TICKS(0.3);
 	    trtSleepUntil(rel, dead);
 	end
-  end
+end
 
 // pin change interrupt on D.2. Initialized in task 2
 ISR(INT0_vect)
@@ -347,23 +299,21 @@ int main(void) {
 
   // --- create semaphores ----------
   // You must creat the first two semaphores if you use the uart
-  trtCreateSemaphore(SEM_RX_ISR_SIGNAL, 0) ; // uart receive ISR semaphore
-  trtCreateSemaphore(SEM_STRING_DONE,0) ;  // user typed <enter>
-  
+  trtCreateSemaphore(SEM_RX_ISR_SIGNAL, 0); // uart receive ISR semaphore
+  trtCreateSemaphore(SEM_STRING_DONE, 0);   // user typed <enter>
+
   // variable protection
-  trtCreateSemaphore(SEM_SHARED_S, 1) ; // protect shared variables
-  trtCreateSemaphore(SEM_SHARED_P, 1) ; // protect shared variables
-  trtCreateSemaphore(SEM_SHARED_I, 1) ; // protect shared variables
-  trtCreateSemaphore(SEM_SHARED_D, 1) ; // protect shared variables
-  trtCreateSemaphore(SEM_SHARED_RPM, 1) ; // protect shared variables
+  trtCreateSemaphore(SEM_SHARED_S, 1);   // protect shared variables
+  trtCreateSemaphore(SEM_SHARED_P, 1);   // protect shared variables
+  trtCreateSemaphore(SEM_SHARED_I, 1);   // protect shared variables
+  trtCreateSemaphore(SEM_SHARED_D, 1);   // protect shared variables
+  trtCreateSemaphore(SEM_SHARED_RPM, 1); // protect shared variables
 
-
- // --- creat tasks  ----------------
+  // --- creat tasks  ----------------
   trtCreateTask(get_User_Input, 1000, SECONDS2TICKS(0.01), SECONDS2TICKS(0.1), &(args[0]));
   trtCreateTask(calc_PWM_Const, 1000, SECONDS2TICKS(0.01), SECONDS2TICKS(0.05), &(args[1]));
   trtCreateTask(get_Fan_Speed, 1000, SECONDS2TICKS(0.05), SECONDS2TICKS(0.2), &(args[2]));
-  
-  
+
   // --- Idle task --------------------------------------
   // just sleeps the cpu to save power 
   // every time it executes
@@ -373,5 +323,4 @@ int main(void) {
   begin
   	sleep_cpu();
   end
-
 } // main
