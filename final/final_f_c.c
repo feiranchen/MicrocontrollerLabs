@@ -38,8 +38,8 @@ volatile unsigned int x_pos;
 volatile unsigned int y_pos;
 #define x_axis 0
 #define y_axis 1
-volatile int x_vect[100] = {18,500,200,600,100,50,340,40,10,15,12,14,13,-1};
-volatile int y_vect[100] = {18,500,520,100,100,500,250,300,200,208,203,206,205,-1};
+volatile int x_vect[100] = {40,400,200,400,100,50,340,40,-1};
+volatile int y_vect[100] = {40,400,420,100,100,400,250,300,-1};
 
 // Inits ----------------------------------------------------------------------
 void LCD_init(void)
@@ -149,7 +149,7 @@ end
 
 void stop_y(void)
 begin
-	PORTD &= ~0xc0;
+	PORTD &= ~0xc0; 
 
 end
 
@@ -157,45 +157,46 @@ end
 void stop_all(void)
 begin
 	PORTD &= 0x23;
+	_delay_ms(100);
 end
 
 // draw a circle
 void circle(void)
 begin
 	move_positive_x();
-	_delay_us(1000);
+	_delay_us(4000);
 	stop_all();
 	move_positive_y();
-	_delay_us(1000);
+	_delay_us(4000);
 	move_negative_x();
-	_delay_us(1000);
+	_delay_us(4000);
 	stop_all();
 	move_negative_y();
-	_delay_us(750);
+	_delay_us(3000);
 	stop_all();
 
 	move_positive_x();
-	_delay_us(600);
+	_delay_us(2400);
 	stop_all();
 	move_positive_y();
-	_delay_us(600);
+	_delay_us(2400);
 	move_negative_x();
-	_delay_us(600);
+	_delay_us(2400);
 	stop_all();
 	move_negative_y();
-	_delay_us(350);
+	_delay_us(1500);
 	stop_all();
 
 	move_positive_x();
-	_delay_us(200);
+	_delay_us(1000);
 	stop_all();
 	move_positive_y();
-	_delay_us(200);
+	_delay_us(1000);
 	move_negative_x();
-	_delay_us(200);
+	_delay_us(1000);
 	stop_all();
 	move_negative_y();
-	_delay_us(100);
+	_delay_us(700);
 	stop_all();
 end
 
@@ -216,6 +217,7 @@ begin
 	_delay_ms(250);
 	stop_all();
 	CopyStringtoLCD(LCD_moving, 0, 0);
+	PORTD |= 0x20;
 //print_position();
 	move_positive_y();
 	_delay_ms(250);
@@ -228,6 +230,7 @@ begin
 	move_negative_y();
 	_delay_ms(250);
 	stop_all();
+	PORTD &= ~0x20;
 //print_position();
 
 	end
@@ -360,7 +363,7 @@ while(1) PORTD |= 0x20;
 			//_delay_ms(1000);
 			// turn on the solenoid to drop the pen (set D.5 high)
 			PORTD |= 0x20;
-
+			_delay_ms(200);
 			// draw a circle or a square at the start of the vector
 			circle();
 
@@ -432,13 +435,19 @@ while(1) PORTD |= 0x20;
 				//_delay_ms(1000);
 			end	// end for each point
 			print_position();
-			_delay_ms(3000);
+			//_delay_ms(3000);
 			// draw a circle at the end
 			circle();
 
 			// turn off the solenoid to raise the pen (set D.5 low)]
 			PORTD &= ~0x20;
+			_delay_ms(200);
+			move_positive_x();
+			_delay_ms(700);
+			move_positive_y();
+			_delay_ms(700);
 
+			while(1);
 		// end for each vector
 	end // while(1)
 	return 1;
