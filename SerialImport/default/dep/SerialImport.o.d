@@ -21,7 +21,7 @@ SerialImport.o: ../SerialImport.c \
   c:/winavr-20100110/lib/gcc/../../avr/include/avr/interrupt.h \
   c:/winavr-20100110/lib/gcc/../../avr/include/util/delay.h \
   c:/winavr-20100110/lib/gcc/../../avr/include/util/delay_basic.h \
-  ../uart.h ../uart.c
+  ../uart.h
 
 c:/winavr-20100110/lib/gcc/../../avr/include/stdio.h:
 
@@ -70,5 +70,3 @@ c:/winavr-20100110/lib/gcc/../../avr/include/util/delay.h:
 c:/winavr-20100110/lib/gcc/../../avr/include/util/delay_basic.h:
 
 ../uart.h:
-
-../uart.c:

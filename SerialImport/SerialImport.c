@@ -18,7 +18,6 @@
 #include <inttypes.h>
 #include <util/delay.h> // needed for lcd_lib
 #include "uart.h"
-#include "uart.c"
 
 
 // UART file descriptor
@@ -71,8 +70,8 @@ end
 
 void get_User_Input(void* args) 
 begin
-  	uint32_t rel, dead ;
-	int inputValue;
+  	//uint32_t rel, dead ;
+	//int inputValue;
 	float finputValue;////////////////////update at one point
 	char cmd[4] ;
 
@@ -112,7 +111,7 @@ int main(void) {
 	LCDGotoXY(0, 0);
 	LCDstring(lcd_buffer2, strlen(lcd_buffer2));
 
-for (i=0; i<file_size-1; i++)
+for (i=0; i<file_size; i++)
   begin
 
   	fprintf(stdout,"Hi\n\r");
