@@ -95,6 +95,7 @@ end
 // --- Main Program ----------------------------------
 int main(void) {
   int i =0;
+  int x=-2 ,y=-2,d=-2;// container for parsed ints
   char buffer[17];
   uint16_t file_size = 0;
   char* file;
@@ -106,7 +107,7 @@ int main(void) {
   // Allocate memory for the buffer	
   fprintf(stdout,"File Length\n\r");
   fscanf(stdin, "%d*", &file_size) ;
-  sprintf(lcd_buffer2,"File Len:%-i.    ", file_size);
+  sprintf(lcd_buffer2,"             %-i.  ", file_size);
 
 	LCDGotoXY(0, 0);
 	LCDstring(lcd_buffer2, strlen(lcd_buffer2));
@@ -116,13 +117,22 @@ for (i=0; i<file_size; i++)
 
   	fprintf(stdout,"Hi\n\r");
 	fscanf(stdin, "%s", buffer) ;
+	sscanf(buffer, "X%dY%dD%d*", &x,&y,&d);
 
     sprintf(lcd_buffer2,"%-i  ", i++);
 	LCDGotoXY(14, 0);
 	LCDstring(lcd_buffer2, 2);
 
+	//print org
 	LCDGotoXY(0, 1);
 	LCDstring(buffer,15);
+
+	//print parsed
+	if (x>0 && y>0 && d>0){
+		sprintf(lcd_buffer,"x%dy%dd%d", x,y,d);
+		LCDGotoXY(0, 0);
+		LCDstring(lcd_buffer, 10);
+	}
 	_delay_ms(1000);
   end
 
