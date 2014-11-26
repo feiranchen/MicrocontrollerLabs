@@ -57,18 +57,61 @@ var line = "";
 var lineIndex = 0;
 
 function  trimBuffer(){
-	console.log('remaining' + inputBuffer + "<End>")
+	// console.log('remaining' + inputBuffer + "<End>")
 	var lineEnding = inputBuffer.indexOf('\r\n');
 	if (lineEnding > -1){
 		line = inputBuffer.substring(0, lineEnding);
-		inputBuffer = inputBuffer.slice(lineEnding + 3)
+		inputBuffer = inputBuffer.slice(lineEnding + 2)
 		console.log('got a line' + line + "<End>");
 		console.log('Buffer trimmed to' + inputBuffer + '<End>')
 	} else {
 		line = ""
 	}
 }
+var gotLenth=0;
+serialPort.on("open", function () {
+	serialPort.on('data', function(data) {
+		console.log("Data!!"+data);
+		console.log("Printing buffer" +inputBuffer);
+		inputBuffer += data;
+		trimBuffer();
 
+		//console.log('data received: ' + data);
+		if (line == "File Length") {
+			line = "";
+			console.log("File Length!!\n");
+			serialPort.write("{0}*\r\n".format(gerber_lines.length), function(err, results) {
+				serialPort.drain(function(){
+					console.log("Lenth Written:" + gerber_lines.length);
+					gotLenth=1;
+				});
+				//console.log('err ' + err);
+				//console.log('results ' + results);
+			});
+		}
+
+		else if (line == "Hi"){
+			if(gerber == "") {
+				console.log("File loading");
+				return;
+			}
+			//console.log('Received Hi\r\n');
+			serialPort.write(gerber_lines[lineIndex]+"\r\n", function(err, results) {
+			//serialPort.write("test\r\n", function(err, results) {
+				serialPort.drain(function(){
+					console.log("Written."+ gerber_lines[lineIndex]+"\r\n");
+				});
+				lineIndex++;
+				console.log("sent"+lineIndex +": "+ gerber_lines[lineIndex]+"<End of MSG>");
+				//console.log('err ' + err);
+				//console.log('results ' + results);
+			});
+		}
+	});
+});
+
+
+/* This is too fast
 serialPort.on("open", function () {
 	serialPort.on('data', function(data) {
 		console.log("Data!!");
@@ -91,29 +134,27 @@ serialPort.on("open", function () {
 				//console.log('err ' + err);
 				//console.log('results ' + results);
 			});
-		}
-		else if (line == "Hi"){
 			if(gerber == "") {
 				console.log("File loading");
 				return;
 			}
-			console.log('Received Hi\r\n');
-			//serialPort.write(gerber_lines[lineIndex]+"\0", function(err, results) {
-			serialPort.write("test\r\n", function(err, results) {
-				serialPort.drain(function(){
-					console.log("Written.");
+
+			for (var i = 0; i< gerber_lines.length; i++){
+				//serialPort.write(gerber_lines[lineIndex]+"\0", function(err, results) {
+				serialPort.write("test\r\n", function(err, results) {
+					serialPort.drain(function(){
+						console.log("Written.");
+					});
+					lineIndex++;
+					console.log("sent"+lineIndex +": "+ gerber_lines[lineIndex]+"====");
+					//console.log('err ' + err);
+					//console.log('results ' + results);
 				});
-				lineIndex++;
-				console.log("sent"+lineIndex +": "+ gerber_lines[lineIndex]+"====");
-				//console.log('err ' + err);
-				//console.log('results ' + results);
-			});
+			}
 		}
 	});
-
-
-
-
+});
+*/
 
 // This works
 /*
@@ -153,5 +194,3 @@ serialPort.on("open", function () {
 	// 	});
  //  	}
 	
-
-});

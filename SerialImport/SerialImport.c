@@ -37,8 +37,9 @@ const int8_t LCD_num_syllable[] PROGMEM = "Num Syllables: \0";
 const int8_t LCD_dur_syllable[] PROGMEM = "Dur Syllables: \0";
 const int8_t LCD_rpt_interval[] PROGMEM = "Rpt interval: \0";
 const int8_t LCD_playing[] PROGMEM = "Chirp, Chirp \0";
-const int8_t LCD_cap_clear[] PROGMEM = " \0";
+const int8_t LCD_line_clear[] PROGMEM = "                \0";
 volatile int8_t lcd_buffer[17];	// LCD display buffer
+volatile int8_t lcd_buffer2[17];	// LCD display buffer
 volatile int8_t keystr[17];
 volatile char LCD_char_count;
 
@@ -94,7 +95,9 @@ end
 
 // --- Main Program ----------------------------------
 int main(void) {
-  int file_size;
+  int i =0;
+  char buffer[17];
+  uint16_t file_size = 0;
   char* file;
   LCD_init();
   //init the UART -- uart_init() is in uart.c
@@ -103,17 +106,25 @@ int main(void) {
 
   // Allocate memory for the buffer	
   fprintf(stdout,"File Length\n\r");
-  //fscanf(stdin, "%d", file_size) ;
-	fscanf(stdin, "%s", lcd_buffer) ;
-	LCDGotoXY(0, 1);
-	LCDstring(lcd_buffer, strlen(lcd_buffer));
+  fscanf(stdin, "%d*", &file_size) ;
+  sprintf(lcd_buffer2,"File Len:%-i.    ", file_size);
 
-  while(1)
+	LCDGotoXY(0, 0);
+	LCDstring(lcd_buffer2, strlen(lcd_buffer2));
+
+for (i=0; i<file_size-1; i++)
   begin
+
   	fprintf(stdout,"Hi\n\r");
-	fscanf(stdin, "%s", lcd_buffer) ;
-	LCDGotoXY(5, 1);
-	LCDstring(lcd_buffer, strlen(lcd_buffer));
+	fscanf(stdin, "%s", buffer) ;
+
+    sprintf(lcd_buffer2,"%-i  ", i++);
+	LCDGotoXY(14, 0);
+	LCDstring(lcd_buffer2, 2);
+
+	LCDGotoXY(0, 1);
+	LCDstring(buffer,15);
+	_delay_ms(1000);
   end
 
 
