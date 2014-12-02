@@ -116,13 +116,13 @@ end
 void raise_pen(void)
 begin
 	PORTD &= ~0x20;
-	_delay_ms(200);
+	_delay_ms(500);
 end
 
 void lower_pen(void)
 begin
 	PORTD |= 0x20;
-	_delay_ms(200);
+	_delay_ms(400);
 end
 
 void move_negative_x(void)
@@ -216,67 +216,68 @@ move_to_XY(int x_in, int y_in, int d)
 begin
 	if (d==2) raise_pen();
 	if (d==1) lower_pen();
+	if(x_in>0 && y_in>0)
+	begin
+		// move to x position
+		ADC_start_measure(x_axis);
+		while(ADCSRA & (1<<ADSC));
+		x_pos = (int)ADCL;
+		x_pos += (int)(ADCH*256);
+
+		if (x_pos > x_in)
+		begin
+			while(x_pos > x_in)
+			begin
+				ADC_start_measure(x_axis);
+				while(ADCSRA & (1<<ADSC))move_negative_x();
+				x_pos = (int)ADCL;
+				x_pos += (int)(ADCH*256);
+			end
+			stop_all();
+		end
+
+		else
+		begin
+			while(x_pos < x_in)
+			begin
+				ADC_start_measure(x_axis);
+				while(ADCSRA & (1<<ADSC))move_positive_x();
+				x_pos = (int)ADCL;
+				x_pos += (int)(ADCH*256);
+			end
+			stop_all();
+		end
 	
-	// move to x position
-	ADC_start_measure(x_axis);
-	while(ADCSRA & (1<<ADSC));
-	x_pos = (int)ADCL;
-	x_pos += (int)(ADCH*256);
+		// move to y position
+		ADC_start_measure(y_axis);
+		while(ADCSRA & (1<<ADSC));
+		y_pos = (int)ADCL;
+		y_pos += (int)(ADCH*256);
 
-	if (x_pos > x_in)
-	begin
-		while(x_pos > x_in)
+		if (y_pos > y_in)
 		begin
-			ADC_start_measure(x_axis);
-			while(ADCSRA & (1<<ADSC))move_negative_x();
-			x_pos = (int)ADCL;
-			x_pos += (int)(ADCH*256);
+			while(y_pos > y_in)
+			begin
+				ADC_start_measure(y_axis);
+				while(ADCSRA & (1<<ADSC))move_negative_y();
+				y_pos = (int)ADCL;
+				y_pos += (int)(ADCH*256);
+			end
+			stop_all();
 		end
-		stop_all();
-	end
 
-	else
-	begin
-		while(x_pos < x_in)
+		else
 		begin
-			ADC_start_measure(x_axis);
-			while(ADCSRA & (1<<ADSC))move_positive_x();
-			x_pos = (int)ADCL;
-			x_pos += (int)(ADCH*256);
+			while(y_pos < y_in)
+			begin
+				ADC_start_measure(y_axis);
+				while(ADCSRA & (1<<ADSC))move_positive_y();
+				y_pos = (int)ADCL;
+				y_pos += (int)(ADCH*256);
+			end
+			stop_all();
 		end
-		stop_all();
 	end
-	
-	// move to y position
-	ADC_start_measure(y_axis);
-	while(ADCSRA & (1<<ADSC));
-	y_pos = (int)ADCL;
-	y_pos += (int)(ADCH*256);
-
-	if (y_pos > y_in)
-	begin
-		while(y_pos > y_in)
-		begin
-			ADC_start_measure(y_axis);
-			while(ADCSRA & (1<<ADSC))move_negative_y();
-			y_pos = (int)ADCL;
-			y_pos += (int)(ADCH*256);
-		end
-		stop_all();
-	end
-
-	else
-	begin
-		while(y_pos < y_in)
-		begin
-			ADC_start_measure(y_axis);
-			while(ADCSRA & (1<<ADSC))move_positive_y();
-			y_pos = (int)ADCL;
-			y_pos += (int)(ADCH*256);
-		end
-		stop_all();
-	end
-
 	// print where you end up
 	print_position();			
 end
@@ -288,161 +289,20 @@ begin
 
 	CopyStringtoLCD(LCD_hello, 0, 0);
 	_delay_ms(1000);
-/*
-	while(1)
+	move_to_XY(x_vect[0],y_vect[0],2);
+	for(i=1;i<100;i++)
 	begin
-		// while loop until there is a file waiting to be sent over Putty
-			// update LCD to say "waiting for file input"
+		if(x_vect[i]>=0 && y_vect[i] >= 0)
+		begin
+			move_to_XY(x_vect[i],y_vect[i],1);
+		end
+		else
+		begin
+			break;
+		end
+	end
+	move_to_XY(700,700,2);
 
-		// exit while loop once there is a file
-			// save the coordinates of the vectors into progmem
-			// update LCD to say "printing"
 
-		// for each vector in the file
-				 // move motor x to start using while statement from the ADC
-				ADC_start_measure(x_axis);
-				while(ADCSRA & (1<<ADSC));
-				x_pos = (int)ADCL;
-				x_pos += (int)(ADCH*256);
-
-				if (x_pos > x_vect[0])
-				begin
-					while(x_pos > x_vect[0])
-					begin
-						ADC_start_measure(x_axis);
-						while(ADCSRA & (1<<ADSC))move_negative_x();
-						x_pos = (int)ADCL;
-						x_pos += (int)(ADCH*256);
-					end
-					stop_all();
-				end
-				else
-				begin
-					while(x_pos < x_vect[0])
-					begin
-						ADC_start_measure(x_axis);
-						while(ADCSRA & (1<<ADSC))move_positive_x();
-						x_pos = (int)ADCL;
-						x_pos += (int)(ADCH*256);
-					end
-					stop_all();
-				end
-				
-				// move motor y to start using while statement from the ADC
-				ADC_start_measure(y_axis);
-				while(ADCSRA & (1<<ADSC));
-				y_pos = (int)ADCL;
-				y_pos += (int)(ADCH*256);
-
-				if (y_pos > y_vect[0])
-				begin
-					while(y_pos > y_vect[0])
-					begin
-						ADC_start_measure(y_axis);
-						while(ADCSRA & (1<<ADSC))move_negative_y();
-						y_pos = (int)ADCL;
-						y_pos += (int)(ADCH*256);
-					end
-					stop_all();
-				end
-				else
-				begin
-					while(y_pos < y_vect[0])
-					begin
-						ADC_start_measure(y_axis);
-						while(ADCSRA & (1<<ADSC))move_positive_y();
-						y_pos = (int)ADCL;
-						y_pos += (int)(ADCH*256);
-					end
-					stop_all();
-				end
-
-			print_position();
-			
-			lower_pen();
-
-			// draw a circle or a square at the start of the vector
-			circle();
-
-			// for each point in the vector
-			for(i=1;i<100;i++)
-			begin
-				if(x_vect[i]>=0 && y_vect[i] >= 0)
-				begin
-					// move motor x using while statement from the ADC
-					if (x_pos > x_vect[i])
-					begin
-						while(x_pos > x_vect[i])
-						begin
-							ADC_start_measure(x_axis);
-							while(ADCSRA & (1<<ADSC))move_negative_x();
-							x_pos = (int)ADCL;
-							x_pos += (int)(ADCH*256);
-						end
-						stop_all();
-					end
-					else
-					begin
-						while(x_pos < x_vect[i])
-						begin
-							ADC_start_measure(x_axis);
-							while(ADCSRA & (1<<ADSC))move_positive_x();
-							x_pos = (int)ADCL;
-							x_pos += (int)(ADCH*256);
-						end
-						stop_all();
-					end// move motor x using while statement from the ADC
-				
-					// move motor y to start using while statement from the ADC
-					ADC_start_measure(y_axis);
-					while(ADCSRA & (1<<ADSC));
-					y_pos = (int)ADCL;
-					y_pos += (int)(ADCH*256);
-
-					if (y_pos > y_vect[i])
-					begin
-						while(y_pos > y_vect[i])
-						begin
-							ADC_start_measure(y_axis);
-							while(ADCSRA & (1<<ADSC))move_negative_y();
-							y_pos = (int)ADCL;
-							y_pos += (int)(ADCH*256);
-						end
-						stop_all();
-					end
-					else
-					begin
-						while(y_pos < y_vect[i])
-						begin
-							ADC_start_measure(y_axis);
-							while(ADCSRA & (1<<ADSC))move_positive_y();
-							y_pos = (int)ADCL;
-							y_pos += (int)(ADCH*256);
-						end
-						stop_all();
-					end // move motor y to start using while statement from the ADC
-				end //if(x_vect[i]>=0)
-				else
-				begin
-					break;
-				end
-
-				// update the LCD with the current positions
-				print_position();
-			end	// end for each point
-
-			circle();
-
-			// turn off the solenoid to raise the pen (set D.5 low)]
-			raise_pen();
-			move_positive_x();
-			_delay_ms(700);
-			move_positive_y();
-			_delay_ms(700);
-
-			while(1);
-		// end for each vector
-	end // while(1)
-		*/
 	return 1;
 end
