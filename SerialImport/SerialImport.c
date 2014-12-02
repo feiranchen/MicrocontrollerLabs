@@ -107,7 +107,7 @@ int main(void) {
   // Allocate memory for the buffer	
   fprintf(stdout,"File Length\n\r");
   fscanf(stdin, "%d*", &file_size) ;
-  sprintf(lcd_buffer2,"             %-i.  ", file_size);
+  sprintf(lcd_buffer2,"             %-i.", file_size);
 
 	LCDGotoXY(0, 0);
 	LCDstring(lcd_buffer2, strlen(lcd_buffer2));
@@ -120,7 +120,7 @@ for (i=0; i<file_size; i++)
 	sscanf(buffer, "X%dY%dD%d*", &x,&y,&d);
 
     sprintf(lcd_buffer2,"%-i  ", i++);
-	LCDGotoXY(14, 0);
+	LCDGotoXY(10, 0);
 	LCDstring(lcd_buffer2, 2);
 
 	//print org
@@ -133,7 +133,7 @@ for (i=0; i<file_size; i++)
 		LCDGotoXY(0, 0);
 		LCDstring(lcd_buffer, 10);
 	}
-	_delay_ms(1000);
+	//_delay_ms(1000);
   end
 
 

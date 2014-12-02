@@ -113,6 +113,17 @@ begin
 	LCDstring(lcd_buffer, strlen(lcd_buffer));
 end
 
+void raise_pen(void)
+begin
+	PORTD &= ~0x20;
+	_delay_ms(200);
+end
+
+void lower_pen(void)
+begin
+	PORTD |= 0x20;
+	_delay_ms(200);
+end
 
 void move_negative_x(void)
 begin
@@ -200,6 +211,76 @@ begin
 	stop_all();
 end
 
+// 1= pen down, 2= pen up
+move_to_XY(int x_in, int y_in, int d)
+begin
+	if (d==2) raise_pen();
+	if (d==1) lower_pen();
+	
+	// move to x position
+	ADC_start_measure(x_axis);
+	while(ADCSRA & (1<<ADSC));
+	x_pos = (int)ADCL;
+	x_pos += (int)(ADCH*256);
+
+	if (x_pos > x_in)
+	begin
+		while(x_pos > x_in)
+		begin
+			ADC_start_measure(x_axis);
+			while(ADCSRA & (1<<ADSC))move_negative_x();
+			x_pos = (int)ADCL;
+			x_pos += (int)(ADCH*256);
+		end
+		stop_all();
+	end
+
+	else
+	begin
+		while(x_pos < x_in)
+		begin
+			ADC_start_measure(x_axis);
+			while(ADCSRA & (1<<ADSC))move_positive_x();
+			x_pos = (int)ADCL;
+			x_pos += (int)(ADCH*256);
+		end
+		stop_all();
+	end
+	
+	// move to y position
+	ADC_start_measure(y_axis);
+	while(ADCSRA & (1<<ADSC));
+	y_pos = (int)ADCL;
+	y_pos += (int)(ADCH*256);
+
+	if (y_pos > y_in)
+	begin
+		while(y_pos > y_in)
+		begin
+			ADC_start_measure(y_axis);
+			while(ADCSRA & (1<<ADSC))move_negative_y();
+			y_pos = (int)ADCL;
+			y_pos += (int)(ADCH*256);
+		end
+		stop_all();
+	end
+
+	else
+	begin
+		while(y_pos < y_in)
+		begin
+			ADC_start_measure(y_axis);
+			while(ADCSRA & (1<<ADSC))move_positive_y();
+			y_pos = (int)ADCL;
+			y_pos += (int)(ADCH*256);
+		end
+		stop_all();
+	end
+
+	// print where you end up
+	print_position();			
+end
+
 int main(void)
 begin
 	char i = 0;
@@ -207,90 +288,7 @@ begin
 
 	CopyStringtoLCD(LCD_hello, 0, 0);
 	_delay_ms(1000);
-
 /*
-	while(1)
-	begin
-	CopyStringtoLCD(LCD_move, 0, 0);
-	_delay_ms(1000);
-	move_positive_x();
-	_delay_ms(250);
-	stop_all();
-	CopyStringtoLCD(LCD_moving, 0, 0);
-	PORTD |= 0x20;
-//print_position();
-	move_positive_y();
-	_delay_ms(250);
-	stop_all();
-//print_position();
-	move_negative_x();
-	_delay_ms(250);
-	stop_all();
-//print_position();
-	move_negative_y();
-	_delay_ms(250);
-	stop_all();
-	PORTD &= ~0x20;
-//print_position();
-
-	end
-*/
-/*
-ADC_start_measure(x_axis);
-while(ADCSRA & (1<<ADSC));
-x_pos = (int)ADCL;
-x_pos += (int)(ADCH*256);
-ADC_start_measure(y_axis);
-while(ADCSRA & (1<<ADSC));
-y_pos = (int)ADCL;
-y_pos += (int)(ADCH*256);
-print_position();
-
-move_positive_x();
-_delay_ms(250);
-stop_all();
-
-ADC_start_measure(x_axis);
-while(ADCSRA & (1<<ADSC));
-x_pos = (int)ADCL;
-x_pos += (int)(ADCH*256);
-ADC_start_measure(y_axis);
-while(ADCSRA & (1<<ADSC));
-y_pos = (int)ADCL;
-y_pos += (int)(ADCH*256);
-print_position();
-
-move_positive_y();
-_delay_ms(250);
-stop_all();
-
-ADC_start_measure(x_axis);
-while(ADCSRA & (1<<ADSC));
-x_pos = (int)ADCL;
-x_pos += (int)(ADCH*256);
-ADC_start_measure(y_axis);
-while(ADCSRA & (1<<ADSC));
-y_pos = (int)ADCL;
-y_pos += (int)(ADCH*256);
-print_position();
-
-
-while(1)
-begin
-	ADC_start_measure(x_axis);
-	while(ADCSRA & (1<<ADSC));
-	x_pos = (int)ADCL;
-	x_pos += (int)(ADCH*256);
-	ADC_start_measure(y_axis);
-	while(ADCSRA & (1<<ADSC));
-	y_pos = (int)ADCL;
-	y_pos += (int)(ADCH*256);
-	 print_position();
-end
-
-while(1) PORTD |= 0x20;
-*/
-
 	while(1)
 	begin
 		// while loop until there is a file waiting to be sent over Putty
@@ -360,10 +358,9 @@ while(1) PORTD |= 0x20;
 				end
 
 			print_position();
-			//_delay_ms(1000);
-			// turn on the solenoid to drop the pen (set D.5 high)
-			PORTD |= 0x20;
-			_delay_ms(200);
+			
+			lower_pen();
+
 			// draw a circle or a square at the start of the vector
 			circle();
 
@@ -432,16 +429,12 @@ while(1) PORTD |= 0x20;
 
 				// update the LCD with the current positions
 				print_position();
-				//_delay_ms(1000);
 			end	// end for each point
-			print_position();
-			//_delay_ms(3000);
-			// draw a circle at the end
+
 			circle();
 
 			// turn off the solenoid to raise the pen (set D.5 low)]
-			PORTD &= ~0x20;
-			_delay_ms(200);
+			raise_pen();
 			move_positive_x();
 			_delay_ms(700);
 			move_positive_y();
@@ -450,5 +443,6 @@ while(1) PORTD |= 0x20;
 			while(1);
 		// end for each vector
 	end // while(1)
+		*/
 	return 1;
 end
