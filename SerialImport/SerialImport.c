@@ -41,6 +41,9 @@ volatile int8_t lcd_buffer[17];	// LCD display buffer
 volatile int8_t lcd_buffer2[17];	// LCD display buffer
 volatile int8_t keystr[17];
 volatile char LCD_char_count;
+volatile int x_vect[100];
+volatile int y_vect[100];
+volatile int d_vect[100];
 
 int args[3] ;
 
@@ -112,7 +115,7 @@ int main(void) {
 	LCDGotoXY(0, 0);
 	LCDstring(lcd_buffer2, strlen(lcd_buffer2));
 
-for (i=0; i<file_size; i++)
+  for (i=0; i<file_size; i++)
   begin
 
   	fprintf(stdout,"Hi\n\r");
@@ -132,9 +135,27 @@ for (i=0; i<file_size; i++)
 		sprintf(lcd_buffer,"x%dy%dd%d", x,y,d);
 		LCDGotoXY(0, 0);
 		LCDstring(lcd_buffer, 10);
+		x_vect[i] = x;
+		y_vect[i] = y;
+		d_vect[i] = d;
+	} else {
+		sprintf(lcd_buffer,"Invalid Input@%-i", i);
+		LCDGotoXY(0, 0);
+		LCDstring(lcd_buffer, 10);
 	}
 	//_delay_ms(1000);
   end
-
-
+		_delay_ms(2000);
+		sprintf(lcd_buffer,"finished%-i", i);
+		LCDGotoXY(0, 0);
+		LCDstring(lcd_buffer, 10);
+		sprintf(lcd_buffer,"x%d%d%d%d", x_vect[0],  x_vect[1],  x_vect[2],  x_vect[3]);
+		LCDGotoXY(0, 0);
+		LCDstring(lcd_buffer, 10);
+		sprintf(lcd_buffer,"y%d%d%d%d", y_vect[0],  y_vect[1],  y_vect[2],  y_vect[3]);
+		LCDGotoXY(0, 1);
+		LCDstring(lcd_buffer, 10);
+		sprintf(lcd_buffer,"d%d%d%d%d", d_vect[0],  d_vect[1],  d_vect[2],  d_vect[3]);
+		LCDGotoXY(10, 0);
+		LCDstring(lcd_buffer, 10);
 } // main

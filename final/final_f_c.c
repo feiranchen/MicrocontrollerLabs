@@ -446,3 +446,11 @@ begin
 		*/
 	return 1;
 end
+
+
+// TODO:
+// populating the array have motor move accordingly
+// button trigger pulling
+// Gerber file trasmittion
+// Testing on multiple frames.
+//
