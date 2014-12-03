@@ -5,21 +5,26 @@
 */
 
 #define F_CPU 16000000UL
+
 #include "lcd_lib.h"
-#include <avr/interrupt.h>
 #include <avr/io.h>
-#include <avr/pgmspace.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <util/delay.h> // needed for lcd_lib
+#include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 #include <avr/sleep.h>
+#include "uart.h"
 
 #define begin {
 #define end }
 
+// UART file descriptor
+// putchar and getchar are in uart.c
+FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 
 // LCD Globals
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
@@ -30,6 +35,7 @@ const int8_t LCD_hello[] PROGMEM = "hello world     \0";
 const int8_t LCD_move[] PROGMEM = "about to move   \0";
 const int8_t LCD_moving[] PROGMEM = "moving          \0";
 volatile int8_t lcd_buffer[17];	// LCD display buffer
+volatile int8_t lcd_buffer2[17];	// LCD display buffer
 volatile int8_t keystr[17];
 volatile char LCD_char_count;
 
@@ -38,8 +44,9 @@ volatile unsigned int x_pos;
 volatile unsigned int y_pos;
 #define x_axis 0
 #define y_axis 1
-volatile int x_vect[100] = {40,400,200,400,100,50,340,40,-1};
-volatile int y_vect[100] = {40,400,420,100,100,400,250,300,-1};
+volatile int x_vect[100];
+volatile int y_vect[100];
+volatile int d_vect[100];
 
 // Inits ----------------------------------------------------------------------
 void LCD_init(void)
@@ -282,11 +289,75 @@ begin
 	print_position();			
 end
 
+// --- Main Program ----------------------------------
 int main(void)
 begin
-	char i = 0;
-	initialize();
+  int i = 0;
+  int x=-2 ,y=-2,d=-2;// container for parsed ints
+  char buffer[17];
+  uint16_t file_size = 0;
+  char* file;
 
+  initialize();
+  //init the UART -- uart_init() is in uart.c
+  uart_init();
+  stdout = stdin = stderr = &uart_str;
+
+  // Allocate memory for the buffer	
+  fprintf(stdout,"File Length^^");
+  fscanf(stdin, "%d*", &file_size) ;
+  sprintf(lcd_buffer2,"             %-i.", file_size);
+  LCDGotoXY(0, 0);
+  LCDstring(lcd_buffer2, strlen(lcd_buffer2));
+
+  for (i=0; i<file_size; i++)
+  begin
+
+  	fprintf(stdout,"Hi^^");
+	fscanf(stdin, "%s", buffer) ;
+	sscanf(buffer, "X%dY%dD%d", &x,&y,&d);
+
+    sprintf(lcd_buffer2,"%-i  ", i);
+	LCDGotoXY(10, 0);
+	LCDstring(lcd_buffer2, 2);
+
+	//print org
+	LCDGotoXY(0, 1);
+	LCDstring(buffer,15);
+
+	//print parsed
+	if (x>=-1 && y>=-1 && d>=-1){
+		sprintf(lcd_buffer,"x%dy%dd%d", x,y,d);
+		LCDGotoXY(0, 0);
+		LCDstring(lcd_buffer, 10);
+		x_vect[i] = x;
+		y_vect[i] = y;
+		d_vect[i] = d;
+		x=-2;
+		y=-2;
+		d=-2;
+	} else {
+		sprintf(lcd_buffer,"Invalid Input@%-i", i);
+		LCDGotoXY(0, 0);
+		LCDstring(lcd_buffer, 10);
+	}
+	_delay_ms(1000);
+  end
+		_delay_ms(2000);
+		sprintf(lcd_buffer,"finished%-i", i);
+		LCDGotoXY(0, 0);
+		LCDstring(lcd_buffer, 10);
+		sprintf(lcd_buffer,"x%d%d%d%d", x_vect[0],  x_vect[1],  x_vect[2],  x_vect[3]);
+		LCDGotoXY(0, 0);
+		LCDstring(lcd_buffer, 10);
+		sprintf(lcd_buffer,"y%d%d%d%d", y_vect[0],  y_vect[1],  y_vect[2],  y_vect[3]);
+		LCDGotoXY(0, 1);
+		LCDstring(lcd_buffer, 10);
+		sprintf(lcd_buffer,"d%d%d%d%d", d_vect[0],  d_vect[1],  d_vect[2],  d_vect[3]);
+		LCDGotoXY(10, 0);
+		LCDstring(lcd_buffer, 10);
+/*
+		_delay_ms(1000);
 	CopyStringtoLCD(LCD_hello, 0, 0);
 	_delay_ms(1000);
 	move_to_XY(x_vect[0],y_vect[0],2);
@@ -302,10 +373,12 @@ begin
 		end
 	end
 	move_to_XY(700,700,2);
-
-
+*/
+while(1);
 	return 1;
 end
+
+
 
 
 // TODO:
