@@ -36,17 +36,16 @@ const int8_t LCD_move[] PROGMEM = "about to move   \0";
 const int8_t LCD_moving[] PROGMEM = "moving          \0";
 volatile int8_t lcd_buffer[17];	// LCD display buffer
 volatile int8_t lcd_buffer2[17];	// LCD display buffer
-volatile int8_t keystr[17];
 volatile char LCD_char_count;
+volatile int x_vect[100];
+volatile int y_vect[100];
+volatile int d_vect[100];
 
 // Plotter Head Globals
 volatile unsigned int x_pos;
 volatile unsigned int y_pos;
 #define x_axis 0
 #define y_axis 1
-volatile int x_vect[100];
-volatile int y_vect[100];
-volatile int d_vect[100];
 
 // Inits ----------------------------------------------------------------------
 void LCD_init(void)
