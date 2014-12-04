@@ -1,64 +1,62 @@
-/* Lab 5 - Circuit Rapid Prototyping
-	Connor Archard - cwa37
-	Feiran Chen - fc254
 
-*/
+#include <stdio.h>
+#include <avr/sleep.h>
 
+// serial communication library
+// Don't mess with the semaphores
+#define SEM_RX_ISR_SIGNAL 1
+#define SEM_STRING_DONE 2 // user hit <enter>
 #define F_CPU 16000000UL
 
-#include "lcd_lib.h"
-#include <avr/io.h>
-#include <inttypes.h>
-#include <stdio.h>
+#define x_axis 0
+#define y_axis 1
+
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
+#include <float.h>
 #include <math.h>
+#include "lcd_lib.h"
 #include <util/delay.h> // needed for lcd_lib
-#include <avr/interrupt.h>
 #include <avr/pgmspace.h>
-#include <avr/sleep.h>
+#include <avr/interrupt.h>
+#include <avr/io.h>
 #include "uart.h"
 
-#define begin {
-#define end }
 
 // UART file descriptor
 // putchar and getchar are in uart.c
 FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 
-// LCD Globals
-const int8_t LCD_initialize[] PROGMEM = "LCD Initialized!\0";
-const int8_t LCD_printing[] PROGMEM = "Printing        \0";
-const int8_t LCD_waiting[] PROGMEM = "Waiting for file\0";
-const int8_t LCD_null[] PROGMEM = "                \0";
+// the usual
+#define begin {
+#define end }
+
+// LCD globals
+const int8_t LCD_initialize[] PROGMEM = "LCD Initialize  \0";
+const int8_t LCD_line_clear[] PROGMEM = "                \0";
 const int8_t LCD_hello[] PROGMEM = "hello world     \0";
-const int8_t LCD_move[] PROGMEM = "about to move   \0";
-const int8_t LCD_moving[] PROGMEM = "moving          \0";
 volatile int8_t lcd_buffer[17];	// LCD display buffer
 volatile int8_t lcd_buffer2[17];	// LCD display buffer
 volatile char LCD_char_count;
 volatile int x_vect[100];
 volatile int y_vect[100];
 volatile int d_vect[100];
-
-// Plotter Head Globals
 volatile unsigned int x_pos;
 volatile unsigned int y_pos;
-#define x_axis 0
-#define y_axis 1
+enum {IDLE =1, PULLING_FRAME, DRAWING};
 
-// Inits ----------------------------------------------------------------------
+//Helper functions
 void LCD_init(void)
 begin
-	// start the LCD 
+	// start the LCD
 	LCDinit();	//initialize the display
 	LCDcursorOFF();
-	LCDclr();				//clear the display
+	LCDclr();	//clear the display
 	LCDGotoXY(0,0);
 	CopyStringtoLCD(LCD_initialize, 0, 0);
 	LCD_char_count = 0;
 end
-
 
 void ADC_init(void)
 begin
@@ -68,7 +66,6 @@ begin
 	ADMUX = (1<<REFS0);
 	ADCSRA = (1<<ADEN) + 7; 
 end
-
 
 void port_init(void)
 begin
@@ -83,11 +80,7 @@ begin
 	port_init();
 	LCD_init();
 	ADC_init();
-
-	sei();
 end
-
-// ISRS -----------------------------------------------------------------------
 
 
 // Helper Functions -----------------------------------------------------------
@@ -97,15 +90,6 @@ begin
 	ADMUX = 0;
 	ADMUX = (1<<REFS1) + (1<<REFS0) + channel;
 	ADCSRA |= (1<<ADSC);
-end
-
-
-// write to LCD
-void write_LCD(char num)
-begin
-	sprintf(lcd_buffer,"%3d", num);
-	LCDGotoXY(0, 1);
-	LCDstring(lcd_buffer, strlen(lcd_buffer));
 end
 
 // writes the X and Y positions of the head to the second LCD line
@@ -288,36 +272,28 @@ begin
 	print_position();			
 end
 
-// --- Main Program ----------------------------------
-int main(void)
+void get_frame()
 begin
-  int i = 0;
-  int x=-2 ,y=-2,d=-2;// container for parsed ints
+  int i=0, x=-2 ,y=-2,d=-2;// container for parsed ints
   char buffer[17];
   uint16_t file_size = 0;
-  char* file;
-
-  initialize();
-  //init the UART -- uart_init() is in uart.c
-  uart_init();
-  stdout = stdin = stderr = &uart_str;
-
-  // Allocate memory for the buffer	
-  fprintf(stdout,"File Length^^");
+ sprintf(lcd_buffer2,"File Length\n\r");
+  fprintf(stdout,"%s\0", lcd_buffer2);
   fscanf(stdin, "%d*", &file_size) ;
   sprintf(lcd_buffer2,"             %-i.", file_size);
-  LCDGotoXY(0, 0);
-  LCDstring(lcd_buffer2, strlen(lcd_buffer2));
+
+	LCDGotoXY(0, 0);
+	LCDstring(lcd_buffer2, strlen(lcd_buffer2));
 
   for (i=0; i<file_size; i++)
   begin
 
-  	fprintf(stdout,"Hi^^");
+  	fprintf(stdout,"Hi\n\r");
 	fscanf(stdin, "%s", buffer) ;
 	sscanf(buffer, "X%dY%dD%d", &x,&y,&d);
 
-    sprintf(lcd_buffer2,"%-i  ", i);
-	LCDGotoXY(10, 0);
+    sprintf(lcd_buffer2,"%-i ", i);
+	LCDGotoXY(11, 0);
 	LCDstring(lcd_buffer2, 2);
 
 	//print org
@@ -336,7 +312,7 @@ begin
 		y=-2;
 		d=-2;
 	} else {
-		sprintf(lcd_buffer,"Invalid Input@%-i", i);
+		sprintf(lcd_buffer,"Invalid@%-i", i);
 		LCDGotoXY(0, 0);
 		LCDstring(lcd_buffer, 10);
 	}
@@ -355,8 +331,28 @@ begin
 		sprintf(lcd_buffer,"d%d%d%d%d", d_vect[0],  d_vect[1],  d_vect[2],  d_vect[3]);
 		LCDGotoXY(10, 0);
 		LCDstring(lcd_buffer, 10);
-/*
-		_delay_ms(1000);
+
+end
+
+
+
+// --- Main Program ----------------------------------
+int main(void) {
+  int i =0;
+  
+  //initialize();
+  
+	LCD_init();
+  //init the UART -- uart_init() is in uart.c
+  uart_init();
+  stdout = stdin = stderr = &uart_str;
+  
+  get_frame();
+  get_frame();
+
+
+		
+	_delay_ms(1000);
 	CopyStringtoLCD(LCD_hello, 0, 0);
 	_delay_ms(1000);
 	move_to_XY(x_vect[0],y_vect[0],2);
@@ -372,16 +368,13 @@ begin
 		end
 	end
 	move_to_XY(700,700,2);
-*/
-while(1);
-	return 1;
-end
 
+while(1);
+} // main
 
 
 
 // TODO:
-// populating the array have motor move accordingly
 // button trigger pulling
 // Gerber file trasmittion
 // Testing on multiple frames.

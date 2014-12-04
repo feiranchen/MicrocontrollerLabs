@@ -35,6 +35,7 @@ FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 // LCD globals
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialize  \0";
 const int8_t LCD_line_clear[] PROGMEM = "                \0";
+const int8_t LCD_hello[] PROGMEM = "hello world     \0";
 volatile int8_t lcd_buffer[17];	// LCD display buffer
 volatile int8_t lcd_buffer2[17];	// LCD display buffer
 volatile char LCD_char_count;
@@ -43,6 +44,7 @@ volatile int y_vect[100];
 volatile int d_vect[100];
 volatile unsigned int x_pos;
 volatile unsigned int y_pos;
+enum {IDLE =1, PULLING_FRAME, DRAWING};
 
 //Helper functions
 void LCD_init(void)
@@ -270,26 +272,12 @@ begin
 	print_position();			
 end
 
-
-
-
-// --- Main Program ----------------------------------
-int main(void) {
-  int i =0;
-  int x=-2 ,y=-2,d=-2;// container for parsed ints
+void get_frame()
+begin
+  int i=0, x=-2 ,y=-2,d=-2;// container for parsed ints
   char buffer[17];
   uint16_t file_size = 0;
-  
-  //initialize();
-  
-	LCD_init();
-  //init the UART -- uart_init() is in uart.c
-  uart_init();
-  stdout = stdin = stderr = &uart_str;
-
-  // Allocate memory for the buffer	
-  
-  sprintf(lcd_buffer2,"File Length\n\r");
+ sprintf(lcd_buffer2,"File Length\n\r");
   fprintf(stdout,"%s\0", lcd_buffer2);
   fscanf(stdin, "%d*", &file_size) ;
   sprintf(lcd_buffer2,"             %-i.", file_size);
@@ -304,8 +292,8 @@ int main(void) {
 	fscanf(stdin, "%s", buffer) ;
 	sscanf(buffer, "X%dY%dD%d", &x,&y,&d);
 
-    sprintf(lcd_buffer2,"%-i  ", i);
-	LCDGotoXY(10, 0);
+    sprintf(lcd_buffer2,"%-i ", i);
+	LCDGotoXY(11, 0);
 	LCDstring(lcd_buffer2, 2);
 
 	//print org
@@ -324,7 +312,7 @@ int main(void) {
 		y=-2;
 		d=-2;
 	} else {
-		sprintf(lcd_buffer,"Invalid Input@%-i", i);
+		sprintf(lcd_buffer,"Invalid@%-i", i);
 		LCDGotoXY(0, 0);
 		LCDstring(lcd_buffer, 10);
 	}
@@ -343,4 +331,51 @@ int main(void) {
 		sprintf(lcd_buffer,"d%d%d%d%d", d_vect[0],  d_vect[1],  d_vect[2],  d_vect[3]);
 		LCDGotoXY(10, 0);
 		LCDstring(lcd_buffer, 10);
+
+end
+
+
+
+// --- Main Program ----------------------------------
+int main(void) {
+  int i =0;
+  
+  //initialize();
+  
+	LCD_init();
+  //init the UART -- uart_init() is in uart.c
+  uart_init();
+  stdout = stdin = stderr = &uart_str;
+  
+  get_frame();
+  get_frame();
+
+
+		
+	_delay_ms(1000);
+	CopyStringtoLCD(LCD_hello, 0, 0);
+	_delay_ms(1000);
+	move_to_XY(x_vect[0],y_vect[0],2);
+	for(i=1;i<100;i++)
+	begin
+		if(x_vect[i]>=0 && y_vect[i] >= 0)
+		begin
+			move_to_XY(x_vect[i],y_vect[i],1);
+		end
+		else
+		begin
+			break;
+		end
+	end
+	move_to_XY(700,700,2);
+
+while(1);
 } // main
+
+
+
+// TODO:
+// button trigger pulling
+// Gerber file trasmittion
+// Testing on multiple frames.
+//
