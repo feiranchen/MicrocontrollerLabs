@@ -36,6 +36,11 @@ FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 const int8_t LCD_initialize[] PROGMEM = "LCD Initialize  \0";
 const int8_t LCD_line_clear[] PROGMEM = "                \0";
 const int8_t LCD_hello[] PROGMEM = "hello world     \0";
+const int8_t LCD_wait1[] PROGMEM = "waiting for user\0";
+const int8_t LCD_wait2[] PROGMEM = "to press button \0";
+const int8_t LCD_printing[] PROGMEM = "printing        \0";
+const int8_t LCD_df1[] PROGMEM = "downloading     \0";
+const int8_t LCD_df2[] PROGMEM = "frame           \0";
 volatile int8_t lcd_buffer[17];	// LCD display buffer
 volatile int8_t lcd_buffer2[17];	// LCD display buffer
 volatile char LCD_char_count;
@@ -70,9 +75,10 @@ end
 void port_init(void)
 begin
 	DDRA = 0x00;    // all inputs to avoid ADC coupling, no pull ups
-	DDRD = 0xff;    // all outputs - bottom 2 are USART top 6 are motor control
+	DDRD = 0xef;    // all outputs - bottom 2 are USART top 6 are motor control
 	PORTA = 0x00;    // no pull up resistors
-	PORTD = 0x00;    // start with no power
+	PORTD = 0x10;    // start with no power and a pullup on D.4
+	
 end
 
 void initialize(void)
@@ -143,21 +149,10 @@ begin
 	PORTD |= 0x40;
 end
 
-void stop_x(void)
-begin
-	PORTD &= ~0x18;
-end
-
-void stop_y(void)
-begin
-	PORTD &= ~0xc0; 
-
-end
-
 // all motors coast to a stop
 void stop_all(void)
 begin
-	PORTD &= 0x23;
+	PORTD &= 0x33;
 	_delay_ms(100);
 end
 
@@ -337,9 +332,9 @@ end
 void move_motor()
 begin
 	int i =0;
-	_delay_ms(1000);
-	CopyStringtoLCD(LCD_hello, 0, 0);
-	_delay_ms(1000);
+	//_delay_ms(1000);
+	//CopyStringtoLCD(LCD_hello, 0, 0);
+	//_delay_ms(1000);
 	move_to_XY(x_vect[0],y_vect[0],2);
 	for(i=1;i<100;i++)
 	begin
@@ -358,29 +353,33 @@ end
 // --- Main Program ----------------------------------
 int main(void) {
   
-  //initialize();
-  
+  initialize();
+  stop_all();
 	LCD_init();
   //init the UART -- uart_init() is in uart.c
   uart_init();
   stdout = stdin = stderr = &uart_str;
+
   while(1)
   begin
-  	//while(Botton not pressed);
-  	get_frame();
-	move_motor();
+  	move_to_XY(700,700,2);
+	CopyStringtoLCD(LCD_wait1, 0, 0);
+	CopyStringtoLCD(LCD_wait2, 0, 1);
+  	while(PIND & 0x10);
+	_delay_ms(30);
+	if(!(PIND&0x10))
+	begin
+		CopyStringtoLCD(LCD_df1, 0, 0);
+		CopyStringtoLCD(LCD_df2, 0, 1);
+	  	get_frame();
+		CopyStringtoLCD(LCD_printing, 0, 0);
+		move_motor();
+	end
   end
-
-
-
-
-while(1);
-} // main
-
-
 
 // TODO:
 // button trigger pulling
 // Gerber file trasmittion
 // Testing on multiple frames.
 //
+}
