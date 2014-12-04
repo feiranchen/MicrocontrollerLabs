@@ -334,24 +334,9 @@ begin
 
 end
 
-
-
-// --- Main Program ----------------------------------
-int main(void) {
-  int i =0;
-  
-  //initialize();
-  
-	LCD_init();
-  //init the UART -- uart_init() is in uart.c
-  uart_init();
-  stdout = stdin = stderr = &uart_str;
-  
-  get_frame();
-  get_frame();
-
-
-		
+void move_motor()
+begin
+	int i =0;
 	_delay_ms(1000);
 	CopyStringtoLCD(LCD_hello, 0, 0);
 	_delay_ms(1000);
@@ -368,6 +353,26 @@ int main(void) {
 		end
 	end
 	move_to_XY(700,700,2);
+end
+
+// --- Main Program ----------------------------------
+int main(void) {
+  
+  //initialize();
+  
+	LCD_init();
+  //init the UART -- uart_init() is in uart.c
+  uart_init();
+  stdout = stdin = stderr = &uart_str;
+  while(1)
+  begin
+  	//while(Botton not pressed);
+  	get_frame();
+	move_motor();
+  end
+
+
+
 
 while(1);
 } // main
