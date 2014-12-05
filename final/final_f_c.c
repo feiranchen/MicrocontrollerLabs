@@ -156,6 +156,15 @@ begin
 	_delay_ms(100);
 end
 
+void stop_x(void)
+begin
+	PORTD &= 0xf3;
+end
+
+void stop_y(void)
+begin
+	PORTD &= 0x3f;
+end
 // draw a circle
 void circle(void)
 begin
@@ -203,6 +212,10 @@ begin
 	if (d==1) lower_pen();
 	if(x_in>0 && y_in>0)
 	begin
+		if(x_in>700) x_in = 700;
+		if(y_in>700) y_in = 700;
+		if(x_in<15) x_in = 15;
+		if(y_in<15) y_in = 15;
 		// move to x position
 		ADC_start_measure(x_axis);
 		while(ADCSRA & (1<<ADSC));
@@ -214,9 +227,11 @@ begin
 			while(x_pos > x_in)
 			begin
 				ADC_start_measure(x_axis);
-				while(ADCSRA & (1<<ADSC))move_negative_x();
+				while(ADCSRA & (1<<ADSC)) stop_x();
+				move_negative_x();
 				x_pos = (int)ADCL;
 				x_pos += (int)(ADCH*256);
+				_delay_us(500);
 			end
 			stop_all();
 		end
@@ -226,9 +241,11 @@ begin
 			while(x_pos < x_in)
 			begin
 				ADC_start_measure(x_axis);
-				while(ADCSRA & (1<<ADSC))move_positive_x();
+				while(ADCSRA & (1<<ADSC))stop_x();
+				move_positive_x();
 				x_pos = (int)ADCL;
 				x_pos += (int)(ADCH*256);
+				_delay_us(500);
 			end
 			stop_all();
 		end
@@ -244,9 +261,11 @@ begin
 			while(y_pos > y_in)
 			begin
 				ADC_start_measure(y_axis);
-				while(ADCSRA & (1<<ADSC))move_negative_y();
+				while(ADCSRA & (1<<ADSC)) stop_y();
+				move_negative_y();
 				y_pos = (int)ADCL;
 				y_pos += (int)(ADCH*256);
+				_delay_us(500);
 			end
 			stop_all();
 		end
@@ -256,9 +275,94 @@ begin
 			while(y_pos < y_in)
 			begin
 				ADC_start_measure(y_axis);
-				while(ADCSRA & (1<<ADSC))move_positive_y();
+				while(ADCSRA & (1<<ADSC)) ;//stop_y();
+				move_positive_y();
 				y_pos = (int)ADCL;
 				y_pos += (int)(ADCH*256);
+				//_delay_us(500);
+			end
+			stop_all();
+		end
+	end
+	// print where you end up
+	print_position();			
+end
+
+// 1= pen down, 2= pen up
+move_back_XY(int x_in, int y_in, int d)
+begin
+	if (d==2) raise_pen();
+	if (d==1) lower_pen();
+	if(x_in>0 && y_in>0)
+	begin
+		if(x_in>700) x_in = 700;
+		if(y_in>700) y_in = 700;
+		if(x_in<15) x_in = 15;
+		if(y_in<15) y_in = 15;
+		// move to y position
+		ADC_start_measure(y_axis);
+		while(ADCSRA & (1<<ADSC));
+		y_pos = (int)ADCL;
+		y_pos += (int)(ADCH*256);
+
+		if (y_pos > y_in)
+		begin
+			while(y_pos > y_in)
+			begin
+				ADC_start_measure(y_axis);
+				while(ADCSRA & (1<<ADSC)) stop_y();
+				move_negative_y();
+				y_pos = (int)ADCL;
+				y_pos += (int)(ADCH*256);
+				_delay_us(500);
+			end
+			stop_all();
+		end
+
+		else
+		begin
+			while(y_pos < y_in)
+			begin
+				ADC_start_measure(y_axis);
+				while(ADCSRA & (1<<ADSC)); //stop_y();
+				move_positive_y();
+				y_pos = (int)ADCL;
+				y_pos += (int)(ADCH*256);
+				//_delay_us(500);
+			end
+			stop_all();
+		end
+
+		// move to x position
+		ADC_start_measure(x_axis);
+		while(ADCSRA & (1<<ADSC));
+		x_pos = (int)ADCL;
+		x_pos += (int)(ADCH*256);
+
+		if (x_pos > x_in)
+		begin
+			while(x_pos > x_in)
+			begin
+				ADC_start_measure(x_axis);
+				while(ADCSRA & (1<<ADSC)) stop_x();
+				move_negative_x();
+				x_pos = (int)ADCL;
+				x_pos += (int)(ADCH*256);
+				_delay_us(500);
+			end
+			stop_all();
+		end
+
+		else
+		begin
+			while(x_pos < x_in)
+			begin
+				ADC_start_measure(x_axis);
+				while(ADCSRA & (1<<ADSC))stop_x();
+				move_positive_x();
+				x_pos = (int)ADCL;
+				x_pos += (int)(ADCH*256);
+				_delay_us(500);
 			end
 			stop_all();
 		end
@@ -311,9 +415,9 @@ begin
 		LCDGotoXY(0, 0);
 		LCDstring(lcd_buffer, 10);
 	}
-	_delay_ms(1000);
+	//_delay_ms(1000);
   end
-		_delay_ms(2000);
+	//	_delay_ms(2000);
 		sprintf(lcd_buffer,"finished%-i", i);
 		LCDGotoXY(0, 0);
 		LCDstring(lcd_buffer, 10);
@@ -340,7 +444,9 @@ begin
 	begin
 		if(x_vect[i]>=0 && y_vect[i] >= 0)
 		begin
-			move_to_XY(x_vect[i],y_vect[i],1);
+			move_to_XY(x_vect[i],y_vect[i],d_vect[i]);
+			move_back_XY(x_vect[i-1],y_vect[i-1],d_vect[i-1]);
+			move_to_XY(x_vect[i],y_vect[i],d_vect[i]);
 		end
 		else
 		begin
@@ -359,7 +465,7 @@ int main(void) {
   //init the UART -- uart_init() is in uart.c
   uart_init();
   stdout = stdin = stderr = &uart_str;
-
+//	while(1) move_positive_y();
   while(1)
   begin
   	move_to_XY(700,700,2);
