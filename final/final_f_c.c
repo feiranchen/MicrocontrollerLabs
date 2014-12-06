@@ -135,14 +135,14 @@ begin
 	PORTD |= 0x08;
 end
 
-void move_negative_y(void)
+void move_positive_y(void)
 begin
 	PORTD &= 0xbf;
 	_delay_us(5);
 	PORTD |= 0x80;
 end
 
-void move_positive_y(void)
+void move_negative_y(void)
 begin
 	PORTD &= 0x7f;
 	_delay_us(5);
@@ -206,7 +206,7 @@ begin
 end
 
 // 1= pen down, 2= pen up
-move_to_XY(int x_in, int y_in, int d)
+move_to_XY(int x_in, int y_in, int d, char motion)
 begin
 	if (d==2) raise_pen();
 	if (d==1) lower_pen();
@@ -216,6 +216,8 @@ begin
 		if(y_in>700) y_in = 700;
 		if(x_in<15) x_in = 15;
 		if(y_in<15) y_in = 15;
+		if(motion == 2 || motion == 0)
+		begin
 		// move to x position
 		ADC_start_measure(x_axis);
 		while(ADCSRA & (1<<ADSC));
@@ -249,8 +251,11 @@ begin
 			end
 			stop_all();
 		end
+		end
 	
 		// move to y position
+		if(motion == 2 || motion == 0)
+		begin
 		ADC_start_measure(y_axis);
 		while(ADCSRA & (1<<ADSC));
 		y_pos = (int)ADCL;
@@ -275,13 +280,14 @@ begin
 			while(y_pos < y_in)
 			begin
 				ADC_start_measure(y_axis);
-				while(ADCSRA & (1<<ADSC)) ;//stop_y();
+				while(ADCSRA & (1<<ADSC)) stop_y();
 				move_positive_y();
 				y_pos = (int)ADCL;
 				y_pos += (int)(ADCH*256);
-				//_delay_us(500);
+				_delay_us(500);
 			end
 			stop_all();
+		end
 		end
 	end
 	// print where you end up
@@ -289,7 +295,8 @@ begin
 end
 
 // 1= pen down, 2= pen up
-move_back_XY(int x_in, int y_in, int d)
+// 0= both, 1= x only, 2= y only
+move_back_XY(int x_in, int y_in, int d, char motion)
 begin
 	if (d==2) raise_pen();
 	if (d==1) lower_pen();
@@ -299,6 +306,8 @@ begin
 		if(y_in>700) y_in = 700;
 		if(x_in<15) x_in = 15;
 		if(y_in<15) y_in = 15;
+		if(motion == 2 || motion == 0)
+		begin
 		// move to y position
 		ADC_start_measure(y_axis);
 		while(ADCSRA & (1<<ADSC));
@@ -324,15 +333,18 @@ begin
 			while(y_pos < y_in)
 			begin
 				ADC_start_measure(y_axis);
-				while(ADCSRA & (1<<ADSC)); //stop_y();
+				while(ADCSRA & (1<<ADSC)); stop_y();
 				move_positive_y();
 				y_pos = (int)ADCL;
 				y_pos += (int)(ADCH*256);
-				//_delay_us(500);
+				_delay_us(500);
 			end
 			stop_all();
 		end
+		end
 
+		if(motion == 2 || motion == 0)
+		begin
 		// move to x position
 		ADC_start_measure(x_axis);
 		while(ADCSRA & (1<<ADSC));
@@ -365,6 +377,7 @@ begin
 				_delay_us(500);
 			end
 			stop_all();
+		end
 		end
 	end
 	// print where you end up
@@ -439,21 +452,39 @@ begin
 	//_delay_ms(1000);
 	//CopyStringtoLCD(LCD_hello, 0, 0);
 	//_delay_ms(1000);
-	move_to_XY(x_vect[0],y_vect[0],2);
+	move_to_XY(x_vect[0],y_vect[0],2,0);
 	for(i=1;i<100;i++)
 	begin
 		if(x_vect[i]>=0 && y_vect[i] >= 0)
 		begin
-			move_to_XY(x_vect[i],y_vect[i],d_vect[i]);
-			move_back_XY(x_vect[i-1],y_vect[i-1],d_vect[i-1]);
-			move_to_XY(x_vect[i],y_vect[i],d_vect[i]);
+			if(x_vect[i] == x_vect[i-1])
+			begin
+				move_to_XY(x_vect[i],y_vect[i],d_vect[i],2);
+				move_back_XY(x_vect[i-1],y_vect[i-1],1,2);
+				move_to_XY(x_vect[i],y_vect[i],d_vect[i],2);
+			end
+			else 
+			begin
+				if(y_vect[i] == y_vect[i-1])
+				begin
+					move_to_XY(x_vect[i],y_vect[i],d_vect[i],1);
+					move_back_XY(x_vect[i-1],y_vect[i-1],1,1);
+					move_to_XY(x_vect[i],y_vect[i],d_vect[i],1);
+				end
+				else
+				begin
+					move_to_XY(x_vect[i],y_vect[i],d_vect[i],0);
+					move_back_XY(x_vect[i-1],y_vect[i-1],1,0);
+					move_to_XY(x_vect[i],y_vect[i],d_vect[i],0);
+				end
+			end
 		end
 		else
 		begin
 			break;
 		end
 	end
-	move_to_XY(700,700,2);
+	move_to_XY(700,700,2,0);
 end
 
 // --- Main Program ----------------------------------
@@ -465,10 +496,10 @@ int main(void) {
   //init the UART -- uart_init() is in uart.c
   uart_init();
   stdout = stdin = stderr = &uart_str;
-//	while(1) move_positive_y();
+//while(1) move_positive_y();
   while(1)
   begin
-  	move_to_XY(700,700,2);
+  	move_to_XY(700,700,2,0);
 	CopyStringtoLCD(LCD_wait1, 0, 0);
 	CopyStringtoLCD(LCD_wait2, 0, 1);
   	while(PIND & 0x10);
