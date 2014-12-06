@@ -672,7 +672,7 @@
 		left: 1em;
 		top: 0;
 		height: 3em;
-		line-height: 3em;
+		line-height: 1em;
 		letter-spacing: -1px;
 	}
 	
@@ -709,10 +709,10 @@
 				}
 
 /*********************************************************************************/
-/* Intro                                                                         */
+/* Home                                                                         */
 /*********************************************************************************/
 
-	#intro {
+	#home {
 		background: url('images/overlay.png'), url('../images/intro.jpg');
 		background-size: 256px 256px, cover;
 		background-attachment: fixed, fixed;
@@ -721,10 +721,10 @@
 	}
 
 /*********************************************************************************/
-/* One                                                                           */
+/* Intro                                                                           */
 /*********************************************************************************/
 
-	#one {
+	#intro {
 		background: url('images/overlay.png'), url('../images/one.jpg');
 		background-size: 256px 256px, cover;
 		background-attachment: fixed, fixed;
@@ -732,10 +732,10 @@
 	}
 
 /*********************************************************************************/
-/* Two                                                                           */
+/* Report                                                                           */
 /*********************************************************************************/
 
-	#two {
+	#report {
 		background: url('images/overlay.png'), url('../images/two.jpg');
 		background-size: 256px 256px, cover;
 		background-attachment: fixed, fixed;
@@ -746,13 +746,13 @@
 /* Work                                                                          */
 /*********************************************************************************/
 
-	#work {
+	#gallery {
 	}
 	
-		#work .row.images {
+		#gallery .row.images {
 		}
 	
-			#work .row.images .image {
+			#gallery .row.images .image {
 				position: relative;
 				top: 0;
 				left: 0;
@@ -771,31 +771,31 @@
 				transform: translateZ(0);
 			}
 		
-			#work .row.images.inactive {
+			#gallery .row.images.inactive {
 			}
 
-				#work .row.images.inactive .image {
+				#gallery .row.images.inactive .image {
 					opacity: 0;
 				}
 			
-				#work .row.images.inactive .image.from-left {
+				#gallery .row.images.inactive .image.from-left {
 					left: -14em;
 				}
 			
-				#work .row.images.inactive .image.from-right {
+				#gallery .row.images.inactive .image.from-right {
 					left: 14em;
 				}
 			
-				#work .row.images.inactive .image.from-top {
+				#gallery .row.images.inactive .image.from-top {
 					top: -7em;
 				}
 			
-				#work .row.images.inactive .image.from-bottom {
+				#gallery .row.images.inactive .image.from-bottom {
 					top: 7em;
 				}
 			
 /*********************************************************************************/
-/* Contact                                                                       */
+/* team                                                                       */
 /*********************************************************************************/
 
 	#contact {

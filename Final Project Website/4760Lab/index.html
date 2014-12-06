@@ -14,6 +14,40 @@
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 		<meta name="description" content="" />
 		<meta name="keywords" content="" />
+
+
+    <!-- Note: All core EaselJS classes are listed here: -->
+    <script type="text/javascript" src="./src/createjs/events/Event.js"></script>
+    <script type="text/javascript" src="./src/createjs/events/EventDispatcher.js"></script>
+    <script type="text/javascript" src="./src/createjs/utils/IndexOf.js"></script>
+    <script type="text/javascript" src="./src/easeljs/utils/UID.js"></script>
+    <script type="text/javascript" src="./src/easeljs/utils/Ticker.js"></script>
+    <script type="text/javascript" src="./src/easeljs/geom/Matrix2D.js"></script>
+    <script type="text/javascript" src="./src/easeljs/geom/Point.js"></script>
+    <script type="text/javascript" src="./src/easeljs/geom/Rectangle.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/Shadow.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/SpriteSheet.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/Graphics.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/DisplayObject.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/Container.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/Stage.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/Bitmap.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/Sprite.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/BitmapAnimation.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/BitmapText.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/Shape.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/Text.js"></script>
+    <script type="text/javascript" src="./src/easeljs/display/DOMElement.js"></script>
+    <script type="text/javascript" src="./src/easeljs/events/MouseEvent.js"></script>
+    <script type="text/javascript" src="./src/easeljs/filters/Filter.js"></script>
+    <script type="text/javascript" src="./src/easeljs/ui/ButtonHelper.js"></script>
+    <script type="text/javascript" src="./src/easeljs/ui/Touch.js"></script>
+    <script type="text/javascript" src="./src/easeljs/utils/SpriteSheetUtils.js"></script>
+    <script type="text/javascript" src="./src/easeljs/utils/SpriteSheetBuilder.js"></script>
+
+
+
+
 		<!--[if lte IE 8]><script src="css/ie/html5shiv.js"></script><![endif]-->
 		<script src="js/jquery.min.js"></script>
 		<script src="js/jquery.poptrox.min.js"></script>
@@ -26,6 +60,8 @@
 			<link rel="stylesheet" href="css/style.css" />
 			<link rel="stylesheet" href="css/style-wide.css" />
 			<link rel="stylesheet" href="css/style-normal.css" />
+
+    <link href="demoStyles.css" rel="stylesheet" type="text/css" />
 		</noscript>
 
 
@@ -39,7 +75,7 @@
 		<!--[if lte IE 8]><link rel="stylesheet" href="css/ie/v8.css" /><![endif]-->
 	</head>
 
-	<body>
+	<body onload="init();">
 
 		<!-- Header -->
 			<header id="header">
@@ -66,6 +102,30 @@
 					<header>
 						<h2>Hey. This is Connor and Feiran's 4760 Final Projects</h2>
 					</header>
+					
+					<canvas id="myCanvas" width="960" height="400" style="
+					border-style:solid; border-color:#98bf21;
+					font-family: 		Arial, Verdana, sans-serif;
+					font-size: 			12px;
+					font-weight:		normal;
+					color: 				#ccc;
+					background-color:	#333;"></canvas>
+					
+
+					<p>Welcome to <strong>Connor and Feiran's 4760 Final Project</strong> a circuit printer that can
+					be controlled and interacted via web over local network. Here's the drawing panel <a href="../4760Lab/circuitPad.html">Circuit Pad</a></p>
+					<footer>
+						<a href="#one" class="button style2 down">More</a>
+					</footer>
+				</div>
+			</section>
+			
+		<!-- Intro -->
+			<section id="home" class="main style1 dark fullscreen">
+				<div class="content container 75%">
+					<header>
+						<h2>Hey. This is Connor and Feiran's 4760 Final Projects</h2>
+					</header>
 					<p>Welcome to <strong>Connor and Feiran's 4760 Final Project</strong> a circuit printer that can
 					be controlled and interacted via web over local network. Here's the drawing panel <a href="../4760Lab/circuitPad.html">Circuit Pad</a></p>
 					<footer>
@@ -74,7 +134,7 @@
 				</div>
 			</section>
 		
-		<!-- Introduction -->
+		<!-- One -->
 			<section id="intro" class="main style2 right dark fullscreen"
 			style="background: url('./images/schematic.png');">
 				<div class="content box style2">
@@ -85,10 +145,10 @@
 					Fusce blandit ultrices sapien, in accumsan orci rhoncus eu. Sed sodales venenatis arcu, 
 					id varius justo euismod in. Curabitur egestas consectetur magna.</p>
 				</div>
-				<a href="#intro" class="button style2 down anchored">Next</a>
+				<a href="#two" class="button style2 down anchored">Next</a>
 			</section>
 		
-		<!-- Report Section -->
+		<!-- Two -->
 			<section id="report" class="main style2 left dark fullscreen">
 				<div class="content box style2">
 					<header>
