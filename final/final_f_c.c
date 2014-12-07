@@ -206,6 +206,7 @@ begin
 end
 
 // 1= pen down, 2= pen up
+// 0= both, 1= x only, 2= y only
 move_to_XY(int x_in, int y_in, int d, char motion)
 begin
 	if (d==2) raise_pen();
@@ -216,80 +217,152 @@ begin
 		if(y_in>700) y_in = 700;
 		if(x_in<15) x_in = 15;
 		if(y_in<15) y_in = 15;
-		if(motion == 2 || motion == 0)
-		begin
-		// move to x position
-		ADC_start_measure(x_axis);
-		while(ADCSRA & (1<<ADSC));
-		x_pos = (int)ADCL;
-		x_pos += (int)(ADCH*256);
 
-		if (x_pos > x_in)
+		if(motion == 0)
 		begin
-			while(x_pos > x_in)
-			begin
-				ADC_start_measure(x_axis);
-				while(ADCSRA & (1<<ADSC)) stop_x();
-				move_negative_x();
-				x_pos = (int)ADCL;
-				x_pos += (int)(ADCH*256);
-				_delay_us(500);
-			end
-			stop_all();
-		end
+			// move to x position
+			ADC_start_measure(x_axis);
+			while(ADCSRA & (1<<ADSC));
+			x_pos = (int)ADCL;
+			x_pos += (int)(ADCH*256);
 
-		else
-		begin
-			while(x_pos < x_in)
+			if (x_pos > x_in)
 			begin
-				ADC_start_measure(x_axis);
-				while(ADCSRA & (1<<ADSC))stop_x();
-				move_positive_x();
-				x_pos = (int)ADCL;
-				x_pos += (int)(ADCH*256);
-				_delay_us(500);
+				while(x_pos > x_in)
+				begin
+					ADC_start_measure(x_axis);
+					while(ADCSRA & (1<<ADSC)) stop_x();
+					move_negative_x();
+					x_pos = (int)ADCL;
+					x_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
 			end
-			stop_all();
-		end
+
+			else
+			begin
+				while(x_pos < x_in)
+				begin
+					ADC_start_measure(x_axis);
+					while(ADCSRA & (1<<ADSC))stop_x();
+					move_positive_x();
+					x_pos = (int)ADCL;
+					x_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
+			end
+			
+			// move to y position
+			ADC_start_measure(y_axis);
+			while(ADCSRA & (1<<ADSC));
+			y_pos = (int)ADCL;
+			y_pos += (int)(ADCH*256);
+
+			if (y_pos > y_in)
+			begin
+				while(y_pos > y_in)
+				begin
+					ADC_start_measure(y_axis);
+					while(ADCSRA & (1<<ADSC)) stop_y();
+					move_negative_y();
+					y_pos = (int)ADCL;
+					y_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
+			end
+
+			else
+			begin
+				while(y_pos < y_in)
+				begin
+					ADC_start_measure(y_axis);
+					while(ADCSRA & (1<<ADSC)) stop_y();
+					move_positive_y();
+					y_pos = (int)ADCL;
+					y_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
+			end
 		end
 	
-		// move to y position
-		if(motion == 2 || motion == 0)
+		if (motion == 1)
 		begin
-		ADC_start_measure(y_axis);
-		while(ADCSRA & (1<<ADSC));
-		y_pos = (int)ADCL;
-		y_pos += (int)(ADCH*256);
+			// move to x position
+			ADC_start_measure(x_axis);
+			while(ADCSRA & (1<<ADSC));
+			x_pos = (int)ADCL;
+			x_pos += (int)(ADCH*256);
 
-		if (y_pos > y_in)
-		begin
-			while(y_pos > y_in)
+			if (x_pos > x_in)
 			begin
-				ADC_start_measure(y_axis);
-				while(ADCSRA & (1<<ADSC)) stop_y();
-				move_negative_y();
-				y_pos = (int)ADCL;
-				y_pos += (int)(ADCH*256);
-				_delay_us(500);
+				while(x_pos > x_in)
+				begin
+					ADC_start_measure(x_axis);
+					while(ADCSRA & (1<<ADSC)) stop_x();
+					move_negative_x();
+					x_pos = (int)ADCL;
+					x_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
 			end
-			stop_all();
+
+			else
+			begin
+				while(x_pos < x_in)
+				begin
+					ADC_start_measure(x_axis);
+					while(ADCSRA & (1<<ADSC))stop_x();
+					move_positive_x();
+					x_pos = (int)ADCL;
+					x_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
+			end
 		end
 
-		else
+		if (motion == 2)
 		begin
-			while(y_pos < y_in)
+			// move to y position
+			ADC_start_measure(y_axis);
+			while(ADCSRA & (1<<ADSC));
+			y_pos = (int)ADCL;
+			y_pos += (int)(ADCH*256);
+
+			if (y_pos > y_in)
 			begin
-				ADC_start_measure(y_axis);
-				while(ADCSRA & (1<<ADSC)) stop_y();
-				move_positive_y();
-				y_pos = (int)ADCL;
-				y_pos += (int)(ADCH*256);
-				_delay_us(500);
+				while(y_pos > y_in)
+				begin
+					ADC_start_measure(y_axis);
+					while(ADCSRA & (1<<ADSC)) stop_y();
+					move_negative_y();
+					y_pos = (int)ADCL;
+					y_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
 			end
-			stop_all();
+
+			else
+			begin
+				while(y_pos < y_in)
+				begin
+					ADC_start_measure(y_axis);
+					while(ADCSRA & (1<<ADSC)) stop_y();
+					move_positive_y();
+					y_pos = (int)ADCL;
+					y_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
+			end
 		end
-		end
-	end
+	end	
 	// print where you end up
 	print_position();			
 end
@@ -306,78 +379,149 @@ begin
 		if(y_in>700) y_in = 700;
 		if(x_in<15) x_in = 15;
 		if(y_in<15) y_in = 15;
-		if(motion == 2 || motion == 0)
+		if(motion == 0)
 		begin
-		// move to y position
-		ADC_start_measure(y_axis);
-		while(ADCSRA & (1<<ADSC));
-		y_pos = (int)ADCL;
-		y_pos += (int)(ADCH*256);
+			// move to y position
+			ADC_start_measure(y_axis);
+			while(ADCSRA & (1<<ADSC));
+			y_pos = (int)ADCL;
+			y_pos += (int)(ADCH*256);
 
-		if (y_pos > y_in)
-		begin
-			while(y_pos > y_in)
+			if (y_pos > y_in)
 			begin
-				ADC_start_measure(y_axis);
-				while(ADCSRA & (1<<ADSC)) stop_y();
-				move_negative_y();
-				y_pos = (int)ADCL;
-				y_pos += (int)(ADCH*256);
-				_delay_us(500);
+				while(y_pos > y_in)
+				begin
+					ADC_start_measure(y_axis);
+					while(ADCSRA & (1<<ADSC)) stop_y();
+					move_negative_y();
+					y_pos = (int)ADCL;
+					y_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
 			end
-			stop_all();
-		end
 
-		else
-		begin
-			while(y_pos < y_in)
+			else
 			begin
-				ADC_start_measure(y_axis);
-				while(ADCSRA & (1<<ADSC)); stop_y();
-				move_positive_y();
-				y_pos = (int)ADCL;
-				y_pos += (int)(ADCH*256);
-				_delay_us(500);
+				while(y_pos < y_in)
+				begin
+					ADC_start_measure(y_axis);
+					while(ADCSRA & (1<<ADSC)); stop_y();
+					move_positive_y();
+					y_pos = (int)ADCL;
+					y_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
 			end
-			stop_all();
-		end
-		end
 
-		if(motion == 2 || motion == 0)
-		begin
-		// move to x position
-		ADC_start_measure(x_axis);
-		while(ADCSRA & (1<<ADSC));
-		x_pos = (int)ADCL;
-		x_pos += (int)(ADCH*256);
+			// move to x position
+			ADC_start_measure(x_axis);
+			while(ADCSRA & (1<<ADSC));
+			x_pos = (int)ADCL;
+			x_pos += (int)(ADCH*256);
 
-		if (x_pos > x_in)
-		begin
-			while(x_pos > x_in)
+			if (x_pos > x_in)
 			begin
-				ADC_start_measure(x_axis);
-				while(ADCSRA & (1<<ADSC)) stop_x();
-				move_negative_x();
-				x_pos = (int)ADCL;
-				x_pos += (int)(ADCH*256);
-				_delay_us(500);
+				while(x_pos > x_in)
+				begin
+					ADC_start_measure(x_axis);
+					while(ADCSRA & (1<<ADSC)) stop_x();
+					move_negative_x();
+					x_pos = (int)ADCL;
+					x_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
 			end
-			stop_all();
+
+			else
+			begin
+				while(x_pos < x_in)
+				begin
+					ADC_start_measure(x_axis);
+					while(ADCSRA & (1<<ADSC))stop_x();
+					move_positive_x();
+					x_pos = (int)ADCL;
+					x_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
+			end
 		end
 
-		else
+		if (motion == 1)
 		begin
-			while(x_pos < x_in)
+			// move to x position
+			ADC_start_measure(x_axis);
+			while(ADCSRA & (1<<ADSC));
+			x_pos = (int)ADCL;
+			x_pos += (int)(ADCH*256);
+
+			if (x_pos > x_in)
 			begin
-				ADC_start_measure(x_axis);
-				while(ADCSRA & (1<<ADSC))stop_x();
-				move_positive_x();
-				x_pos = (int)ADCL;
-				x_pos += (int)(ADCH*256);
-				_delay_us(500);
+				while(x_pos > x_in)
+				begin
+					ADC_start_measure(x_axis);
+					while(ADCSRA & (1<<ADSC)) stop_x();
+					move_negative_x();
+					x_pos = (int)ADCL;
+					x_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
 			end
-			stop_all();
+
+			else
+			begin
+				while(x_pos < x_in)
+				begin
+					ADC_start_measure(x_axis);
+					while(ADCSRA & (1<<ADSC))stop_x();
+					move_positive_x();
+					x_pos = (int)ADCL;
+					x_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
+			end
 		end
+		
+		if (motion == 2)
+		begin
+			// move to y position
+			ADC_start_measure(y_axis);
+			while(ADCSRA & (1<<ADSC));
+			y_pos = (int)ADCL;
+			y_pos += (int)(ADCH*256);
+
+			if (y_pos > y_in)
+			begin
+				while(y_pos > y_in)
+				begin
+					ADC_start_measure(y_axis);
+					while(ADCSRA & (1<<ADSC)) stop_y();
+					move_negative_y();
+					y_pos = (int)ADCL;
+					y_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
+			end
+
+			else
+			begin
+				while(y_pos < y_in)
+				begin
+					ADC_start_measure(y_axis);
+					while(ADCSRA & (1<<ADSC)); stop_y();
+					move_positive_y();
+					y_pos = (int)ADCL;
+					y_pos += (int)(ADCH*256);
+					_delay_us(500);
+				end
+				stop_all();
+			end
 		end
 	end
 	// print where you end up
@@ -460,22 +604,31 @@ begin
 			if(x_vect[i] == x_vect[i-1])
 			begin
 				move_to_XY(x_vect[i],y_vect[i],d_vect[i],2);
-				move_back_XY(x_vect[i-1],y_vect[i-1],1,2);
-				move_to_XY(x_vect[i],y_vect[i],d_vect[i],2);
+				if (d_vect[i] == 1)
+				begin
+					move_back_XY(x_vect[i-1],y_vect[i-1],1,2);
+					move_to_XY(x_vect[i],y_vect[i],1,2);
+				end
 			end
 			else 
 			begin
 				if(y_vect[i] == y_vect[i-1])
 				begin
 					move_to_XY(x_vect[i],y_vect[i],d_vect[i],1);
-					move_back_XY(x_vect[i-1],y_vect[i-1],1,1);
-					move_to_XY(x_vect[i],y_vect[i],d_vect[i],1);
+					if (d_vect[i] == 1)
+					begin
+						move_back_XY(x_vect[i-1],y_vect[i-1],1,1);
+						move_to_XY(x_vect[i],y_vect[i],1,1);
+					end
 				end
 				else
 				begin
 					move_to_XY(x_vect[i],y_vect[i],d_vect[i],0);
-					move_back_XY(x_vect[i-1],y_vect[i-1],1,0);
-					move_to_XY(x_vect[i],y_vect[i],d_vect[i],0);
+					if (d_vect[i] == 1)
+					begin
+						move_back_XY(x_vect[i-1],y_vect[i-1],1,0);
+						move_to_XY(x_vect[i],y_vect[i],1,0);
+					end
 				end
 			end
 		end
