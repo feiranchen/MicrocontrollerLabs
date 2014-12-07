@@ -34,10 +34,19 @@
 	body,input,textarea,select
 	{
 		font-family: 'Source Sans Pro', sans-serif;
-		font-size: 19pt;
+		font-size: 12pt;
 		font-weight: 300;
-		line-height: 1.75em;
+		line-height: 1em;
 		color: #888;
+	}
+	.top 
+	{
+		font-size: 16pt;
+		font-weight: 300;
+		line-height: 1.25em;
+	}
+	#logo{
+		text-align: center;
 	}
 
 	h1,h2,h3,h4,h5,h6
@@ -534,7 +543,7 @@
 		position: fixed;
 		top: 0;
 		left: 0;
-		width: 375px;
+		width: 275px;
 		height: 100%;
 		color: #fff;
 		background: #222629 url('images/overlay.png');
@@ -716,7 +725,7 @@
 
 	#main
 	{
-		margin-left: 375px;
+		margin-left: 275px;
 	}
 	
 		#main > section
@@ -780,7 +789,7 @@
 			}
 			#main > section.three p
 			{
-				font-size: 80%;
+				text-align: left;
 			}
 			#main > section.three table, th, td {
 			   border: 1px solid black;
