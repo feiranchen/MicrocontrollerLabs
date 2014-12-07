@@ -18,6 +18,21 @@ var url=require('url');
 var fs = require('fs');
 var filename = './samplePureVector';
 var querystring = require('querystring');
+var express = require('express');
+var compression = require('compression');
+var app = express();
+
+
+app.use(express.static(__dirname));
+
+app.set('port', process.env.PORT);
+// app.listen(app.get('port'), function(){
+//   console.log('Express server listening on port ' + app.get('port'));
+// });
+
+http.createServer(app).listen(app.get('port'), function(){
+  console.log('Express server listening on port ' + app.get('port'));
+});
 
 function processPost(request, response, callback) {
     var queryData = "";
@@ -44,22 +59,32 @@ function processPost(request, response, callback) {
     }
 }
 
-http.createServer(function (req, res) {
-	var pathname=url.parse(req.url).pathname;
-	if(req.method == 'POST') {
-        processPost(req, res, function() {
-            console.log(req.post);
-            // Use req.post here
 
-            res.writeHead(200, "OK", {'Content-Type': 'text/plain'});
-            res.end();
-        });
-    } else {
-        res.writeHead(200, "OK", {'Content-Type': 'text/plain'});
-		res.end('Hello World\n');
-    }
-}).listen(1337, '127.0.0.1');
-console.log('Server running at http://127.0.0.1:1337/');
+// http.createServer(function (req, res) {
+// 	var pathname=url.parse(req.url).pathname;
+// 	fs.readFile('./index.html', function (err, html) {
+// 	    if (err) {
+// 	        throw err; 
+// 	    }
+//         // console.log(html);
+//         res.writeHeader(200);//, {"Content-Type": "text/html"});  
+//         res.write(html);  
+//         res.end();
+//     });
+// 	// if(req.method == 'POST') {
+//  //        processPost(req, res, function() {
+//  //            console.log(req.post);
+//  //            // Use req.post here
+
+//  //            res.writeHead(200, "OK", {'Content-Type': 'text/plain'});
+//  //            res.end();
+//  //        });
+//  //    } else {
+//  //        res.writeHead(200, "OK", {'Content-Type': 'text/plain'});
+// 	// 	res.end('Hello World\n');
+//  //    }
+// }).listen(1337, '127.0.0.1');
+// console.log('Server running at http://127.0.0.1:1337/');
 
 var gerber = "";
 var gerber_lines;
@@ -95,8 +120,11 @@ parity: Parity, defaults to 'none'.
 buffersize: Size of read buffer, defaults to 255.
 
 */
+
+/*
 var SerialPort = require("serialport").SerialPort;
-var serialPort = new SerialPort("/dev/cu.usbserial-A603UZG1", {
+var serialPort = 
+new SerialPort("/dev/cu.usbserial-A603UZG1", {
   baudrate: 9600
 });
 console.log('opened serialport');
@@ -163,7 +191,7 @@ serialPort.on("open", function () {
 		}
 	});
 });
-
+*/
 
 /* This is too fast
 serialPort.on("open", function () {
