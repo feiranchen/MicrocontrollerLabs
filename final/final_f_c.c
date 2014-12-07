@@ -604,22 +604,31 @@ begin
 			if(x_vect[i] == x_vect[i-1])
 			begin
 				move_to_XY(x_vect[i],y_vect[i],d_vect[i],2);
-				move_back_XY(x_vect[i-1],y_vect[i-1],1,2);
-				move_to_XY(x_vect[i],y_vect[i],d_vect[i],2);
+				if (d_vect[i] == 1)
+				begin
+					move_back_XY(x_vect[i-1],y_vect[i-1],1,2);
+					move_to_XY(x_vect[i],y_vect[i],1,2);
+				end
 			end
 			else 
 			begin
 				if(y_vect[i] == y_vect[i-1])
 				begin
 					move_to_XY(x_vect[i],y_vect[i],d_vect[i],1);
-					move_back_XY(x_vect[i-1],y_vect[i-1],1,1);
-					move_to_XY(x_vect[i],y_vect[i],d_vect[i],1);
+					if (d_vect[i] == 1)
+					begin
+						move_back_XY(x_vect[i-1],y_vect[i-1],1,1);
+						move_to_XY(x_vect[i],y_vect[i],1,1);
+					end
 				end
 				else
 				begin
 					move_to_XY(x_vect[i],y_vect[i],d_vect[i],0);
-					move_back_XY(x_vect[i-1],y_vect[i-1],1,0);
-					move_to_XY(x_vect[i],y_vect[i],d_vect[i],0);
+					if (d_vect[i] == 1)
+					begin
+						move_back_XY(x_vect[i-1],y_vect[i-1],1,0);
+						move_to_XY(x_vect[i],y_vect[i],1,0);
+					end
 				end
 			end
 		end
