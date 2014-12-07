@@ -98,13 +98,14 @@
 			<section id="home" class="main style1 dark fullscreen">
 				<div class="content container 75%">
 					<header>
-						<h2>Hey. This is Connor and Feiran's 4760 Final Projects</h2>
+						<h2>ECE 4760 Final Project: Rapid Circuit Prototyping</h2>
+						<h3><strong>by Connor Archard and Feiran Chen</strong></h3>
 					</header>
 					
 					<canvas id="myCanvas" width="380" height="380" style="
 					border-style:solid; border-color:#98bf21;
 					font-family: 		Arial, Verdana, sans-serif;
-					font-size: 			12px;
+					font-size: 			10px;
 					font-weight:		normal;
 					color: 				#ccc;
 					background-color:	#333;"></canvas>
@@ -121,9 +122,9 @@
 					        });
 	  					});
 				    </script>
-					<p>Welcome to <strong>Connor and Feiran's 4760 Final Project</strong> a circuit printer that can
-					be controlled and interacted via web over local network. Here's the drawing panel <strong>Circuit
-					 Pad</strong>. </p>
+					<p>For our <strong>cumulative design experience</strong>, we made a circuit printer that can
+					be controlled and interacted with via web over a local network. To draw a circuit, you can use the <strong>Circuit
+					 Pad</strong> right above this text. </p>
 					<footer>
 						<a href="#one" class="button style2 down">More</a>
 					</footer>
@@ -132,7 +133,7 @@
 		
 		<!-- One -->
 			<section id="intro" class="main style2 right dark fullscreen"
-			style="background: url('./images/schematic.png');">
+				style="background: url('images/fulls/02.jpg');">
 				<div class="content box style2">
 					<header>
 						<h2>Introduction</h2>
@@ -239,33 +240,7 @@
 
 					</p>
 					<p></p>
-					<h2>Documentation</h2>
-					<h3>Software Listing</h3>
-					<p>void move_positive_x(void) - sets PORTD so that D.3 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.4 high. This will send control signals to the TB6561NG to forward bias the x-axis motor.</p>
-
-					<p>void move_positive_y(void) - sets PORTD so that D.6 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.7 high. This will send control signals to the TB6561NG to forward bias the y-axis motor.</p>
-
-					<p>void move_negative_x(void) - sets PORTD so that D.4 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.3 high. This will send control signals to the TB6561NG to reverse bias the x-axis motor.</p>
-
-					<p>void move_negative_y(void) - sets PORTD so that D.7 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.6 high. This will send control signals to the TB6561NG to reverse bias the y-axis motor.</p>
-
-					<p>void stop_all (void) - sets PORTD so that D.3,4,6,7 are all pulled low. This will put the TB6561NG into short brake mode to stop the motor. A delay of a few milliseconds was input to ensure that any running motors have come to a complete stop. This helps for isolating direction of motion to give us sharp corners.</p>
-
-					<p>int start_ADC_measurement(char channel) - This takes in a channel number corresponding to a pin in PORTA and will output an integer value from the 10-bit ADC  conversion of the given channel. This ADC measurement is not interrupt based, and requires polling of the conversion complete flags (ADCSRA and ADSC)).</p>
-
-					<p>void raise_pen(void) - This function will set pin D.5 low to remove power from the solenoid that actuates the hinge the pen rests on. This function includes a delay of a few milliseconds to ensure that movement functions right after this function is called will not drag the pen across the page for the first few milliseconds of motion.</p>
-
-					<p>void lower_pen(void) - This function will set pin D.5 high to supply power to the solenoid that actuates the hinge through the second TB6561NG h-bridge. A slight delay is included after D.5 is pulled high to make sure that the solenoid has time to mechanically actuate before the plotter head moves, which guarantees the pen will always be in contact with the paper when desired.</p>
-
-					<p>void move_to_XY(int x, int y, int d) - This function combines the previous functions to allow for movement of the plotter head to a specific location x,y. The third argument, int d, specifies whether the pen should be raised or lowered during the movement to the new x,y position.</p>
-
-					<p>void initialize(void) - This function calls on subfunctions to initialize the registers regarding the ports, the LCD, the UART, and the ADC. This function is called at the start of main.</p>
-
-					<p>void print_position(void) - This function will print the current position of the plotter head on the bottom line of the LCD to provide a means for checking accuracy during testing.</p>
-
-					<p>void get_frame(void) - This function will handle the entire serial communications section and will download a full frame of vectors each time it is called. This function assumes that the server is currently running and trying to send information. If the server is not running, the printer will be stuck looping in this function because of the blocking nature of fscanf, which is called in this function.</p>
-
-					<p>void move_motor(void) - This wrapper function for motor controlling is meant to be called after the get_frame() function and will step through the x and y integer arrays to move the plotter head and draw the entire frame.</p>
+					
 					 <p></p>
 					<h2>Results</h2>
 					<h3>Accuracy of Printing</h3>
@@ -291,7 +266,6 @@
 					<h2>Appendices</h2>
 					<h3>Budgeting</h3>
 					<div id="wrapper">
-	  					<h1>Sortable Table of Search Queries</h1>
 						<table border="2" style="width:80%">
 						<tbead>
 		 					<tr>
@@ -318,7 +292,7 @@
 	 					</tr>
 	 					<tr>
 	 						<td>SIP Sockets (*55)</td>
-	 						<td>Used to hold the LCD and Atmega board into the solder board and the serial cable into pins D.0 and D>1</td>
+	 						<td>Used to hold the LCD and Atmega board into the solder board and the serial cable into pins D.0 and D.1</td>
 	 						<td>$2.75</td>
 	 					</tr>
 						<tr>
@@ -373,6 +347,35 @@
 	 					</tr>
 		 				</tbody>
 		 			</table>
+		 			<p></p>
+		 			<p></p>
+		 			<p></p>
+		 			<h3>Software Listing</h3>
+					<p><strong>void move_positive_x(void)</strong> - sets PORTD so that D.3 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.4 high. This will send control signals to the TB6561NG to forward bias the x-axis motor.</p>
+
+					<p><strong>void move_positive_y(void)</strong> - sets PORTD so that D.6 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.7 high. This will send control signals to the TB6561NG to forward bias the y-axis motor.</p>
+
+					<p><strong>void move_negative_x(void)</strong> - sets PORTD so that D.4 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.3 high. This will send control signals to the TB6561NG to reverse bias the x-axis motor.</p>
+
+					<p><strong>void move_negative_y(void)</strong> - sets PORTD so that D.7 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.6 high. This will send control signals to the TB6561NG to reverse bias the y-axis motor.</p>
+
+					<p><strong>void stop_all (void)</strong> - sets PORTD so that D.3,4,6,7 are all pulled low. This will put the TB6561NG into short brake mode to stop the motor. A delay of a few milliseconds was input to ensure that any running motors have come to a complete stop. This helps for isolating direction of motion to give us sharp corners.</p>
+
+					<p><strong>int start_ADC_measurement(char channel)</strong> - This takes in a channel number corresponding to a pin in PORTA and will output an integer value from the 10-bit ADC  conversion of the given channel. This ADC measurement is not interrupt based, and requires polling of the conversion complete flags (ADCSRA and ADSC)).</p>
+
+					<p><strong>void raise_pen(void)</strong> - This function will set pin D.5 low to remove power from the solenoid that actuates the hinge the pen rests on. This function includes a delay of a few milliseconds to ensure that movement functions right after this function is called will not drag the pen across the page for the first few milliseconds of motion.</p>
+
+					<p><strong>void lower_pen(void)</strong> - This function will set pin D.5 high to supply power to the solenoid that actuates the hinge through the second TB6561NG h-bridge. A slight delay is included after D.5 is pulled high to make sure that the solenoid has time to mechanically actuate before the plotter head moves, which guarantees the pen will always be in contact with the paper when desired.</p>
+
+					<p><strong>void move_to_XY(int x, int y, int d)</strong> - This function combines the previous functions to allow for movement of the plotter head to a specific location x,y. The third argument, int d, specifies whether the pen should be raised or lowered during the movement to the new x,y position.</p>
+
+					<p><strong>void initialize(void)</strong> - This function calls on subfunctions to initialize the registers regarding the ports, the LCD, the UART, and the ADC. This function is called at the start of main.</p>
+
+					<p><strong>void print_position(void)</strong> - This function will print the current position of the plotter head on the bottom line of the LCD to provide a means for checking accuracy during testing.</p>
+
+					<p><strong>void get_frame(void)</strong> - This function will handle the entire serial communications section and will download a full frame of vectors each time it is called. This function assumes that the server is currently running and trying to send information. If the server is not running, the printer will be stuck looping in this function because of the blocking nature of fscanf, which is called in this function.</p>
+
+					<p><strong>void move_motor(void)</strong> - This wrapper function for motor controlling is meant to be called after the get_frame() function and will step through the x and y integer arrays to move the plotter head and draw the entire frame.</p>
 					</div>
 				</div>
 
@@ -421,18 +424,18 @@
 						<div class="col-lg-6">
 						  <img class="img-circle img-responsive center-block" alt="100x100" src="./images/connor.jpeg" />
 						  <h3 class="text-center">Connor Archard</h3>
-						  <p class="text-center">Donec sed odio dui. Etiam porta sem malesuada magna mollis euismod. Nullam id dolor id nibh ultricies vehicula ut id elit. Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Praesent commodo cursus magna.</p>
+						  <p class="text-center">Hi! I'm an electrical and computer engineering major in the class of 2015. In this project, I took care of the hardware design and software motor control schemes. I am interested in automotive engineering and I am a member of both the Cornell Formula Racing and Cornell Electric Motorcycle project teams. In my free time, I also do photography.</p>
 						  <p class="text-center">
-						    <a class="" href="https://github.com/carchard" role="button">Personal Website</a>
+						    <a class="" href="https://www.linkedin.com/pub/connor-archard/87/8a0/aa8" role="button">Personal Website</a>
 						  </p>
 						</div>
 
 						<div class="col-lg-6">
 						  <img class="img-circle img-responsive center-block" alt="100x100" src="./images/feiran2.jpg" />
 						  <h3 class="text-center">Feiran Chen</h3>
-						  <p class="text-center">Donec sed odio dui. Etiam porta sem malesuada magna mollis euismod. Nullam id dolor id nibh ultricies vehicula ut id elit. Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Praesent commodo cursus magna.</p>
+						  <p class="text-center">Hello, I'm an electrical and computer engineering and computer sciences double major in the class of 2015. In this project I took care of the software design and serial communications.</p>
 						  <p class="text-center">
-						    <a class="" href="https://github.com/lalalah/" role="button">Personal Website</a>
+						    <a class="" href="https://www.linkedin.com/pub/feiran-chen/47/a82/940" role="button">Personal Website</a>
 						  </p>
 						</div>
 					</div>
@@ -444,7 +447,7 @@
 				<div class="content container">
 					<header>
 						<h2>Say Hello.</h2>
-						<p>Lorem ipsum dolor sit amet et sapien sed elementum egestas dolore condimentum.</p>
+						<p>Or email us at <address><a href="mailto:cwa37@cornell.edu">cwa37@cornell.edu</a></address> and <address><a href="mailto:fc254@cornell.edu">fc254@cornell.edu</a></address>All work shown on this website belongs to us and may not be copied without our notification and prior agreement.</p>
 					</header>
 					<div class="box container 75%">
 					
