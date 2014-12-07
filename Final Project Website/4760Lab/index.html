@@ -45,9 +45,7 @@
 	    <script type="text/javascript" src="./src/easeljs/utils/SpriteSheetUtils.js"></script>
 	    <script type="text/javascript" src="./src/easeljs/utils/SpriteSheetBuilder.js"></script>
 	    <script type="text/javascript" src="./pad.js"></script>
-    
-
-
+    	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js">  </script>
 
 		<!--[if lte IE 8]><script src="css/ie/html5shiv.js"></script><![endif]-->
 		<script src="js/jquery.min.js"></script>
@@ -110,6 +108,19 @@
 					font-weight:		normal;
 					color: 				#ccc;
 					background-color:	#333;"></canvas>
+					<button id="sendFrame" type="button">Click Me!</button>
+					<script>
+				      $(document).ready(function(){
+					        $("#sendFrame").click(function(){
+					          $.post("http://10.148.12.97:8000/frame",{frame:strokes}, function(data){
+					            if(data==='done')
+					              {
+					                alert("login success");
+					              }
+					          });
+					        });
+	  					});
+				    </script>
 					<p>Welcome to <strong>Connor and Feiran's 4760 Final Project</strong> a circuit printer that can
 					be controlled and interacted via web over local network. Here's the drawing panel <strong>Circuit
 					 Pad</strong>. </p>
