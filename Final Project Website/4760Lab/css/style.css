@@ -550,7 +550,9 @@
 					-ms-transform: translateZ(0);
 					transform: translateZ(0);
 				}
-			
+				.main.style2 .content p, h3, h4{
+					font-size: 80%
+				}
 				.main.style2.left {
 				}
 
@@ -741,7 +743,7 @@
 		background-attachment: fixed, fixed;
 		background-position: top left, center center;
 	}
-	
+
 	#keywords thead {
 	  cursor: pointer;
 	  background: #c9dff0;
