@@ -16,13 +16,12 @@ var tempPt;
 // params for outputing
 var strokes;
 var this_stroke;
-var frame_count= 0;
 
 function gridX(x){
     return Math.ceil(x +20);
 }
 function gridY(y){
-    return Math.ceil(y+20);
+    return 500 - Math.ceil(y+20);
 }
 
 function handleDblclick(event){
@@ -45,19 +44,17 @@ function handleDblclick(event){
             straightCanvas.setStrokeStyle(stroke, 'round', 'round').moveTo(oldPt.x, oldPt.y).beginStroke(color).lineTo(newPt.x, newPt.y).endStroke();
             stage.update();
         }
-        this_stroke += "X-1Y-1D2*\n";
         console.log(this_stroke);
+        strokes += this_stroke;
 
         stage.removeChild(tempCanvas);
         tempGraphics = new createjs.Graphics();
         tempCanvas = new createjs.Shape(tempGraphics);
         stage.update();
-
-            }
+    }
     stage.removeEventListener("stagemousemove" , handleMouseMove);
     stage.update();
 }
-
 
 function handleMouseDown(event) {
     if (stage.contains(title)) { stage.clear(); stage.removeChild(title); }

@@ -20,15 +20,25 @@ var filename = './samplePureVector';
 var querystring = require('querystring');
 var express = require('express');
 var compression = require('compression');
+var bodyParser = require('body-parser');
 var app = express();
 
 
 app.use(express.static(__dirname));
-
 app.set('port', process.env.PORT);
 // app.listen(app.get('port'), function(){
 //   console.log('Express server listening on port ' + app.get('port'));
 // });
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+
+app.post('/frame',function(req,res){
+  var frame=req.body.frame;
+  console.log("Frame = "+frame);
+  res.end("yes");
+  frame += "X-1Y-1D2*\n"
+  writeFile(frame);
+});
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
@@ -59,32 +69,47 @@ function processPost(request, response, callback) {
     }
 }
 
-var gerber = "";
-var gerber_lines;
 
-function readGerber() {
-	fs.readFile(filename, 'utf8', function (err,data) {
+// File parameters
+var frame_count= 0;
+var filename_base="/frame_";
+var sendCount = 0;
+var loaded = 0;
+var gerber = "";
+var gerber_lines= [];
+
+function writeFile(text){
+    fs.writeFile(__dirname+filename_base + frame_count, text, function(err) {
+	    if(err) {
+	        console.log(err);
+	    } else {
+	        console.log("The file was saved!"+frame_count);
+	    	frame_count++;
+	    	if(!loaded){
+	    	  readFile();
+	    	}
+	    }
+	}); 
+}
+
+function readFile() {
+	if (frame_count <= sendCount){
+		loaded = 0;
+		return;
+	}
+	fs.readFile(__dirname+filename_base + sendCount, 'utf8', function (err,data) {
 	  if (err) {
 	    return console.log(err);
+	  }else{
+		  if (sendCount<frame_count){
+		  	sendCount++;
+		  }
+		  gerber = data+"";
+		  gerber_lines = gerber.split('\n');
+		  console.log(gerber_lines);
 	  }
-	  gerber = data+"";
-	  gerber_lines = gerber.split('\n');
-	  console.log(gerber_lines);
 	});
 }
-
-function writeLine(text){
-    fs.writeFile("/tmp/test", text, function(err) {
-    if(err) {
-        console.log(err);
-    } else {
-        console.log("The file was saved!");
-    }
-}); 
-}
-
-readGerber();
-
 
 var SerialPort = require("serialport").SerialPort;
 var serialPort = 
@@ -110,6 +135,8 @@ function trimBuffer(){
 		line = ""
 	}
 }
+
+readFile();
 serialPort.on("open", function () {
 	serialPort.on('data', function(data) {
 		console.log("Data!!"+data);
@@ -124,12 +151,14 @@ serialPort.on("open", function () {
 			console.log(line.length + "length \n" + "File Length".length)
 			console.log(line == "File Length\r")
 			if (line == "File Length") {
+				console.log("frame" + frame_count + "read" + sendCount);
 				line = "";
 				console.log("File Length!!\n");
 				serialPort.write("{0}*\r\n".format(gerber_lines.length), function(err, results) {
 					serialPort.drain(function(){
 						console.log("Lenth Written:" + gerber_lines.length);
 						lineIndex = 0;
+						readFile();
 					});
 					//console.log('err ' + err);
 					//console.log('results ' + results);
