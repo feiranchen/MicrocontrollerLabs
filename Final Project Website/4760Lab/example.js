@@ -111,6 +111,7 @@ function readFile() {
 	});
 }
 
+/*
 var SerialPort = require("serialport").SerialPort;
 var serialPort = 
 new SerialPort("/dev/cu.usbserial-A603UZG1", {
@@ -183,4 +184,4 @@ serialPort.on("open", function () {
 			}
 		}
 	});
-});
+});*/

@@ -53,6 +53,7 @@ function handleDblclick(event){
         stage.update();
     }
     stage.removeEventListener("stagemousemove" , handleMouseMove);
+    stage.mouseMoveOutside = false;
     stage.update();
 }
 
