@@ -340,13 +340,17 @@ end
 int main(void) {
   int i =0;
   
-  //initialize();
+  initialize();
   
-	LCD_init();
+//	LCD_init();
   //init the UART -- uart_init() is in uart.c
   uart_init();
   stdout = stdin = stderr = &uart_str;
   
+ sprintf(lcd_buffer2,"File Length\n\r");
+  fprintf(stdout,"%s\0", lcd_buffer2);
+	LCDGotoXY(0,0);
+	CopyStringtoLCD(LCD_initialize, 0, 0);
   get_frame();
   get_frame();
 

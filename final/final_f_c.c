@@ -33,7 +33,7 @@ FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 #define end }
 
 // LCD globals
-const int8_t LCD_initialize[] PROGMEM = "LCD Initialize  \0";
+const int8_t LCD_initialize[] PROGMEM = "LCD Initialized \0";
 const int8_t LCD_line_clear[] PROGMEM = "                \0";
 const int8_t LCD_hello[] PROGMEM = "hello world     \0";
 const int8_t LCD_wait1[] PROGMEM = "waiting for user\0";
@@ -44,9 +44,9 @@ const int8_t LCD_df2[] PROGMEM = "frame           \0";
 volatile int8_t lcd_buffer[17];	// LCD display buffer
 volatile int8_t lcd_buffer2[17];	// LCD display buffer
 volatile char LCD_char_count;
-volatile int x_vect[100];
-volatile int y_vect[100];
-volatile int d_vect[100];
+volatile int x_vect[100];//= {30,30,400,400,30,30,30,400,400,30,-1};
+volatile int y_vect[100];//= {30,300,300,30,30,350,450,450,350,350,-1};
+volatile int d_vect[100];//= {2,1,1,1,1,2,1,1,1,1,2};
 volatile unsigned int x_pos;
 volatile unsigned int y_pos;
 enum {IDLE =1, PULLING_FRAME, DRAWING};
@@ -169,6 +169,18 @@ end
 void circle(void)
 begin
 	move_positive_x();
+	_delay_us(7000);
+	stop_all();
+	move_positive_y();
+	_delay_us(7000);
+	move_negative_x();
+	_delay_us(7000);
+	stop_all();
+	move_negative_y();
+	_delay_us(5000);
+	stop_all();
+
+	move_positive_x();
 	_delay_us(4000);
 	stop_all();
 	move_positive_y();
@@ -181,27 +193,15 @@ begin
 	stop_all();
 
 	move_positive_x();
-	_delay_us(2400);
+	_delay_us(2500);
 	stop_all();
 	move_positive_y();
-	_delay_us(2400);
+	_delay_us(2500);
 	move_negative_x();
-	_delay_us(2400);
+	_delay_us(2500);
 	stop_all();
 	move_negative_y();
 	_delay_us(1500);
-	stop_all();
-
-	move_positive_x();
-	_delay_us(1000);
-	stop_all();
-	move_positive_y();
-	_delay_us(1000);
-	move_negative_x();
-	_delay_us(1000);
-	stop_all();
-	move_negative_y();
-	_delay_us(700);
 	stop_all();
 end
 
@@ -209,7 +209,11 @@ end
 // 0= both, 1= x only, 2= y only
 move_to_XY(int x_in, int y_in, int d, char motion)
 begin
-	if (d==2) raise_pen();
+	if (d==2)
+	begin
+		//circle();
+		raise_pen();
+	end
 	if (d==1) lower_pen();
 	if(x_in>0 && y_in>0)
 	begin
@@ -533,6 +537,11 @@ begin
   int i=0, x=-2 ,y=-2,d=-2;// container for parsed ints
   char buffer[17];
   uint16_t file_size = 0;
+
+  
+	LCDGotoXY(0,0);
+	CopyStringtoLCD(LCD_initialize, 0, 0);
+
  sprintf(lcd_buffer2,"File Length\n\r");
   fprintf(stdout,"%s\0", lcd_buffer2);
   fscanf(stdin, "%d*", &file_size) ;
@@ -604,22 +613,31 @@ begin
 			if(x_vect[i] == x_vect[i-1])
 			begin
 				move_to_XY(x_vect[i],y_vect[i],d_vect[i],2);
-				move_back_XY(x_vect[i-1],y_vect[i-1],1,2);
-				move_to_XY(x_vect[i],y_vect[i],d_vect[i],2);
+				if(d_vect[i] == 1)
+				begin
+					move_back_XY(x_vect[i-1],y_vect[i-1],1,2);
+					move_to_XY(x_vect[i],y_vect[i],d_vect[i],2);
+				end
 			end
 			else 
 			begin
 				if(y_vect[i] == y_vect[i-1])
 				begin
 					move_to_XY(x_vect[i],y_vect[i],d_vect[i],1);
-					move_back_XY(x_vect[i-1],y_vect[i-1],1,1);
-					move_to_XY(x_vect[i],y_vect[i],d_vect[i],1);
+					if(d_vect[i] == 1)
+					begin
+						move_back_XY(x_vect[i-1],y_vect[i-1],1,1);
+						move_to_XY(x_vect[i],y_vect[i],1,1);
+					end
 				end
 				else
 				begin
 					move_to_XY(x_vect[i],y_vect[i],d_vect[i],0);
-					move_back_XY(x_vect[i-1],y_vect[i-1],1,0);
-					move_to_XY(x_vect[i],y_vect[i],d_vect[i],0);
+					if(d_vect[i] == 1)
+					begin
+						move_back_XY(x_vect[i-1],y_vect[i-1],1,0);
+						move_to_XY(x_vect[i],y_vect[i],d_vect[i],0);
+					end
 				end
 			end
 		end
@@ -640,6 +658,9 @@ int main(void) {
   //init the UART -- uart_init() is in uart.c
   uart_init();
   stdout = stdin = stderr = &uart_str;
+  
+ sprintf(lcd_buffer2,"File Length\n\r");
+  fprintf(stdout,"%s\0", lcd_buffer2);
 //while(1) move_positive_y();
   while(1)
   begin
