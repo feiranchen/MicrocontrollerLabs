@@ -1,11 +1,11 @@
 ###############################################################################
-# Makefile for the project SerialImport
+# Makefile for the project final_f_c
 ###############################################################################
 
 ## General Flags
-PROJECT = SerialImport
-MCU = atmega128
-TARGET = SerialImport.elf
+PROJECT = final_f_c
+MCU = atmega1284p
+TARGET = final_f_c.elf
 CC = avr-gcc
 
 ## Options common to compile, link and assembly rules
@@ -13,7 +13,7 @@ COMMON = -mmcu=$(MCU)
 
 ## Compile options common for all C compilation units.
 CFLAGS = $(COMMON)
-CFLAGS += -Wall -gdwarf-2 -Os -std=gnu99 -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
+CFLAGS += -Wall -gdwarf-2 -std=gnu99    -DF_CPU=16000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 CFLAGS += -MD -MP -MT $(*F).o -MF dep/$(@F).d 
 
 ## Assembly specific flags
@@ -23,7 +23,7 @@ ASMFLAGS += -x assembler-with-cpp -Wa,-gdwarf2
 
 ## Linker flags
 LDFLAGS = $(COMMON)
-LDFLAGS +=  -Wl,-Map=SerialImport.map
+LDFLAGS +=  -Wl,-Map=final_f_c.map
 
 
 ## Intel Hex file production flags
@@ -34,17 +34,20 @@ HEX_EEPROM_FLAGS += --set-section-flags=.eeprom="alloc,load"
 HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 
 
+## Libraries
+LIBS = -lm 
+
 ## Objects that must be built in order to link
-OBJECTS = SerialImport.o lcd_lib.o uart.o 
+OBJECTS = final_f_c.o lcd_lib.o uart.o 
 
 ## Objects explicitly added by the user
 LINKONLYOBJECTS = 
 
 ## Build
-all: $(TARGET) SerialImport.hex SerialImport.eep SerialImport.lss size
+all: $(TARGET) final_f_c.hex final_f_c.eep final_f_c.lss size
 
 ## Compile
-SerialImport.o: ../SerialImport.c
+final_f_c.o: ../final_f_c.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $<
 
 lcd_lib.o: ../lcd_lib.c
@@ -73,7 +76,7 @@ size: ${TARGET}
 ## Clean target
 .PHONY: clean
 clean:
-	-rm -rf $(OBJECTS) SerialImport.elf dep/* SerialImport.hex SerialImport.eep SerialImport.lss SerialImport.map
+	-rm -rf $(OBJECTS) final_f_c.elf dep/* final_f_c.hex final_f_c.eep final_f_c.lss final_f_c.map
 
 
 ## Other dependencies
