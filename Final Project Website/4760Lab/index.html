@@ -85,7 +85,7 @@
 						<ul>
 							<li><a href="#home">Home</a></li>
 							<li><a href="#intro">Introduction</a></li>
-							<li><a href="#report">Design and Testing Report</a></li>
+							<li><a href="#report">Design Report</a></li>
 							<li><a href="#gallery">Gallery</a></li>
 							<li><a href="#team">Team</a></li>
 							<li><a href="#contact">Contact</a></li>
@@ -135,6 +135,10 @@
 			<section id="intro" class="main style2 right dark fullscreen"
 				style="background: url('images/fulls/02.jpg');">
 				<div class="content box style2">
+					<header>
+						<h2>"Sound Bite"</h2>
+					</header>
+					<p>We created a pen plotter that draws in electrically conductive ink to rapidly create circuits drawn on a webapp.</p>
 					<header>
 						<h2>Introduction</h2>
 					</header>
@@ -261,7 +265,9 @@
 					<h3>Ethical Considerations</h3>
 					<p>Throughout the course of this project, we adhered to the IEEE ethical guidelines by making sure that we were testing in safe ways that avoided placing other lab users and ourselves in harm’s way. We also certify that the work presented as a part of this project is entirely our own - unless otherwise stated. Code from previous portions of this class - ECE 4760 - was used in part or in whole as a starting point for some of the code in this project. For example, the ADC code, serial code, and some LCD code were based off of code from lab 3, lab 4, and lab 1 respectively. Additionally, uart libraries written by Joerg Wunsch under the  BEER-WARE LICENSE were used to facilitate serial communication. We also used code from scienceprog.com to send text to the LCD, which is protected the GNU Public License.</p>
 
-					<p>This website was designed using the “Big Picture” template from html5up.com under the CCA 3.0 license, which allows the use of this template for both personal and commercial webdesign.</p>
+					<p>This website was designed using the “Profile” template from html5up.com under the CCA 3.0 license, which allows the use of this template for both personal and commercial webdesign.</p>
+
+					<p>There are no major legal considerations regarding the FCC because we are not broadcasting or manipulating any data in the RF range. In fact, all the signals that are sent between the MCU and the CPU are control signals, so the relevant FCC article is abided by.</p>
 
 					<h2>Appendices</h2>
 					<h3>Budgeting</h3>
@@ -376,6 +382,8 @@
 					<p><strong>void get_frame(void)</strong> - This function will handle the entire serial communications section and will download a full frame of vectors each time it is called. This function assumes that the server is currently running and trying to send information. If the server is not running, the printer will be stuck looping in this function because of the blocking nature of fscanf, which is called in this function.</p>
 
 					<p><strong>void move_motor(void)</strong> - This wrapper function for motor controlling is meant to be called after the get_frame() function and will step through the x and y integer arrays to move the plotter head and draw the entire frame.</p>
+
+					<p><strong>To see a full listing of our final code, view it on github:<a class="" href="https://github.com/lalalah/MicrocontrollerLabs/tree/master/final" role="button">here</a></p>
 					</div>
 				</div>
 
@@ -396,8 +404,8 @@
 					<!-- Lightbox Gallery  -->
 						<div class="container 75% gallery">
 							<div class="row 0% images">
-								<div class="6u"><a href="images/fulls/01.jpg" class="image fit from-left"><img src="images/thumbs/01.jpg" title="The Anonymous Red" alt="" /></a></div>
-								<div class="6u"><a href="images/fulls/02.jpg" class="image fit from-right"><img src="images/thumbs/02.jpg" title="Airchitecture II" alt="" /></a></div>
+								<div class="6u"><a href="./images/schematic.png" class="image fit from-left"><img src="./images/schematic.png" title="The Anonymous Red" alt="" /></a></div>
+								<div class="6u"><a href="images/fulls/02.jpg" class="image fit from-right"><img src="images/" title="Airchitecture II" alt="" /></a></div>
 							</div>
 							<div class="row 0% images">
 								<div class="6u"><a href="images/fulls/03.jpg" class="image fit from-left"><img src="images/thumbs/03.jpg" title="Air Lounge" alt="" /></a></div>
