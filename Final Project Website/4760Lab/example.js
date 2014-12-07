@@ -59,33 +59,6 @@ function processPost(request, response, callback) {
     }
 }
 
-
-// http.createServer(function (req, res) {
-// 	var pathname=url.parse(req.url).pathname;
-// 	fs.readFile('./index.html', function (err, html) {
-// 	    if (err) {
-// 	        throw err; 
-// 	    }
-//         // console.log(html);
-//         res.writeHeader(200);//, {"Content-Type": "text/html"});  
-//         res.write(html);  
-//         res.end();
-//     });
-// 	// if(req.method == 'POST') {
-//  //        processPost(req, res, function() {
-//  //            console.log(req.post);
-//  //            // Use req.post here
-
-//  //            res.writeHead(200, "OK", {'Content-Type': 'text/plain'});
-//  //            res.end();
-//  //        });
-//  //    } else {
-//  //        res.writeHead(200, "OK", {'Content-Type': 'text/plain'});
-// 	// 	res.end('Hello World\n');
-//  //    }
-// }).listen(1337, '127.0.0.1');
-// console.log('Server running at http://127.0.0.1:1337/');
-
 var gerber = "";
 var gerber_lines;
 
@@ -112,16 +85,7 @@ function writeLine(text){
 
 readGerber();
 
-/*
-baudrate: Baud Rate, defaults to 9600. 
-databits: Data Bits, defaults to 8.
-stopbits: Stop Bits, defaults to 1.
-parity: Parity, defaults to 'none'.
-buffersize: Size of read buffer, defaults to 255.
 
-*/
-
-/*
 var SerialPort = require("serialport").SerialPort;
 var serialPort = 
 new SerialPort("/dev/cu.usbserial-A603UZG1", {
@@ -191,88 +155,3 @@ serialPort.on("open", function () {
 		}
 	});
 });
-*/
-
-/* This is too fast
-serialPort.on("open", function () {
-	serialPort.on('data', function(data) {
-		console.log("Data!!");
-		inputBuffer += data;
-		if (inputBuffer.indexOf('*')> -1){
-			console.log("DeletingBuffer");
-			trimBuffer();
-			return;
-		}
-		trimBuffer();
-		
-		//console.log('data received: ' + data);
-		if (line == "File Length") {
-			line = "";
-			console.log("File Length!!\n");
-			serialPort.write("{0}*\r\n".format(gerber_lines.length), function(err, results) {
-				serialPort.drain(function(){
-					console.log("Lenth Written:" + gerber_lines.length);
-				});
-				//console.log('err ' + err);
-				//console.log('results ' + results);
-			});
-			if(gerber == "") {
-				console.log("File loading");
-				return;
-			}
-
-			for (var i = 0; i< gerber_lines.length; i++){
-				//serialPort.write(gerber_lines[lineIndex]+"\0", function(err, results) {
-				serialPort.write("test\r\n", function(err, results) {
-					serialPort.drain(function(){
-						console.log("Written.");
-					});
-					lineIndex++;
-					console.log("sent"+lineIndex +": "+ gerber_lines[lineIndex]+"====");
-					//console.log('err ' + err);
-					//console.log('results ' + results);
-				});
-			}
-		}
-	});
-});
-*/
-
-// This works
-/*
-serialPort.on("open", function () {
-	serialPort.on('data', function(data) {
-		console.log('data received: ' + data);
-		serialPort.write("test\r\n", function(err, results) {
-			console.log(gerber.length)
-			console.log('err ' + err);
-			console.log('results ' + results);
-		});
-	});
-*/
-
-
-
-
-
-
-
-
-
-
-
-	// console.log('open');
- //  	console.log(gerber);
-
- //  	remaining = gerber;
- //  	var index = remaining.indexOf('\n');
- //  	var last = 0;
- //  	while (index > -1){
- //  		var line = remaining.substring(last, index);
- //  		last = index + 1;
- //  		serialPort.write(line, function(err, results) {
-	// 		console.log('err ' + err);
-	// 		console.log('results ' + results);
-	// 	});
- //  	}
-	

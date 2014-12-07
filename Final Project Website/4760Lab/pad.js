@@ -41,14 +41,13 @@ function handleDblclick(event){
         }
 
         if(Math.abs(oldPt.x - newPt.x) + Math.abs(oldPt.y - newPt.y)> 10){
-            this_stroke = this_stroke + "X"+gridX(newPt.x)+"Y"+gridY(newPt.y) + "D1*\n";
+            this_stroke += "X"+gridX(newPt.x)+"Y"+gridY(newPt.y) + "D1*\n";
             straightCanvas.setStrokeStyle(stroke, 'round', 'round').moveTo(oldPt.x, oldPt.y).beginStroke(color).lineTo(newPt.x, newPt.y).endStroke();
             stage.update();
         }
+        this_stroke += "X-1Y-1D2*\n";
         console.log(this_stroke);
 
-        // console.log("start"+ oldPt.x + " "+oldPt.y);
-        // console.log("end"+ newPt.x + " "+newPt.y);
         stage.removeChild(tempCanvas);
         tempGraphics = new createjs.Graphics();
         tempCanvas = new createjs.Shape(tempGraphics);
@@ -181,8 +180,8 @@ function init() {
     stage.addEventListener("stagemouseup", handleMouseUp);
     canvas.addEventListener("dblclick", handleDblclick);
 
-    title = new createjs.Text("Click and Drag to draw", "36px Arial", "#777777");
-    title.x = 300;
+    title = new createjs.Text("Click and Drag\n    to draw", "36px Arial", "#777777");
+    title.x = 100;
     title.y = 200;
     stage.addChild(title);
 

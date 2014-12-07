@@ -111,24 +111,9 @@
 					font-weight:		normal;
 					color: 				#ccc;
 					background-color:	#333;"></canvas>
-					
-
 					<p>Welcome to <strong>Connor and Feiran's 4760 Final Project</strong> a circuit printer that can
-					be controlled and interacted via web over local network. Here's the drawing panel <a href="../4760Lab/circuitPad.html">Circuit Pad</a></p>
-					<footer>
-						<a href="#one" class="button style2 down">More</a>
-					</footer>
-				</div>
-			</section>
-			
-		<!-- Intro -->
-			<section id="home" class="main style1 dark fullscreen">
-				<div class="content container 75%">
-					<header>
-						<h2>Hey. This is Connor and Feiran's 4760 Final Projects</h2>
-					</header>
-					<p>Welcome to <strong>Connor and Feiran's 4760 Final Project</strong> a circuit printer that can
-					be controlled and interacted via web over local network. Here's the drawing panel <a href="../4760Lab/circuitPad.html">Circuit Pad</a></p>
+					be controlled and interacted via web over local network. Here's the drawing panel <strong>Circuit
+					 Pad</strong>. </p>
 					<footer>
 						<a href="#one" class="button style2 down">More</a>
 					</footer>
@@ -142,9 +127,7 @@
 					<header>
 						<h2>Introduction</h2>
 					</header>
-					<p>Lorem ipsum dolor sit amet et sapien sed elementum egestas dolore condimentum. 
-					Fusce blandit ultrices sapien, in accumsan orci rhoncus eu. Sed sodales venenatis arcu, 
-					id varius justo euismod in. Curabitur egestas consectetur magna.</p>
+					<p>Our final project was to create a rapid prototyping machine for electrical circuits by repurposing an old pen plotter that we fitted with an electrically conductive pen. Our plotter utilized an atmega 1284P to control motors, normalize vector coordinate strings, and maintain a state machine to regulate hardware and software interaction with the end user. We created a web app that allowed a user to draw out circuits quickly, and then send them to be printed out with our printer as long as they were on the same wifi network as our host computer that maintained the serial connection with the atmega 1284P. By controlling the position of the plotter head in the x and y axis with feedback on the position of each motor, we were able to draw circuits to an accuracy of approximately 1/10th of an inch on a typical piece of A4 paper. With a single pen and only using conductive ink, each sheet of paper can contain only planar circuits. To facsimile multi-layer printed circuit boards (PCBs), we designed the circuit drawing application we made to track which traces are overlapping and to assign them to different virtual layers. The CPU would then send over chunks of vectors in groups we will refer to as “files” based on which layer they were on. A new file would be sent each time the user indicated that they had placed a new piece of paper on the plotting area via a button on the printer . By treating each layer as a new file, the user would end up with a different piece of paper for each layer of the circuit. By using through-hole components and solder paste, stacking these different sheets of paper is analogous to printing a multi-layer PCB.</p>
 				</div>
 				<a href="#two" class="button style2 down anchored">Next</a>
 			</section>
@@ -155,10 +138,229 @@
 					<header>
 						<h2>Design and Testing</h2>
 					</header>
-					<p>Lorem ipsum dolor sit amet et sapien sed elementum egestas dolore condimentum. 
-					Fusce blandit ultrices sapien, in accumsan orci rhoncus eu. Sed sodales venenatis arcu, 
-					id varius justo euismod in. Curabitur egestas consectetur magna.</p>
+					<h3>High Level Design<h3>
+					<p>The design of this plotter was motivated by maintaining the highest level of accuracy possible to allow for more densely packed circuits to reliably operate without unintended connections. To do this, we split the project into two discrete parts to separately focus efforts on:  maximizing plotter head position accuracy, and improving accuracy with smart control algorithms. Ease of use was another concern of ours that drove our design, so we focused our time in making a smooth, user friendly environment to print and design their own circuits in.
+
+					</p>
+
+					<h3>Hardware Design and Testing</h3>
+					<h4>Frame/Plotter Hardware</h4>
+					<p>To achieve mobility in two dimensions, we knew that we there was a significant mechanical challenge ahead of us. Maintaining structural rigidity while allowing for unimpeded motion in two axis is not a trivial feat. To bypass this challenge, we found a HIPLOT DMP-29 pen plotter from 1983 on craigslist for $20 whose frame we could use as a starting point. This frame came with a plotter head that we fit a Circuit Scribe electrically conductive pen to. This allowed us to print electrically functional drawings on the plotter. We altered the frame by removing the button interface on the front, and by removing the rack of pen-holders on the left of the plotter to increase the area that could be plotted on. This frame also included gearing which connected drive shafts of the motors to strings that would move the plotter head. The gearing was different for the x and the y axis, which made it so that each axis could be traversed in 4.5 revolutions of each respective motor even though the axis lengths are physically different (in proportion to the size of A4 or A5 paper).</p>
+
+					<p>There is also a solenoid that actuates a hinge, which controls the vertical position of the plotter head to either raise or lower the pen tip onto or off of the paper. This solenoid and hinge needed to be modified for the Circuit Scribe because of the difference in weight and the rust that built up on the hinge itself. To bias the hinge to make it easier for the solenoid to actuate with the larger pen, a set screw was tapped into the hinge and acted as a negative stop for the plotter head. This made it easier for the solenoid to just barely have to turn on to change the position of the pen.
+
+					</p>
+
+					<h4>Motor Controls</h4>	
+					<p>There were two motors in our final project in addition to one solenoid. One motor would drive the x-axis motion of the plotter head, the second motor would drive the y-axis motion of the plotter head, and the solenoid would control whether or not the pen was being pressed against the paper to draw. </p>
+
+					<p>The motors that came in the plotter were thirty-year-old servos that ran on 12 volts. When running, they drew approximately 1.5A each. These parameters were used to determine appropriate controller hardware, and to size the required power supplies. The Toshiba TB6561NG Dual H-Bridge was selected as a suitable motor controller due to its supply current maximum of 2.5A at 12-40V. These H-Bridge chips also offer isolation from the signal to power. Although the datasheet does not specify an exact isolation metric, there are separate power and ground lines for control signals and for motor power. By trying to run both motors while pulsing LEDs on the the atmega, we confirmed that the isolation was large enough to prevent the microcontroller from browning out while running the motors. These h-bridge packages also had short braking diodes, which means that by drawing both control signals low, the voltage across the motor would be held very close to zero, and that the back-EMF would be clipped through the use of four diodes placed between power and ground and each terminal of the motor, which could supply the current for the inductive spike. The end result of this was that stopping a motor could be achieved with minimal backpedalling simply by grounding both control signals. The h-bridge operates via two control signals for each motor. By dragging only one control signal high at a time, you can make the motor go either clockwise or counter-clockwise.</p>
+
+					<p>The solenoid was also shown to draw roughly an amp at 12V, and as such was driven with a second DIP of the Toshiba TB6561NG. In this case, because the solenoid is not a polar device, one of the control leads was connected directly to ground. This means that a single control line could be used to control whether or not the pen was drawing on the paper or not. In this specific case, if pin D.5 was set high, the pen would be set against the paper to draw. </p>
+
+					<p>All of these circuits were soldered to the board on the opposite side from the ADC circuits (to be described in the next section) to minimize capacitive coupling of noise that could impact to measurements of the current plotter head position. The motors themselves shared a drive shaft with the potentiometers used for these measurements, but the signal lines were shielded and kept separate from the power lines to the motors.</P>
+
+					<h4>Analog to Digital Conversions and Plotter Position Tracking</h4>
+					<p>In order to determine how the circuit was being drawn, we needed to track where the plotter head currently was. This was achieved through the use of servo potentiometers. These are special potentiometers that are designed to run from 0 Ohms to 5 kOhms at the middle pin through the course of 10 full revolutions. A servo potentiometer was placed on each of the driveshafts of the motors, so a revolution of the servo motor would cause an equal rotation of the potentiometer. By placing Vcc at the top of the servo potentiometer and signal ground at the bottom, we can use the middle pin as a voltage divider, with the voltage at the second pin being proportional to the position of the plotter head. </p>
+
+					<p>When the servo potentiometer was collared onto the driveshaft of the servo motor, the potentiometer was at its counter clockwise rotational limit, and the plotter head was at its corresponding minimum position (being mechanically stopped by elements of the frame). This set our coordinate grid’s origin and ensured that we go the maximum amount of rotation from each servo potentiometer to utilize the full voltage range to get the best possible granularity out of the ADC and subsequently the most accuracy for plotter head position. Because the servo motor would only spin 4.5 revolutions to travel from our origin to the maximum value of either axis, less than half of the potentiometer’s range would be used. To compensate for this and to increase accuracy, the on chip ADC’s Aref was set to the internal 2.56V value. This roughly doubled our accuracy because we getting quantized values relative to a range more precise to the values that could be generated by the servo potentiometers (0-1.82V measured). </p>
+
+					<p>The ADC on the atmega 1284P is a 10-bit converted, and by displaying the converted values on an LCD we determined that our origin was (16,16), the maximum value for an A4 size sheet of paper was (513,520), and that the maximum value for the plotting area was (715,718). This gave us a theoretical limit on the accuracy of our printer of 2.2% in the x axis and 1.7% in the y axis  on an 8.5”x11” (A4) piece of paper. To put this in a physical perspective, this is a resultant accuracy limit of approximately 1/20th of an inch.
+					</p>
+
+					<h4>User Interaction Hardware</h4>
+					<p>It was important to make sure that the end user could control the printer and would understand what the printer was doing in a manner similar to commercial inkjet/laser printers. This was accomplished by adding a single button and an LCD display to the printer.</p>
+
+					<p>The button would poll one of the input pins on the MCU to ground and signify to the printer that the a fresh piece of paper has been placed in the tray and secured. This would be required when printing multiple layers or multiple different files and you need to be able to switch out print media.</p>
+
+					<p>The LCD helps to provide instructions as to what the user should be doing. It is connected to the MCU as seen in the schematic below in the documentation section. The LCD will display which state the printer is in, reading either “waiting for file,” “printing,” or “job waiting, press button when ready.”
+
+					</p>
+					<h4>Isolation, Motor Protection, and Reliable Communications</h4>
+					<p>When using the large motors that came in the HIPLOT plotter, it was important to make sure that we didn’t have noise spikes coming from the motor that would impact the way the MCU was working. In particular, we had to worry about isolating the motor power from the MCU control, keeping the ADC pins and signal lines away from the noisy motor environment, and large back EMFs breaking the control equipment that was driving the motors.</p>
+
+					<p>Isolating the motor was handled by the TB6561NG, and provided separate power and signal grounds. Having separate grounds prevents current flooding into the ground from swaying the voltage going into the chip and causing the MCU to “brown-out” and reset. To mitigate the impact of these power electronics on the sensitive signal lines, the TB6561NG chips were kept on the opposite side of the board from the analog signal lines. Additionally, the signal lines from the servo potentiometers were kept as far away from the power lines to the motors as possible inside of the frame and were twisted together to be more noise resistant. Back EMFs were handled by the TB6561NG, again, through the placement of catch diodes on either side of the motors between ground and power. This means that when the transistors in the h-bridge are turned off, the two terminals of the motor will be at the same potential electrically. Because a motor is a large inductor, the catch diodes provide a path for current and prevent large voltage swings that could damage the h-bridge and cause very large noise spikes.</p>
+
+					<p>As mentioned in the high level design, the goal of all of this was to be able to measure the position of the plotter head as accurately as possible. This kept our overall accuracy as high as possible on the hardware side. 
+
+					</p>
+					<h4>Testing	</h4>
+					<p>To test the hardware, each piece was driven separately to verify functionality. The motors were driven, then they were driven with the h-bridge chips, and then they were driven with the h-bridges through the MCU to confirm that they worked as desired. The solenoid went through similar iterations to ensure that it operated as desired even while driven through the Toshiba chip by the MCU. The potentiometers were wired up and the ADC code was written to display the ADC values on the LCD. By manually moving the plotter head, we confirmed that the ADC and potentiometers were working. After these worked separately, we integrated them all together by sending the motors through a random walk while displaying the current plotter head position. This showed that the motors were not affecting the ADC readings while they were running or in a transient.</p>
+
+					<p>One change that came out of testing was to add a cooling system to the h-bridge chips. They grew very hot over prolonged running of the motors. By only running one motor at a time, this helped to reduce the burden placed on the motor controller chips, and a heatsink with a fan took care of the rest of the required heat dissipation. 
+
+					</p>
+					<h3>Software Design and Testin</h3>
+					<h4>Motor Functions and Contro</h4>
+					<p>To simplify the process of controlling the motors, a series of helper functions were made that could be built together to help logically control the position of the plotter head. This would allow for us to abstract away from the pin-level controls that are required for h-bridge operation. The following methods were implemented:</p>
+
+					<p>void move_positive_x(void), void move_positive_y(void), void move_negative_x(void), void move_negative_x(void), void raise_pen(void), void lower_pen(void), void stop_all(void)</p>
+
+					<p>These functions will set pins to indefinitely power the respective motor in a given bias. By setting separate functions for moving in each direction, we can guarantee that we do not ever have shorts over the h-bridge. The stop_all() function is called to lower all pins, removing power from both of the motors. Next, a method needed to be created to determine where the plotter head currently is at a given time. This would replace the need for timing how long motors were turned on for, as plotter head position is the end goal. </p>
+
+					<p>int start_ADC_measure(channel) was created to read the on-chip ADC for a given pin on PORTA. The channel that you input to the function corresponds to the pin on PORTA that the ADC reads in from. The ADC was configured to read all 10 bits for maximal accuracy, and was set to have an internal reference voltage of 2.56V (as described in the hardware design section).  </p>
+
+					<p>By pairing this ADC function with the motor power control functions, the method void move_to_XY(x, y, d) was created. By inputting an x-coordinate, a y-coordinate, and a number corresponding to whether the pen should be lowered or raised while the plotter head is moved to the new coordinate pair, controlling to motors became easy. In this function, the pen would first be raised or lowered depending on the d value, and then the plotter head was moved to the new location one axis at a time. By only moving one axis at a time, we could continuously read the ADC value for a given channel, which is four times as fast as if we were to alternate between reading two channels (due to the 25 cycle cost of the first conversion as opposed to the 13 cycle cost of subsequent conversions on the same channel). A motor power controller function would be called and then the ADC value would continuously be read at a rate of 13 cycles per conversion plus an additional 12 machine cycles of register manipulation and comparisons. This means that we were getting a position update for the plotter head roughly once every 2uS. Once the ADC value reported that the plotter head had reached the goal value, the motor would be stopped. Due to the high rate at which the ADC sampled and the ability for the h-bridges to short brake (holding each terminal of the motor at the same voltage), this was shown to sufficiently to stop the motor within 2 units of the desired coordinate (at worst) for each axis.</p>
+
+					<p>The motor controller methods were tested in the order they were created, seeing as they all built on one another. The motion controlling methods were written and tested, the ADC code was written and tested with output to the LCD, and finally the move_to_XY function was made by drawing on the previous methods. The move_to_XY function was tested by reading off a string of coordinates that was saved locally, and proved to work as expected.</p>
+
+					<p>After this was developed, we set up global variables to utilize these functions. The integer arrays x_vect and y_vect were created to store sets of coordinates to move to, and d_vect was created to store information about pen position for a given coordinate motion. With this structure, we were able to step through the arrays to form series of vectors to draw a file.
+
+					</p>
+					<h4>Serial Communication</h4>
+					<p>Serial Communication with the CPU is handled through the UART on pins D.1 and D.0 on the atmega 1284P. This is similar to the serial communications in lab 4, where the motor controller feedback loop was altered via putty. By defining the standard output and using the UART.c and UART.h libraries made Joerg Wunsch under the  BEER-WARE LICENSE, we were able to use the fprintf, sprintf, fscanf, and sscanf to communicate with the terminal on the macbook that was running the server. An initial handshake takes place to tell the microcontroller how many packets to expect in each transaction, and the subsequent communications are segmented by a stop-and-wait system in which the CPU will wait for an acknowledgement statement from the microcontroller. This serial connection forms the basis of motor control from the computer. The strings to be sent that will guide the plotter head are generated and computed on the CPU before being transmitted over this serial connection and then being parsed out on the MCU side into meaningful control statements.</p>
+
+					<h4>Webapp Design</h4>
+					<p>The application we made to drawn circuits (shown above) was a javascript applet that was created with the goal of allowing for rapid generation of strictly perpendicular lines to facilitate simple circuit creation that would be consistent with our design goals of only allowing for one degree of motion at any given time. This application was made to output a file into the print buffer on the server side after having allocated each vector (corresponding to each line in the application) to an appropriate frame in the file. This web app would also take car of normalizing vector coordinates to the plotter's ADC grid. This included limiting coordinates to (700,700) and multiplying the y-axis by the correction factor to account for the difference in gearing between the motor on each axis. This was tested by drawing squares on the web app and verifying that the resultant drawing on the plotter was roughly square. Because the applet was communicating with the server exclusively, this allows us to print from any computer on the same local network as the macbook that is hosting the application and that is physically connected to the printer over the UART terminals.</p>
+
+					<h4>File parsing and Vector Management</h4>
+					<p>Our end goal for the project was to be able to use existing .gerber files to generate layouts on our plotter. gerber files store circuit layout data in terms of x coordinates, y coordinates, and machine control code. We set up our vector transfer program to mirror the structure shown in a gerber file in that we are transmitting coordinate pairs and control code from the CPU in the form: </p>
+
+					<p>“X100Y300D2”</p>
+
+					<p>which corresponds to the command, “move the plotter head to (100,300) with the pen raised. We parse these strings by looking for the values in between X and Y, Y and D, and D and the end. We save these values into our x_vect, y_vect, and d_vect arrays and reference them later once the entire file has been saved on the MCU. To save time printing, the vectors are “terminated” with a directive to move the plotter head to a negative position (which is out of range). At the beginning of each motion step, the MCU will compare the destination coordinate to check that the values are nonnegative. </p>
+
+					<p>After achieving successful motor control through our existing parsing system, we built up a javascript program to convert .gerber files into our particular variety of machine code. This was trivial because our vector system was already built to accommodate the gerber command structure. Most of the work involved finding the delimiters in the .gerber data and then throwing out machine control data that was not applicable to our machine (such as using a drill to punch a hole through a board).</p>
+
+					 <p>As discussed in the introduction section, vectors would be sent over in groups that we refer to as files based on which layer of a given circuit they are assigned to. Given that there are several kilobytes of stack space that we can work with, and given that complex circuits will tend to distribute traces over multiple layers, we can simply save an entire file worth of vectors into our global vectors (which allows for 2000 coordinate pairs in a given file). By transmitting a terminator with the “X-1Y-1D2” command, we ignore old data that might have been left over in the integer arrays from previous files.
+
+					</p>
+					<h4>CPU and MCU Interface</h4>
+					<h2>Documentation</h2>
+					<h3>Software Listing</h3>
+					<p>void move_positive_x(void) - sets PORTD so that D.3 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.4 high. This will send control signals to the TB6561NG to forward bias the x-axis motor.</p>
+
+					<p>void move_positive_y(void) - sets PORTD so that D.6 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.7 high. This will send control signals to the TB6561NG to forward bias the y-axis motor.</p>
+
+					<p>void move_negative_x(void) - sets PORTD so that D.4 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.3 high. This will send control signals to the TB6561NG to reverse bias the x-axis motor.</p>
+
+					<p>void move_negative_y(void) - sets PORTD so that D.7 is low, delays a few microseconds to ensure that the pin has discharged to low logic levels, and then sets D.6 high. This will send control signals to the TB6561NG to reverse bias the y-axis motor.</p>
+
+					<p>void stop_all (void) - sets PORTD so that D.3,4,6,7 are all pulled low. This will put the TB6561NG into short brake mode to stop the motor. A delay of a few milliseconds was input to ensure that any running motors have come to a complete stop. This helps for isolating direction of motion to give us sharp corners.</p>
+
+					<p>int start_ADC_measurement(char channel) - This takes in a channel number corresponding to a pin in PORTA and will output an integer value from the 10-bit ADC  conversion of the given channel. This ADC measurement is not interrupt based, and requires polling of the conversion complete flags (ADCSRA and ADSC)).</p>
+
+					<p>void raise_pen(void) - This function will set pin D.5 low to remove power from the solenoid that actuates the hinge the pen rests on. This function includes a delay of a few milliseconds to ensure that movement functions right after this function is called will not drag the pen across the page for the first few milliseconds of motion.</p>
+
+					<p>void lower_pen(void) - This function will set pin D.5 high to supply power to the solenoid that actuates the hinge through the second TB6561NG h-bridge. A slight delay is included after D.5 is pulled high to make sure that the solenoid has time to mechanically actuate before the plotter head moves, which guarantees the pen will always be in contact with the paper when desired.</p>
+
+					<p>void move_to_XY(int x, int y, int d) - This function combines the previous functions to allow for movement of the plotter head to a specific location x,y. The third argument, int d, specifies whether the pen should be raised or lowered during the movement to the new x,y position.
+					 
+					 </p>
+					 <p></p>
+					<h2>Results</h2>
+					<h3>Accuracy of Printing</h3>
+					<p>As we began to test out the printer and the circuit scribe pen, we began to realize that continuity was an issue. Testing with the circuit scribe pen by itself showed that the ink was much less conductive than advertised. When drawing simple lines by hand, continuity was spotty at best with fewer than 50% of the six-inch, hand-drawn traces showing a connection from end to end. The solution when drawing by hand was to go back over the trace multiple times to get better continuity. We tried to carry this mentality over to our printer by having the plotter head trace out each line three times ("there, back, and there again"). This improved the quality of the lines that we drew, but reduced the accuracy of our printing. Running motors forwards and then quickly into reverse causes large spikes in backcurrent that would decrease the accuracy of the analog to digital converters. In general, the noise in the environment and the momentum of the motors only allowed us to get an accuracy of roughly 1/10th of an inch, so when we drove the motors back and forth consistently overshooting, our errors would add and our accuracy became only 1/5th of an inch. This provides a significant limitation to the circuits we could print, and could be solved by getting a better kind of conductive ink or by changing the way that we lay ink down. For example, using an inkjet style head we could increase the spray rate to improve conductivity without having to double back over our own lines. The other problem that this posed was the issue of missing connections due to the 1/5th of an inch error as the trace width is roughly only 1/8th of an inch. To solve this problem, we simply designed circuits to connect at intersections instead of at points. By putting in more overlap, we can guarantee that we will connect our lines and reduce the errors.</p>
+					<h3>Demonstration Summary</h3>
+
+					<h2>Conclusions</h2>
+					<p>Overall, we are pretty happy with how this project turned out. We realized early on that there were a lot of different systems that had to come together in order to get the plotter working to our initial specifications, so over the course of this project, we learned how to utilize modular design techniques to effectively distribute work while still advancing towards a goal. The decision to separate the tasks of higher-level control and data acquisition versus lower-level hardware and motor controlling allowed for independent optimization of performance in each section and allowed for us to independently progress based on pre-agreed-upon interfaces between the different systems.</P>
+
+					<p>Our initial goal of having a simple script that would allow for user input to control the motions of the motors was surpassed as we developed a web app and wireless infrastructure for using the plotter. This allowed for a better user interface than we had initially hoped for, and made us happier with the final product.</p>
+
+					<p>If we had more time on this project, we would have liked to improve some mechanical aspects of the device. It was very difficult to balance the circuit scribe with the plotter head to get a good trace lined out, and making a more custom fit holder for the pen would have improved the quality of the prints. Additionally, making the cooling system more effective and better isolating the servo potentiometers to allow for both motors to run simultaneously, indefinitely would have been nice. </p>
+
+					<h3>Societal Impacts</h3>
+					<p>If this project was to be created on a larger production scale, it would make circuit design less intimidating and would help to get more people interested in electrical design. The idea that people would be able to trivially create physical, functional versions of .gerber and other layout files is exciting and could potentially spur on the genesis of an open-source hardware design community. </p>
+
+					<h3>Ethical Considerations</h3>
+					<p>Throughout the course of this project, we adhered to the IEEE ethical guidelines by making sure that we were testing in safe ways that avoided placing other lab users and ourselves in harm’s way. We also certify that the work presented as a part of this project is entirely our own - unless otherwise stated. Code from previous portions of this class - ECE 4760 - was used in part or in whole as a starting point for some of the code in this project. For example, the ADC code, serial code, and some LCD code were based off of code from lab 3, lab 4, and lab 1 respectively. Additionally, uart libraries written by Joerg Wunsch under the  BEER-WARE LICENSE were used to facilitate serial communication. We also used code from scienceprog.com to send text to the LCD, which is protected the GNU Public License.</p>
+
+					<p>This website was designed using the “Big Picture” template from html5up.com under the CCA 3.0 license, which allows the use of this template for both personal and commercial webdesign.</p>
+
+					<h2>Appendices</h2>
+					<h3>Budgeting</h3>
+					<h3>Schmeehoooy</h3>
+					<p>shiggatown</p>
+					<div id="wrapper">
+	  					<h1>Sortable Table of Search Queries</h1>
+						<table border="2" style="width:80%">
+						<tbead>
+		 					<tr>
+		 						<td><b>Part:</b></td>
+		 						<td><b>Description:</b></td>
+		 						<td><b>Cost:</b></td>
+		 					</tr>
+		 				</thead>
+		 				<tbody>
+	 					<tr>
+	 						<td>Frame</td>
+	 						<td>HIPLOT pen plotter and motors that were used for the basis of the machine</td>
+	 						<td>$20</td>
+	 					</tr>
+	 					<tr>
+	 						<td>Servo Potentiometers</td>
+	 						<td>Potentiometers used for locating the plotter head during motion (scavenged)</td>
+	 						<td>$0.00</td>
+	 					</tr>
+	 					<tr>
+	 						<td>Atmega 1284P</td>
+	 						<td>the microcontroller at the head of the project</td>
+	 						<td>$5.00</td>
+	 					</tr>
+	 					<tr>
+	 						<td>SIP Sockets (*55)</td>
+	 						<td>Used to hold the LCD and Atmega board into the solder board and the serial cable into pins D.0 and D>1</td>
+	 						<td>$2.75</td>
+	 					</tr>
+						<tr>
+	 						<td>Solder Board</td>
+	 						<td>Board used for keeping the circuit together</td>
+	 						<td>$2.50</td>
+	 					</tr>
+						<tr>
+	 						<td>Motor Power Supply</td>
+	 						<td>A large 25A max power supply that could handle the 12V 15A draw on each motor</td>
+	 						<td>$5.00</td>
+	 					</tr>
+						<tr>
+	 						<td>MCU Power Supply</td>
+	 						<td>A typical 9V or 12VDC power supply that runs into the microcontroller board</td>
+	 						<td>$5.00</td>
+	 					</tr>
+						<tr>
+	 						<td>Atmega 1284P PC Board</td>
+	 						<td>Standard board from the other labs in the class that handles voltage regulation, the external oscillator, and lays out the output pins</td>
+	 						<td>$4.00</td>
+	 					</tr>
+						<tr>
+	 						<td>Circuit Scribe Pen</td>
+	 						<td>The electricaly conductive pen that is used to draw the circuits</td>
+	 						<td>$20.00</td>
+	 					</tr>
+						<tr>
+	 						<td>Toshiba TB6561NG (*2)</td>
+	 						<td>The twin h-bridge IC that drives the two servo motors and the solenoid</td>
+	 						<td>$8.00</td>
+	 					</tr>
+						<tr>
+	 						<td>Cooling Fan and Heatsink</td>
+	 						<td>A fan on a heatsink that was placed above the two motor driver chips to reduce thermal overload risk. (Salvage)</td>
+	 						<td>$0.00</td>
+	 					</tr>
+						<tr>
+	 						<td>LCD</td>
+	 						<td>An LCD used for displaying the current status of the printer</td>
+	 						<td>$8.00</td>
+	 					</tr>
+						<tr>
+	 						<td>Serial Cable</td>
+	 						<td>A cable that connects the USART of the Atmega 1284P</td>
+	 						<td>$4.00</td>
+	 					</tr>
+						<tr>
+	 						<td> </td>
+	 						<td><b>Total</b></td>
+	 						<td><b>$84.25</b></td>
+	 					</tr>
+		 				</tbody>
+		 			</table>
+					</div>
 				</div>
+
+
+
+
 				<a href="#work" class="button style2 down anchored">Next</a>
 			</section>
 
