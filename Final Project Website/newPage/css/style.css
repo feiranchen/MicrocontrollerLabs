@@ -778,7 +778,13 @@
 			{
 				background-color: #ecf1f1;
 			}
-		
+			#main > section.three p
+			{
+				font-size: 80%;
+			}
+			#main > section.three table, th, td {
+			   border: 1px solid black;
+			}
 			#main > section.four
 			{
 				background-color: #e8edec;
