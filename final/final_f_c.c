@@ -33,7 +33,7 @@ FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 #define end }
 
 // LCD globals
-const int8_t LCD_initialize[] PROGMEM = "LCD Initialize  \0";
+const int8_t LCD_initialize[] PROGMEM = "LCD Initialized \0";
 const int8_t LCD_line_clear[] PROGMEM = "                \0";
 const int8_t LCD_hello[] PROGMEM = "hello world     \0";
 const int8_t LCD_wait1[] PROGMEM = "waiting for user\0";
@@ -511,7 +511,7 @@ begin
 
 			else
 			begin
-				while(y_pos < y_in)
+				while(y_pos < (y_in - 20))
 				begin
 					ADC_start_measure(y_axis);
 					while(ADCSRA & (1<<ADSC)); stop_y();
@@ -608,6 +608,8 @@ begin
 				begin
 					move_back_XY(x_vect[i-1],y_vect[i-1],1,2);
 					move_to_XY(x_vect[i],y_vect[i],1,2);
+					move_back_XY(x_vect[i-1],y_vect[i-1],1,2);
+					move_to_XY(x_vect[i],y_vect[i],1,2);
 				end
 			end
 			else 
@@ -619,6 +621,8 @@ begin
 					begin
 						move_back_XY(x_vect[i-1],y_vect[i-1],1,1);
 						move_to_XY(x_vect[i],y_vect[i],1,1);
+						move_back_XY(x_vect[i-1],y_vect[i-1],1,1);
+						move_to_XY(x_vect[i],y_vect[i],1,1);
 					end
 				end
 				else
@@ -626,6 +630,8 @@ begin
 					move_to_XY(x_vect[i],y_vect[i],d_vect[i],0);
 					if (d_vect[i] == 1)
 					begin
+						move_back_XY(x_vect[i-1],y_vect[i-1],1,0);
+						move_to_XY(x_vect[i],y_vect[i],1,0);
 						move_back_XY(x_vect[i-1],y_vect[i-1],1,0);
 						move_to_XY(x_vect[i],y_vect[i],1,0);
 					end
