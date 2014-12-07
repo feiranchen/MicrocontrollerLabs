@@ -72,17 +72,6 @@ function readGerber() {
 	  console.log(gerber_lines);
 	});
 }
-
-function writeLine(text){
-    fs.writeFile("/tmp/test", text, function(err) {
-    if(err) {
-        console.log(err);
-    } else {
-        console.log("The file was saved!");
-    }
-}); 
-}
-
 readGerber();
 
 

@@ -16,7 +16,21 @@ var tempPt;
 // params for outputing
 var strokes;
 var this_stroke;
+// File parameters
 var frame_count= 0;
+var filename_base="frame_";
+var fs = require('fs');
+
+
+function writeLine(text){
+    fs.writeFile("/tmp/test", text, function(err) {
+    if(err) {
+        console.log(err);
+    } else {
+        console.log("The file was saved!");
+    }
+}); 
+}
 
 function gridX(x){
     return Math.ceil(x +20);
