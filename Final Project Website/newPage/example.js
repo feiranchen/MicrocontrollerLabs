@@ -112,7 +112,6 @@ function readFile() {
 	});
 }
 
-/*
 var SerialPort = require("serialport").SerialPort;
 var serialPort = 
 new SerialPort(serialPortName, {
@@ -185,4 +184,4 @@ serialPort.on("open", function () {
 			}
 		}
 	});
-});*/
+});

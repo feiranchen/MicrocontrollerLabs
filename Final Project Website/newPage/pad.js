@@ -1,4 +1,4 @@
-var serverIP = "127.0.0.1:8000"
+var serverIP = "http://10.148.12.97:8000"
 var drawing;
 var canvas, stage;
 var drawingCanvas;
