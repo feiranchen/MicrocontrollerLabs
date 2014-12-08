@@ -118,7 +118,6 @@
 					font-weight:		normal;
 					color: 				#ccc;
 					background-color:	#333;"></canvas>
-					<button id="sendFrame" type="button">Click Me!</button>
 					<script>
 				      $(document).ready(function(){
 					        $("#sendFrame").click(function(){
@@ -135,14 +134,25 @@
 					be controlled and interacted with via web over a local network. To draw a circuit, you can use the <strong>Circuit
 					 Pad</strong> right above this text. </p>
 					<footer>
-						<a href="#one" class="button style2 down">More</a>
+						<button id="sendFrame" type="button" class="button style2 down">Send and Print Vectors</button>
+						<button id="clear" type="button" class="button style2 down">Clear Pad</button>
 					</footer>
+					<script>
+				      var myCanvas = document.getElementById('myCanvas');
+				      var context = myCanvas.getContext('2d');
+
+				      // bind event handler to clear button
+				      document.getElementById('clear').addEventListener('click', function() {
+				        context.clearRect(0, 0, myCanvas.width, myCanvas.height);
+				      }, false);
+				      console.log("called!!!!");
+				      clearCanvas();
+				    </script>
 				</div>
 			</section>
 		
 		<!-- One -->
-			<section id="intro" class="two"
-				style="background: url('images/fulls/02.jpg');">
+			<section id="intro" class="two">
 				<div class="container 75%">
 					<header>
 						<h2>Introduction</h2>

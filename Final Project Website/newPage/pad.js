@@ -1,7 +1,9 @@
+var serverIP = "127.0.0.1:8000"
 var drawing;
 var canvas, stage;
 var drawingCanvas;
 
+var toClear =0;
 var oldPt;
 var oldMidPt;
 var title;
@@ -24,13 +26,14 @@ function gridY(y){
     return 500 - Math.ceil(y+20);
 }
 
+
 function handleDblclick(event){
         drawing = 0;
         console.log("doubleclicked!");
     //this_stroke = this_stroke + "\n";
     //strokes = strokes + (this_stroke.toString());
     //console.log(strokes);
-    if (straight) {
+    if (stage.mouseInBounds&&straight) {
         var newPt;
 
         if (Math.abs(oldPt.x - stage.mouseX) < Math.abs(oldPt.y - stage.mouseY) ){
@@ -58,6 +61,15 @@ function handleDblclick(event){
 }
 
 function handleMouseDown(event) {
+    if (toClear){
+        toClear = 0;
+        console.log("cleaning!!!!");
+        stage.autoClear = true;
+        stage.removeAllChildren();
+        stage.update();
+        stage.autoClear = false;
+    }
+    if (!stage.mouseInBounds) return;
     if (stage.contains(title)) { stage.clear(); stage.removeChild(title); }
     // color = colors[(index++)%colors.length];
     // stroke = Math.random()*30 + 10 | 0;
@@ -115,7 +127,7 @@ function handleMouseUp(event) {
     //this_stroke = this_stroke + "\n";
     //strokes = strokes + (this_stroke.toString());
     //console.log(strokes);
-    if (straight) {
+    if (stage.mouseInBounds&&straight) {
         var newPt;
 
         if (Math.abs(oldPt.x - stage.mouseX) < Math.abs(oldPt.y - stage.mouseY) ){
@@ -188,5 +200,12 @@ function init() {
 }
 
 function stop() {}
+
+
+function clearCanvas() {
+    toClear=1;
+    strokes = "";
+    this_stroke = "";
+}
 
 
