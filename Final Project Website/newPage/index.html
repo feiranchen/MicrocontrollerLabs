@@ -118,7 +118,7 @@
 					font-weight:		normal;
 					color: 				#ccc;
 					background-color:	#333;"></canvas>
-					<button id="sendFrame" type="button">Click Me!</button>
+					<button id="sendFrame" type="button">Print</button>
 					<script>
 				      $(document).ready(function(){
 					        $("#sendFrame").click(function(){
@@ -144,6 +144,10 @@
 			<section id="intro" class="two"
 				style="background: url('images/fulls/02.jpg');">
 				<div class="container 75%">
+					<header>
+						<h2>"Sound Bite"</h2>
+					</header>
+					<p>We created a pen plotter that draws in electrically conductive ink to rapidly create circuits drawn on a webapp.</p>
 					<header>
 						<h2>Introduction</h2>
 					</header>
@@ -212,8 +216,8 @@
 
 					</p>
 					<p></p>
-					<h3>Software Design and Testin</h3>
-					<h4>Motor Functions and Contro</h4>
+					<h3>Software Design and Testing</h3>
+					<h4>Motor Functions and Controls</h4>
 					<p>To simplify the process of controlling the motors, a series of helper functions were made that could be built together to help logically control the position of the plotter head. This would allow for us to abstract away from the pin-level controls that are required for h-bridge operation. The following methods were implemented:</p>
 
 					<p>void move_positive_x(void), void move_positive_y(void), void move_negative_x(void), void move_negative_x(void), void raise_pen(void), void lower_pen(void), void stop_all(void)</p>
@@ -252,16 +256,16 @@
 					 <p></p>
 					<h2>Results</h2>
 					<h3>Accuracy of Printing</h3>
-					<p>As we began to test out the printer and the circuit scribe pen, we began to realize that continuity was an issue. Testing with the circuit scribe pen by itself showed that the ink was much less conductive than advertised. When drawing simple lines by hand, continuity was spotty at best with fewer than 50% of the six-inch, hand-drawn traces showing a connection from end to end. The solution when drawing by hand was to go back over the trace multiple times to get better continuity. We tried to carry this mentality over to our printer by having the plotter head trace out each line three times ("there, back, and there again"). This improved the quality of the lines that we drew, but reduced the accuracy of our printing. Running motors forwards and then quickly into reverse causes large spikes in backcurrent that would decrease the accuracy of the analog to digital converters. In general, the noise in the environment and the momentum of the motors only allowed us to get an accuracy of roughly 1/10th of an inch, so when we drove the motors back and forth consistently overshooting, our errors would add and our accuracy became only 1/5th of an inch. This provides a significant limitation to the circuits we could print, and could be solved by getting a better kind of conductive ink or by changing the way that we lay ink down. For example, using an inkjet style head we could increase the spray rate to improve conductivity without having to double back over our own lines. The other problem that this posed was the issue of missing connections due to the 1/5th of an inch error as the trace width is roughly only 1/8th of an inch. To solve this problem, we simply designed circuits to connect at intersections instead of at points. By putting in more overlap, we can guarantee that we will connect our lines and reduce the errors.</p>
-					<h3>Demonstration Summary</h3>
-					<p></p>
+					<p>As we began to test out the printer and the circuit scribe pen, we began to realize that continuity was an issue. Testing with the circuit scribe pen by itself showed that the ink was much less conductive than advertised. When drawing simple lines by hand, continuity was spotty at best with fewer than 50% of the six-inch, hand-drawn traces showing a connection from end to end. The solution when drawing by hand was to go back over the trace multiple times to get better continuity. We tried to carry this mentality over to our printer by having the plotter head trace out each line five times ("there, back, there, back, and there again"). This improved the quality of the lines that we drew, but reduced the accuracy of our printing. Running motors forwards and then quickly into reverse causes large spikes in backcurrent that would decrease the accuracy of the analog to digital converters. In general, the noise in the environment and the momentum of the motors only allowed us to get an accuracy of roughly 1/10th of an inch, so when we drove the motors back and forth consistently overshooting, our errors would add and our accuracy became only 1/5th of an inch. This provides a significant limitation to the circuits we could print, and could be solved by getting a better kind of conductive ink or by changing the way that we lay ink down. For example, using an inkjet style head we could increase the spray rate to improve conductivity without having to double back over our own lines. The other problem that this posed was the issue of missing connections due to the 1/5th of an inch error as the trace width is roughly only 1/8th of an inch. To solve this problem, we simply designed circuits to connect at intersections instead of at points. By putting in more overlap, we can guarantee that we will connect our lines and reduce the errors.</p>
+					<h3>Demonstration</h3>
+					<p>EMBED YOUTUBE VIDEO HERE</p>
 					<p></p>
 					<h2>Conclusions</h2>
 					<p>Overall, we are pretty happy with how this project turned out. We realized early on that there were a lot of different systems that had to come together in order to get the plotter working to our initial specifications, so over the course of this project, we learned how to utilize modular design techniques to effectively distribute work while still advancing towards a goal. The decision to separate the tasks of higher-level control and data acquisition versus lower-level hardware and motor controlling allowed for independent optimization of performance in each section and allowed for us to independently progress based on pre-agreed-upon interfaces between the different systems.</P>
 
 					<p>Our initial goal of having a simple script that would allow for user input to control the motions of the motors was surpassed as we developed a web app and wireless infrastructure for using the plotter. This allowed for a better user interface than we had initially hoped for, and made us happier with the final product.</p>
 
-					<p>If we had more time on this project, we would have liked to improve some mechanical aspects of the device. It was very difficult to balance the circuit scribe with the plotter head to get a good trace lined out, and making a more custom fit holder for the pen would have improved the quality of the prints. Additionally, making the cooling system more effective and better isolating the servo potentiometers to allow for both motors to run simultaneously, indefinitely would have been nice. </p>
+					<p>If we had more time on this project, we would have liked to improve some mechanical aspects of the device. It was very difficult to balance the circuit scribe with the plotter head to get a good trace lined out, and making a more custom fit holder for the pen would have improved the quality of the prints. Additionally, making the cooling system more effective and better isolating the servo potentiometers to allow for both motors to run simultaneously, indefinitely would have been nice. We also did not ever manage to parse gerber files into our printer, which we could have implemented with some more time and experience with eCAD tools such as EAGLE. Another notable improvement would have been to use a pen with more conductive ink. The Circuit Scribe pen that we used proved to have very high resistance and poor conductivity in general. This made our circuits difficult to work with. </p>
 
 					<h3>Societal Impacts</h3>
 					<p>If this project was to be created on a larger production scale, it would make circuit design less intimidating and would help to get more people interested in electrical design. The idea that people would be able to trivially create physical, functional versions of .gerber and other layout files is exciting and could potentially spur on the genesis of an open-source hardware design community. </p>
@@ -388,12 +392,21 @@
 
 					<p><strong>void move_motor(void)</strong> - This wrapper function for motor controlling is meant to be called after the get_frame() function and will step through the x and y integer arrays to move the plotter head and draw the entire frame.</p>
 
-					<p><strong>To see a full listing of our final code, view it on github:<a class="" href="https://github.com/lalalah/MicrocontrollerLabs/tree/master/final" role="button">here</a></p>
+					<p><strong>To see a full listing of our final code, view it on github: <a class="" href="https://github.com/lalalah/MicrocontrollerLabs/tree/master/final" role="button">here</a></p>
 
 					<h3>References</h3>
-					<p><a class="" href="http://www.digikey.com/" role="button">Digikey</a>
-						<a class="" href="https://www.toshiba.com/taec/components2/Datasheet_Sync/201009/DST_TB6561NG-TDE_EN_21340.pdf" role="button">Toshiba TB6561NG Datasheet</a>
-						<a class="" href="http://www.atmel.com/images/doc8059.pdf" role="button">Atmega 1284P Datasheet</a></p>
+					<p><a class="" href="http://www.digikey.com/" role="button">Digikey</a></p>
+					<p><a class="" href="https://www.toshiba.com/taec/components2/Datasheet_Sync/201009/DST_TB6561NG-TDE_EN_21340.pdf" role="button">Toshiba TB6561NG Datasheet</a></p>
+					<p><a class="" href="http://www.atmel.com/images/doc8059.pdf" role="button">Atmega 1284P Datasheet</a></p>
+					<p><a class="" href="http://www.atmel.com/images/doc8059.pdf" role="button">LCD Information and Sample Code</a></p>
+					<p><a class="" href="http://people.ece.cornell.edu/land/courses/ece4760/labs/f2014/lab1code/lcd_lib.h" role="button">lcd_lib.h</a></p>
+					<p><a class="" href="http://people.ece.cornell.edu/land/courses/ece4760/labs/f2014/lab1code/lcd_lib.c" role="button">lcd_lib.c</a></p>
+					<p><a class="" href="http://people.ece.cornell.edu/land/courses/ece4760/analogDigital/index_644_GCC.html" role="button">ADC Information and Sample Code</a></p>
+					<p><a class="" href="http://people.ece.cornell.edu/land/courses/ece4760/labs/f2014/lab4.html" role="button">Serial Communication Information</a></p>
+					<p><a class="" href="http://people.ece.cornell.edu/land/courses/ece4760/labs/f2014/lab4code/uart.h" role="button">UART.h</a></p>
+					<p><a class="" href="http://people.ece.cornell.edu/land/courses/ece4760/labs/f2014/lab4code/uart.c" role="button">UART.c</a></p>
+					<p><a class="" href="http://en.wikipedia.org/wiki/Gerber_format" role="button">Gerber File Information</a></p>
+					<p><a class="" href="http://www.w3schools.com/" role="button">HTML References</a></p>
 					</div>
 				</div>
 			</section>
@@ -409,15 +422,15 @@
 					<!-- Lightbox Gallery  -->
 						<div class="container 75% gallery">
 							<div class="row 0% images">
-								<div class="6u"><a href="images/fulls/01.jpg" class="image fit from-left"><img src="./images/schematic.png" title="The Anonymous Red" alt="" /></a></div>
-								<div class="6u"><a href="images/fulls/02.jpg" class="image fit from-right"><img src="images/thumbs/02.jpg" title="Airchitecture II" alt="" /></a></div>
+								<div class="6u"><a href="./images/schematic.png" class="image fit from-left"><img src="./images/schematic.png" title="Wiring Diagram" alt="" /></a></div>
+								<div class="6u"><a href="./images/plotter_underside.jpg" class="image fit from-right"><img src="./images/plotter_underside.jpg" title="Plotter Underside" alt="" /></a></div>
 							</div>
 							<div class="row 0% images">
-								<div class="6u"><a href="images/fulls/03.jpg" class="image fit from-left"><img src="images/thumbs/03.jpg" title="Air Lounge" alt="" /></a></div>
-								<div class="6u"><a href="images/fulls/04.jpg" class="image fit from-right"><img src="images/thumbs/04.jpg" title="Carry on" alt="" /></a></div>
+								<div class="6u"><a href="./images/motor_and_potentiometer.jpg" class="image fit from-left"><img src="./images/motor_and_potentiometer.jpg" title="Motor and Potentiometer" alt="" /></a></div>
+								<div class="6u"><a href="./images/working_in_lab.jpg" class="image fit from-right"><img src="./images/working_in_lab.jpg" title="Testing in the lab" alt="" /></a></div>
 							</div>
 							<div class="row 0% images">
-								<div class="6u"><a href="images/fulls/05.jpg" class="image fit from-left"><img src="images/thumbs/05.jpg" title="The sparkling shell" alt="" /></a></div>
+								<div class="6u"><a href="./images/4760_final_flowchart.png" class="image fit from-left"><img src="./images/4760_final_flowchart.png" title="The sparkling shell" alt="" /></a></div>
 								<div class="6u"><a href="images/fulls/06.jpg" class="image fit from-right"><img src="images/thumbs/06.jpg" title="Bent IX" alt="" /></a></div>
 							</div>
 						</div>
