@@ -68,7 +68,11 @@ function handleMouseDown(event) {
         stage.removeAllChildren();
         stage.update();
         stage.autoClear = false;
+        
+        strokes = "";
+        this_stroke = "";
     }
+    console.log(""+strokes + this_stroke);
     if (!stage.mouseInBounds) return;
     if (stage.contains(title)) { stage.clear(); stage.removeChild(title); }
     // color = colors[(index++)%colors.length];

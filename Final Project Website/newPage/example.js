@@ -36,7 +36,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.post('/frame',function(req,res){
   var frame=req.body.frame;
   console.log("Frame = "+frame);
-  res.end("yes");
+  res.end("done");
   frame += "X-1Y-1D2*\n"
   writeFile(frame);
 });
