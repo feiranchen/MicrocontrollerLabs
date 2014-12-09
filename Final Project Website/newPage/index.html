@@ -123,10 +123,14 @@
 					        $("#sendFrame").click(function(){
 					          $.post(serverIP+"/frame",{frame:strokes}, function(data){
 					            if(data==='done')
-					              {
-					                alert("login success");
-					              }
-					          });
+					            {
+					                alert("Data sent!");
+					            } else {
+					            	alert("Sorry, Connection not successful");
+					            }
+					          }).fail(function() {
+							    alert( "Sorry, Connection not successful" );
+							  });
 					        });
 	  					});
 				    </script>
@@ -165,10 +169,7 @@
 					<p>Our final project was to create a rapid prototyping machine for electrical circuits by repurposing an old pen plotter that we fitted with an electrically conductive pen. Our plotter utilized an atmega 1284P to control the x and y-axis motors, and to raise and lower the pen. We created a web app that allowed a user to draw out circuits quickly, and then send them to be printed out on our plotter over a wifi network as our host computer that maintained the serial connection with the atmega 1284P.  The atmega 1284P would receive vectors of x and y coordinates from the host computer that would instruct it on how to move the plotter head. By measuring the position of the plotter head on each axis through the on-chip ADC and two servo potentiometers, we were able move the plotter head to an accuracy of approximately 1/10th of an inch  on a typical piece of A4 paper.</p>
 					<p> With a single pen and only using conductive ink, each sheet of paper can contain only planar circuits. To facsimile multi-layer printed circuit boards (PCBs), we designed the circuit drawing application we made to track which traces are overlapping and to assign them to different virtual layers. The CPU would then send over chunks of vectors in groups we will refer to as “files” based on which layer they were on. A new file would be sent each time the user indicated that they had placed a new piece of paper on the plotting area via a button on the printer . By treating each layer as a new file, the user would end up with a different piece of paper for each layer of the circuit. By using through-hole components and solder paste, stacking these different sheets of paper is analogous to printing a multi-layer PCB.</p>
 
-
-					<header>
-						<h2>Check out or Demo Video!</h2>
-					</header>
+					<h2>Check out our Demo Video!</h2>
 					<iframe width="560" height="315" src="https://www.youtube.com/embed/HWdeMJdfJQ0" frameborder="0" allowfullscreen></iframe>
 				</div>
 			</section>
