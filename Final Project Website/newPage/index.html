@@ -126,10 +126,10 @@
 					            {
 					                alert("Data sent!");
 					            } else {
-					            	alert("Sorry, Connection not successful");
+					            	alert("Data not sent. Check you connection to the printer! ^.^");
 					            }
 					          }).fail(function() {
-							    alert( "Sorry, Connection not successful" );
+							    alert( "Data not sent. Check you connection to the printer! ^.^" );
 							  });
 					        });
 	  					});
@@ -276,8 +276,7 @@
 					<h3>Accuracy of Printing</h3>
 					<p>As we began to test out the printer and the circuit scribe pen, we began to realize that continuity was an issue. Testing with the circuit scribe pen by itself showed that the ink was much less conductive than advertised. When drawing simple lines by hand, continuity was spotty at best with fewer than 50% of the six-inch, hand-drawn traces showing a connection from end to end. The solution when drawing by hand was to go back over the trace multiple times to get better continuity. We tried to carry this mentality over to our printer by having the plotter head trace out each line five times ("there, back, there, back, and there again"). This improved the quality of the lines that we drew, but reduced the accuracy of our printing. Running motors forwards and then quickly into reverse causes large spikes in backcurrent that would decrease the accuracy of the analog to digital converters. In general, the noise in the environment and the momentum of the motors only allowed us to get an accuracy of roughly 1/10th of an inch, so when we drove the motors back and forth consistently overshooting, our errors would add and our accuracy became only 1/5th of an inch. This provides a significant limitation to the circuits we could print, and could be solved by getting a better kind of conductive ink or by changing the way that we lay ink down. For example, using an inkjet style head we could increase the spray rate to improve conductivity without having to double back over our own lines. The other problem that this posed was the issue of missing connections due to the 1/5th of an inch error as the trace width is roughly only 1/8th of an inch. To solve this problem, we simply designed circuits to connect at intersections instead of at points. By putting in more overlap, we can guarantee that we will connect our lines and reduce the errors.</p>
 					<h3>Demonstration</h3>
-					<p>EMBED YOUTUBE VIDEO HERE</p>
-					<p></p>
+					<p>See embedded video in the Introduction Section!</p>
 					<h2>Conclusions</h2>
 					<p>Overall, we are pretty happy with how this project turned out. We realized early on that there were a lot of different systems that had to come together in order to get the plotter working to our initial specifications, so over the course of this project, we learned how to utilize modular design techniques to effectively distribute work while still advancing towards a goal. The decision to separate the tasks of higher-level control and data acquisition versus lower-level hardware and motor controlling allowed for independent optimization of performance in each section and allowed for us to independently progress based on pre-agreed-upon interfaces between the different systems.</P>
 
@@ -449,7 +448,7 @@
 							</div>
 							<div class="row 0% images">
 								<div class="6u"><a href="./images/4760_final_flowchart.png" class="image fit from-left"><img src="./images/4760_final_flowchart.png" title="The sparkling shell" alt="" /></a></div>
-								<div class="6u"><a href="./images/drawn_circuit.jpg" class="image fit from-right"><img src="./images/drawn_circuit.jpg" title="Test Circuit" alt="" /></a></div>
+								<div class="6u"><a href="./images/drawn_circuit.JPG" class="image fit from-right"><img src="./images/drawn_circuit.JPG" title="Test Circuit" alt="" /></a></div>
 							</div>
 						</div>
 
@@ -475,7 +474,7 @@
 						</div>
 
 						<div class="col-lg-6">
-						  <img class="img-circle img-responsive center-block" alt="100x100" src="./images/feiran2.jpg" />
+						  <img class="img-circle img-responsive center-block" alt="100x100" src="./images/feiran2.JPG" />
 						  <h3 class="text-center">Feiran Chen</h3>
 						  <p class="text-center">Hello, I'm an electrical and computer engineering and computer sciences double major in the class of 2015. In this project I took care of the software design and serial communications.</p>
 						  <p class="text-center">
